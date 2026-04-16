@@ -1,0 +1,13 @@
+% Add list of acronyms.
+\chapter*{\glossarytitlename}
+\addcontentsline{toc}{chapter}{\glossarytitlename}
+
+% See https://ftp.rrze.uni-erlangen.de/ctan/macros/latex/contrib/acronym/acronym.pdf
+% for details on how to use the different acronym reference commands
+\begin{acronym}[ABCDEFGHIJK]
+    \acro{FAU}{Friedrich-Alexander-Universität Erlangen-Nürnberg}
+    \acro{IP}{Internet Protocol}
+        \acroplural{IP}[IPs]{Internet Protocols}
+\end{acronym}
+
+\clearpage

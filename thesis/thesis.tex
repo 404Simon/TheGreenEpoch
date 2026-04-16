@@ -1,0 +1,116 @@
+\documentclass[cscoversheet,twoside]{i7-thesis}
+% options:
+% [germanthesis] - Thesis is written in German
+% [plainunnumbered] - Don't print numbers on plain pages
+% [earlydraft] - Settings for quick draft printouts
+% [watermark] - Print current time/date at bottom of each page
+% [phdthesis] - switch to PhD thesis style (incompatible with cscoversheet)
+% [twoside] - double sided
+% [cscoversheet] - Add thesis cover sheet in FAU CS style
+% [colorcoversheet] - Use print version of the PhD thesis cover sheet (only with phdthesis)
+
+% ########################################
+% Settings
+% ########################################
+\author{Erika Mustermann}
+\birthplace{Erlangen}
+\matriculationnumber{123456789ABC} % not requied for phdthesis
+
+\germantitle{Eine Architektur zur Bestimmung der dynamischen Resonanzstärke von Rotkehlchen}
+\title{An architecture to identify the dynamic resonance strenght of robins}
+
+\course{Informatik}
+\fakulty{Technische Fakultät}
+\department{Department Computer Science}
+\chair{Computer Science 7 - Computer Networks and Communication Systems}
+\germandepartment{Department Informatik}
+\germanchair{Lehrstuhl Informatik 7\\-\\Rechnernetze und Kommunikationssysteme}
+\address{Martenstr.~3, 91058~Erlangen}
+\website{https://www.cs7.tf.fau.de/}
+
+\thesisend{1. April 3022}%disputation date in case of dissertation (Tag der mündl. Prüfung) [phdthesis], date of submission for everything else
+
+\advisors{Prof.\ Dr-Ing. Reinhard German\newline Jörg Deutschmann, M.Sc.}%used as Gutachter/peer reviewer  for the option [phdthesis], otherwise as supervisors
+
+\watermarklogo{i7/watermark-inf.pdf}
+\chairlogo{i7/i7-logo.pdf}
+\faulogo{i7/techfak-logo.pdf}
+
+
+% -----------------------------------------------------------------------------
+% Settings when NOT using option [phdthesis]
+% -----------------------------------------------------------------------------
+\birthday{01. Januar 2000}
+
+\thesistype{Masterarbeit}
+\thesiscite{Master Thesis~(Masterarbeit)}
+%\thesistype{Bachelorarbeit}
+%\thesiscite{Bachelor Thesis~(Bachelorarbeit)}
+
+\thesisstart{1. April 2022}
+
+% -----------------------------------------------------------------------------
+% Settings when using option [phdthesis]
+% -----------------------------------------------------------------------------
+%\thesistype{Dissertation}
+%\thesiscite{PhD Thesis~(Dissertation)}
+%\academicdegree{Doktor-Ingenieur}
+
+% ########################################
+
+% all packages and new comamnds should be added to preamble.sty to minimize the size of out main document
+\usepackage{preamble}
+
+\begin{document}
+% -----------------------------------------------------------------------------
+% Frontmatter
+% -----------------------------------------------------------------------------
+\maketitle
+\pagenumbering{gobble}% gobble supresses page numbers. To use roman page numbering for abstract use \pagenumbering{roman}
+\include{chapters/00-abstract.tex}
+\cleardoublepage{}
+
+\tableofcontents
+\cleardoublepage{}
+
+\pagenumbering{arabic}
+% use ISO date style from here
+\DTMsetdatestyle{iso}
+
+% -----------------------------------------------------------------------------
+% Main content
+% -----------------------------------------------------------------------------
+\include{chapters/01-introduction.tex}
+
+\include{chapters/02-fundamentals.tex}
+
+\include{chapters/03-related-work.tex}
+
+\include{chapters/04-analysis.tex}
+
+\include{chapters/05-conclusion.tex}
+
+\ifthenelse{\boolean{phdthesis}}{
+    \include{chapters/93-publications.tex} % If the own publications are relevant, e.g., for the option [phdthesis]
+    \include{chapters/94-CRediT.tex} % If authors contribution statements are relevant, e.g., for the option [phdthesis]
+}
+% -----------------------------------------------------------------------------
+% Appendices and listings
+% -----------------------------------------------------------------------------
+\cleardoublepage{}
+
+\appendix
+
+\include{chapters/95-appendix.tex}
+
+\include{chapters/96-acronyms.tex}
+
+\include{chapters/97-nomenclature.tex}
+
+\include{chapters/98-listoffigures.tex}
+
+\include{chapters/99-listoftables.tex}
+
+\include{chapters/100-bibliography.tex}
+
+\end{document}

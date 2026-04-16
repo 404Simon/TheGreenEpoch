@@ -1,0 +1,105 @@
+\ProvidesPackage{preamble}
+
+%Add the file with nomenclature definitons
+\input{nomenclature}
+
+%Import the bibliography file
+\addbibresource{bibliography.bib}
+
+%
+%% #########################################################
+%% [BEGIN] packages
+%% #########################################################
+
+% optional, recommended packages
+% colorize table cells
+% \usepackage{colortbl}
+% typeset 1rst, 2nd, 3rd, ...
+% \usepackage[super]{nth}
+% introduction quotes at the beginning of chapters
+% \usepackage{epigraph}
+% beautiful icons
+% \usepackage{fontawesome5}
+% helpers for beautiful tables
+% \usepackage{makecell}
+% include entire PDF pages
+% \usepackage{pdfpages}
+% Euro symbol: The book is \EUR{10}
+% \usepackage{eurosym}
+% table cells that span over multiple rows
+% \usepackage{multirow}
+% show borders and overflows
+% \usepackage{showframe}
+% fine tuning for enum items
+% \usepackage{enumitem}
+% push footnotes to the bottom (i.e. below figures)
+% \usepackage[bottom]{footmisc}
+
+% uncomment this line if you need to define hyphenations
+% \input{98-hyphenations}
+
+
+%% ###########################
+%%% User packages
+%% ###########################
+
+\usepackage{comment}  % A package, that let's you comment whole blocks within your tex file
+\begin{comment}
+	This will not printed anywhere.
+	Neither will this line or anything else, that within the comment-environment.
+\end{comment}
+
+\usepackage{readarray}  % allows you to read csv files and process them within latex
+\readarraysepchar{,}
+
+\usetikzlibrary{patterns, patterns.meta, matrix, fit, positioning, arrows.meta, backgrounds, shapes,decorations}
+
+\usepackage{multirow}
+\usepackage[outline]{contour}  % allows for contoured text, e.g. in figures
+\contourlength{1.2pt}
+
+\usepackage{tcolorbox}
+
+% Fix incompatability of the cleveref and acronym package in older texlive versions by 
+% adding braces to acronym references, see https://tex.stackexchange.com/a/735502
+\makeatletter
+\AtBeginDocument
+ {
+   \def\ltx@label#1{\cref@label{#1}}
+   \def\label@in@display@noarg#1{\cref@old@label@in@display{#1}}
+\def\label@in@mmeasure@noarg#1{%
+    \begingroup%
+      \measuring@false%
+      \cref@old@label@in@display{#1}
+    \endgroup}%  
+ } %
+\makeatother
+
+%% #########################################################
+%% [END] packages
+%% #########################################################
+
+%% #########################################################
+%% [BEGIN] new commands
+%% #########################################################
+
+
+% grey scale
+%\definecolor{color_phase1}{rgb}{0.8,0.8,0.8}
+%\definecolor{color_phase2}{rgb}{0.75,0.75,0.75}
+%\definecolor{color_phase3}{rgb}{0.6,0.6,0.6}
+%\definecolor{color_phase4}{rgb}{0.55,0.55,0.55}
+%\definecolor{color_phase5}{rgb}{0.40,0.40,0.40}
+
+% color blind friendly
+%\definecolor{color_phase1}{HTML}{E69F00}
+%\definecolor{color_phase2}{HTML}{CC79A7}
+%\definecolor{color_phase5}{HTML}{56B4E9}
+%\definecolor{color_phase3}{HTML}{009E73}
+%\definecolor{color_phase4}{HTML}{D55E00}
+
+
+%% #########################################################
+%% [END] new commands
+%% #########################################################
+

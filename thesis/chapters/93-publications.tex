@@ -1,0 +1,15 @@
+\chapter*{List of Publications}
+\label{sec:lop}
+\addcontentsline{toc}{chapter}{List of Publications}
+
+If you want to exlude some publications from being listed here use \verb|\nocite{XXX}|.
+
+\BiblatexSplitbibDefernumbersWarningOff
+\section*{Associated Publications}
+\printbibliography[keyword={mine},heading=none]%this will filter bibliography.bib for any entry with keywords = {mine}
+
+\section*{Associated Student Thesis}
+\printbibliography[keyword={student},heading=none]%this will filter bibliography.bib for any entry with keywords = {student}
+
+\section*{Additional Publications}
+\printbibliography[keyword={helped},heading=none]%this will filter bibliography.bib for any entry with keywords = {helped}

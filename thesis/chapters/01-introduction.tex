@@ -1,0 +1,245 @@
+%! TEX root = thesis.tex
+
+\chapter{Introduction}%
+%\chapter{Einleitung}
+\label{sec:introduction}
+
+general motivation for your work, context and goals: 1-2 pages
+
+\begin{itemize}
+    \item \textbf{Context:} make sure to link where your work fits in
+    \item \textbf{Problem:} gap in knowledge, too expensive, too slow, a deficiency, superseded technology
+    \item \textbf{Strategy:} the way you will address the problem
+\end{itemize}
+
+You can create a chapter wise table of content:
+
+\setcounter{tocdepth}{2}
+\startcontents[introduction]
+\rule{\linewidth}{0.5pt}
+\printcontents[introduction]{}{1}{}
+\rule{\linewidth}{0.5pt}
+
+\section{Sample Section}%
+\label{sec:sample-section}
+
+The following samples explain how to insert cross-references, figures and tables, how to set math, algorithms and program code, how to add references, and how to use acronyms.
+
+\subsection{Cross References}%
+\label{sec:cross-ref}
+
+Use the \verb|\label| and \verb|\cref| commands for cross references, e.g.\ to \cref{sec:cross-ref}.
+It will automatically expand and add the type of label: \cref{tab:SensorNetworkApplications}, \cref{sec:references}, \cref{alg:H_hello} and \cref{eq:zeta}.
+
+\subsection{Figures}%
+\label{sec:figures}
+
+\Cref{fig:setup0} shows the distribution of the nodes in the sample setup at time $t=0$, as well as the initial coverage with a sensing radius of \qty{30}{\metre} and the communication graph for a communication range of \qty{50}{\metre}.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.3\textwidth]{figures/coverage-30--0-static1}
+    \includegraphics[width=0.3\textwidth]{figures/connectivity-50-0-static1}
+    \caption{Coverage and connectivity for a sample replication at time $t=0$}%
+    \label{fig:setup0}
+\end{figure}
+
+\subsection{Subfigures}%
+\label{sec:subfigures}
+
+\Crefrange{fig:setup1}{fig:setup2} show the distribution of the nodes in the sample setup at time $t=0$, as well as the initial coverage with a sensing radius of \qty{30}{\metre} and the communication graph for a communication range of \qty{50}{\metre}.
+
+\begin{figure}
+    \centering
+    \begin{subfigure}{0.49\linewidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/coverage-30--0-static1}
+        \caption{coverage}%
+        \label{fig:setup1}
+    \end{subfigure}
+    \begin{subfigure}{0.49\linewidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/connectivity-50-0-static1}
+        \caption{connectivity}%
+        \label{fig:setup2}
+    \end{subfigure}
+    \caption{Subfigures showing coverage and connectivity for a sample replication at time $t=0$}%
+    \label{fig:setups12}%
+\end{figure}
+
+\subsection{Tables}%
+\label{sec:tables}
+
+Short tables, e.g., \cref{tab:shorttable} are straighforward to define.
+
+\begin{table}
+    \centering
+    \begin{tabular}{llr}
+        \toprule
+        left aligned & same here & right aligned \\
+        \midrule
+        1            & 2         & 3             \\
+        4            & 5         & 6             \\
+        7            & 8         & 9             \\
+        \bottomrule
+    \end{tabular}
+    \caption{Short table}%
+    \label{tab:shorttable}
+\end{table}
+
+Multi-line cells can be set as shown in \cref{tab:SensorNetworkApplications}.
+
+\begin{table}
+    \centering
+    \begin{tabularx}{\textwidth}{>{\raggedright}p{0.2\linewidth}Xp{0.2\linewidth}}
+        \toprule
+        Class                              & application examples & lifetime aspects \\
+        \midrule
+        Critical, coverage           &
+        Forest fire detection, flood detection, nuclear/chemical/biological attack detection, battlefield surveillance, intrusion detection &
+        $c_{ca}$/$c_{ct}$/$c_{cb}$, $c_{ln}$, $c_{la}$, $c_{lo}$                                                                                                                      \\
+        Critical, no coverage      &
+        Monitoring human physiological data, military monitoring of friendly forces, machine monitoring                                     &
+        $c_{cc}$, $c_{ln}$, $c_{la}$, $c_{lo}$                                                                                                                                        \\
+        Noncritical, coverage      &
+        Agriculture, smart buildings, habitat monitoring (sensors monitor the inhabitants in a region)                                      &
+        $c_{ac}$/$c_{tc}$/$c_{bc}$, $c_{cc}$, $c_{sd}$                                                                                                                                \\
+        Noncritical, no coverage &
+        Home automation, habitat monitoring (sensors are attached to animals and monitor their health and social contacts)                  &
+        $c_{cc}$, $c_{sd}$                                                                                                                                                            \\
+        \bottomrule
+    \end{tabularx}
+    \caption{Sensor network applications}%
+    \label{tab:SensorNetworkApplications}
+\end{table}
+
+\subsection{Math}%
+\label{sec:math}
+
+Simple inlined equations: $\zeta(t) = \min( \zeta_{**}(t))$.
+The same in a numbered equation, i.e.\ \cref{eq:zeta}, which states
+\begin{equation}
+    \zeta(t) =  \min\left( \zeta_{**}(t) \right)
+    \label{eq:zeta}
+    .
+\end{equation}
+
+You can use the \texttt{nomencl} package and define mathematic expressions for the nomenclature within the file \texttt{nomenclature.tex}.
+Additionally you can add the description that will be shown in the nomclature table.
+
+Equations covering multiple lines should be aligned.
+Note that the numbering is added automatically, independent of whether the equation is actually referenced or not, as in
+\begin{align}
+   \timeMax    & =  \max\left(   (t_{i+1} - t_i)   : \zeta(t_i) < 1, i \in [0, |T|-1]  \right),   \\
+    \psi_{sd}(t)  & =   \begin{cases}
+        \dfrac{\deltaTime}{\timeMax}   & \text{if $\timeMax > 0$}, \\
+        1                                                 & \text{if $\timeMax= 0$},
+    \end{cases}
+    \\
+    \zeta_{sd}(t) & =  \frac{
+        \psi_{sd} - cl_{sd}
+    }{
+        c_{sd} - cl_{sd}
+    }
+    .
+\end{align}
+
+\subsection{Units}%
+\label{sec:units}
+
+Units should be set using the \verb|\qty| or \verb|\unit| command: the measurements show that the car was accelerating at \qty{5}{\metre\per\second\squared} until it reached its final speed of \qty{100}{\kilo\metre\per\hour}.
+
+Longer unitless numbers or ranges can be typeset using the \verb|\num| and \verb|\numrange| commands, respectively: The number \num{12345678} lies in the range of \numrange{10000000}{20000000}.
+
+% TODO broken in recent siunitx package:
+\Cref{tab:si-in-tables} gives an example of how to typeset numbers and units in tables.
+
+\begin{table}
+    \centering
+    \begin{tabular}{llrl}%{l>{\raggedright}S{4cm}s[table-text-alignment=left,table-format=1.4e-1]s}
+        \toprule
+        \multicolumn{2}{l}{factor} & value & unit \\
+        \midrule
+        $M$ & vehicle mass & 1.3250e+3 & \unit{\kilo\gram} \\
+        $g$ & gravitational constant & 9.81 & \unit{\metre\per\second\squared} \\
+        $\vartheta$ & road grade & 0 & \unit{\degree} \\
+        $\alpha$ & & 1.1100 & \unit{\gram\per\second} \\
+        $\delta$ & & 1.9800e-6 & \unit{\gram\per\meter\cubed\second\squared} \\
+        \bottomrule
+    \end{tabular}
+    \caption{EMIT factors for a category 9 vehicle}%
+    \label{tab:si-in-tables}
+\end{table}
+
+\subsection{Algorithms}%
+\label{sec:algorithms}
+
+Based on the periodically transmitted \texttt{hello} messages, the joining node gets information about its physical neighbors and their adjacent nodes.
+\Cref{alg:H_hello} depicts the handling of \texttt{hello} messages.
+
+\begin{algorithm}
+    \begin{algorithmic}[1]
+        \REQUIRE Locally stored state of all neighbors in set $N$
+        \ENSURE Maintain neighbor set $N$ and set virtual address
+        \STATE Receive neighbor information from node $N_i$
+        \IF {$N_i \notin N$}
+        \STATE $N \gets N_i$
+        \ELSE
+        \STATE Update $N_i \in N$
+        \ENDIF
+        \IF {$P==-1$ AND (Time() $-$ OldTime) $> T_{ps}$}
+        \STATE OldTime $\gets$ Time()
+        \STATE SetMyPosition()
+        \ENDIF
+    \end{algorithmic}
+    \caption{Handle \texttt{hello} messages}%
+    \label{alg:H_hello}
+\end{algorithm}
+
+\subsection{Program Code}%
+\label{sec:code}
+
+Program code should be omitted, but if absolutely necessary, it should be set as seen in \cref{lst:code}.
+
+\begin{lstlisting}[style=txt,caption=Sample application,label=lst:code]{}
+APPLICATION("printU", 192, arg)
+{
+    // Set Priority
+    NutThreadSetPriority(16);
+    // main() loop
+    for (;;) {
+        putchar('U');
+        NutSleep(125);
+    }
+}
+\end{lstlisting}
+
+\subsection{References}%
+\label{sec:references}
+
+To further evaluate the applicability of our definition, we analyzed sensor network applications as surveyed in~\cite{akyildiz2002survey,arampatzis2005survey,khemapach2005survey}.
+Concerning the importance of different lifetime criteria, most of the application scenarios can be grouped into two main classes with two sub-classes each~\cite{dietrich2009lifetime}.
+
+\subsection{Acronyms}%
+\label{sec:acronyms}
+
+Acronyms should be explained when first use.
+\verb|\ac{FAU}| will produce \ac{IP} on the first use and \ac{FAU} in later usages. 
+The plural form can be printed with \verb|\acp{IP}| and it will produce \acp{IP}.
+All abbreviations must be defined in the \texttt{chapters/96-acronyms.tex} file.
+
+\subsection{Color boxes}
+Sometimes it might be interesting to highlight parts of your thesis like examples.
+This can easily be done with the \verb|tcolorbox| environment.
+
+\begin{tcolorbox}
+This could be your example.
+\end{tcolorbox}
+
+\subsection{TODOs and FIXMEs}%
+\label{sec:todos}
+
+You can use the the \verb|\TODO| command to add short ``sticky notes'' to your document.
+\TODO{This is what a TODO looks like}
+This will also trigger generation of a list-of-TODOs at the end of the document.
+The same goes for the \verb|\FIXME|\FIXME{This is what a FIXME looks like} command.

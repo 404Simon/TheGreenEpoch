@@ -1,0 +1,315 @@
+% This code defines the groups
+\renewcommand\nomgroup[1]{%
+  \item[]
+  \hspace*{-\leftmargin}%
+\rule[2pt]{\linewidth+\leftmargin}{1pt}%
+%\hfill 
+\\
+  \textbf{
+  \ifstrequal{#1}{A}{Variables from \ac{EfES} \cite{2024_Fellerer_preprint}}{%
+  \ifstrequal{#1}{B}{Newly introduced}{%
+   Other}}
+   }
+   %\hfill
+   \\
+\rule[2pt]{\linewidth}{1pt}
+}
+
+%%% New math versions
+%\DeclareMathAlphabet{\mathnormal}{OML}{cmm}{m}{it}  % letters
+%\DeclareMathAlphabet{\mathrm}{OT1}{cmr}{m}{n}  % operators (roman)
+%\DeclareMathAlphabet{\mathcal}{OMS}{cmsy}{m}{n}  % symbols (caligraphic)
+%\DeclareMathAlphabet{\mathcallarge}{OMX}{cmex}{m}{n}  % large symbols (caligraphic)
+%\DeclareMathAlphabet{\mathbf}{OT1}{cmr}{bx}{n}  % bold roman
+%\DeclareMathAlphabet{\mathsf}{OT1}{cmss}{m}{n}  % sans serif
+%\DeclareMathAlphabet{\mathit}{OT1}{cmr}{m}{it}  % text italic
+%\DeclareMathAlphabet{\mathtt}{OT1}{cmtt}{m}{n}  % typewriter
+
+\SetMathAlphabet{\mathit}{normal}{OT1}{cmr}{m}{it}
+
+\DeclareMathAlphabet{\mathsfit}{OT1}{lmss}{m}{sl}
+\DeclareMathAlphabet{\mathsfbfit}{OT1}{lmss}{bx}{sl}
+
+\newcommand{\mathscalar}[1]{\mathnormal{#1}}
+\newcommand{\matharray}[1]{\mathbf{#1}}
+\newcommand{\matharrayelement}[1]{\mathsf{#1}}
+\newcommand{\mathset}[1]{\mathit{#1}}
+
+%\DeclareMathAlphabet{\matharrayelement}{OML}{cmbrm}{n}{it}
+
+%\DeclareMathAlphabet{\mathbold}{OML}{cmbrm}{b}{it}
+
+%% Formula notation
+
+\DeclareMathOperator{\deficitSymbol}{\mathrm{def}}
+\DeclareMathOperator{\excessSymbol}{\mathrm{exs}}
+\DeclareMathOperator{\demandSymbol}{\mathrm{dem}}
+\DeclareMathOperator{\generationSymbol}{\mathrm{gen}}
+\DeclareMathOperator{\chargingSymbol}{\mathrm{ch}}
+\DeclareMathOperator{\dischargingSymbol}{\mathrm{dch}}    
+
+\DeclareMathOperator{\minSymbol}{\mathrm{min}}
+\DeclareMathOperator{\maxSymbol}{\mathrm{max}}
+\DeclareMathOperator{\residualSymbol}{\mathrm{r}}
+\DeclareMathOperator{\phaseSymbol}{\mathrm{ph}}
+
+
+\DeclareMathOperator{\funcLerp}{\mathrm{lerp}}
+\DeclareMathOperator{\funcMin}{\mathrm{min}}
+\DeclareMathOperator{\funcMax}{\mathrm{max}}
+\DeclareMathOperator{\funcRLE}{\mathrm{rle}}
+
+\DeclareMathOperator{\efficiency}{\mathit{\eta}}
+
+% New formula section
+\nomencldef{NTimesteps}{\mathscalar{N}_{t}}{The total number of time steps}
+\nomencldef{NPhases}{\mathscalar{N}_{\phaseSymbol}}{The total number of phases}
+\nomencldef{nPhase}{\mathscalar{n}_{\phaseSymbol}}{The number of a single phase}
+
+\nomencldef{timeStart}{\mathscalar{t}_{0}}{The start time of the power data}
+\nomencldef{timeEnd}{\mathscalar{t}_{1}}{The end time of the power data}
+\nomencldef{timeTotal}{\mathscalar{d}_{total}}{The total duration described by the power data}[A,00]
+\nomencldef{deltaTime}{\mathscalar{\Delta t}}{The fixed time step of the power data}
+
+\nomencldef{powerGeneration}{\matharray{P_{\generationSymbol}}}{The power data of the generation}
+\nomencldef{powerDemand}{\matharray{P_{\demandSymbol}}}{The power data of the demand}
+\nomencldef{powerResidualGeneration}{\matharray{P_{\residualSymbol\generationSymbol}}}{The power data of the residual generation}
+\newcommand\powerResidualGenerationElement[1]{\matharrayelement{P}_{\residualSymbol\generationSymbol,\,#1\,\mathrm{mod}\NTimesteps}}
+
+\nomencldef{powerDeficit}{\matharray{P_{\deficitSymbol}}}{The power data of the deficit}
+\nomencldef{powerExcess}{\matharray{P_{\excessSymbol}}}{The power data of the excess}
+
+\nomencldef{powerDemandMax}{\mathscalar{P}_{\demandSymbol,\maxSymbol}}{The maximum demand power}
+\nomencldef{powerGenerationMax}{\mathscalar{P}_{\generationSymbol,\maxSymbol}}{The maximum generation power}
+
+\nomencldef{powerChargingMax}{\mathscalar{P}_{\chargingSymbol, \maxSymbol}}{The maximum input\ie charging power of the \ac{EES}}
+\nomencldef{powerDischargingMax}{\mathscalar{P}_{\dischargingSymbol,\maxSymbol}}{The maximum output\ie discharging power of the \ac{EES}}
+\nomencldef{powerCharging}{\mathscalar{P}_{\chargingSymbol}}{The input\ie charging power of the \ac{EES}}
+\nomencldef{powerDischarging}{\mathscalar{P}_{\dischargingSymbol}}{The output\ie discharging power of the \ac{EES}}
+
+
+\DeclareMathOperator{\packetSymbol}{\mathrm{pk}}
+\nomencldef{capacityPackage}{\mathscalar{C}_{\packetSymbol}}{The capacity at which an energy package becomes available}
+\nomencldef{energyPackage}{\mathscalar{E}^{+}_{\packetSymbol}}{The energy content of an energy package}
+\nomencldef{maskPackage}{\mathscalar{b}_{\packetSymbol}}{A flag to mark an energy package as used or covered}
+
+\nomencldef{capacityDeficitPackages}{\matharray{C}_{\packetSymbol, \deficitSymbol}}{The capacity at which a deficit energy package becomes available}
+
+\nomencldef{capacityExcessPackages}{\matharray{C}_{\packetSymbol, \excessSymbol}}{The capacity at which an excess energy package becomes available}
+\newcommand\capacityGenericPackagesElement[3]{\matharrayelement{C}_{\packetSymbol, #1,\,#2,#3}}
+\newcommand\capacityDeficitPackagesElement[2]{\capacityGenericPackagesElement{\deficitSymbol}{#1}{#2}}
+\newcommand\capacityExcessPackagesElement[2]{\capacityGenericPackagesElement{\excessSymbol}{#1}{#2}}
+
+\nomencldef{energyDeficitPackages}{\matharray{E}^{+}_{\packetSymbol, \deficitSymbol}}{The energy content of a deficit energy package}
+\nomencldef{energyExcessPackages}{\matharray{E}^{+}_{\packetSymbol, \excessSymbol}}{The energy content of an excess energy package}
+\newcommand\energyGenericPackagesElement[3]{\matharrayelement{E}^{+}_{\packetSymbol, #1,\,#2,#3}}
+\newcommand\energyDeficitPackagesElement[2]{\energyGenericPackagesElement{\deficitSymbol}{#1}{#2}}
+\newcommand\energyExcessPackagesElement[2]{\energyGenericPackagesElement{\excessSymbol}{#1}{#2}}
+
+\nomencldef{maskDeficitPackages}{\matharray{b}_{\packetSymbol, \deficitSymbol}}{A binary mask to mark deficit energy packets as covered}
+\nomencldef{maskExcessPackages}{\matharray{b}_{\packetSymbol, \excessSymbol}}{A binary mask to mark excess energy packets as used}
+\newcommand\maskGenericPackagesElement[3]{\matharrayelement{b}_{\packetSymbol, #1,\,#2,#3}}
+\newcommand\maskDeficitPackagesElement[2]{\maskGenericPackagesElement{\deficitSymbol}{#1}{#2}}
+\newcommand\maskExcessPackagesElement[2]{\maskGenericPackagesElement{\excessSymbol}{#1}{#2}}
+
+\nomencldef{capacityExcessPackagesSet}{\mathset{C}_{\excessSymbol}}{An ordered set containing the array $\capacityExcessPackages$ for each phase pair}
+\nomencldef{capacityDeficitPackagesSet}{\mathset{C}_{\deficitSymbol}}{An ordered set containing the array $\capacityDeficitPackages$ for each phase pair}
+\nomencldef{energyExcessPackagesSet}{\mathset{E}^{+}_{\excessSymbol}}{An ordered set containing the array $\energyExcessPackages$ for each phase pair}
+\nomencldef{energyDeficitPackagesSet}{\mathset{E}^{+}_{\deficitSymbol}}{An ordered set containing the array $\energyDeficitPackages$ for each phase pair}
+\nomencldef{maskExcessPackagesSet}{\mathset{b}_{\excessSymbol}}{An ordered set containing the array $\maskExcessPackages$ for each phase pair}
+\nomencldef{maskDeficitPackagesSet}{\mathset{b}_{\deficitSymbol}}{An ordered set containing the array $\maskDeficitPackages$ for each phase pair}
+
+\newcommand\capacityGenericPackagesSetElement[2]{\matharray{C}_{\packetSymbol,#1,\,#2}}
+\newcommand\capacityExcessPackagesSetElement[1]{\capacityGenericPackagesSetElement{\excessSymbol}{#1}}
+\newcommand\capacityDeficitPackagesSetElement[1]{\capacityGenericPackagesSetElement{\deficitSymbol}{#1}}
+
+\newcommand\energyGenericPackagesSetElement[2]{\matharray{E}^{+}_{\packetSymbol,#1,\,#2}}
+\newcommand\energyExcessPackagesSetElement[1]{\energyGenericPackagesSetElement{\excessSymbol}{#1}}
+\newcommand\energyDeficitPackagesSetElement[1]{\energyGenericPackagesSetElement{\deficitSymbol}{#1}}
+
+\newcommand\maskGenericPackagesSetElement[2]{\matharray{b}_{\packetSymbol,#1,\,#2}}
+\newcommand\maskExcessPackagesSetElement[1]{\maskGenericPackagesSetElement{\excessSymbol}{#1}}
+\newcommand\maskDeficitPackagesSetElement[1]{\maskGenericPackagesSetElement{\deficitSymbol}{#1}}
+
+\nomencldef{maskExcess}{\matharray{b}_{\excessSymbol}}{A binary mask containing the first elements of $\maskExcessPackages$}
+\nomencldef{maskDeficit}{\matharray{b}_{\deficitSymbol}}{A binary mask containing the first elements of $\maskDeficitPackages$}
+\newcommand\maskGenericElement[2]{\matharrayelement{b}_{#1,\,#2}}
+\newcommand\maskExcessElement[1]{\maskGenericElement{\excessSymbol}{#1}}
+\newcommand\maskDeficitElement[1]{\maskGenericElement{\deficitSymbol}{#1}}
+
+
+\nomencldef{powerUsedGeneration}{\matharray{P}_{\mathrm{ugen}}}{Directly used generation to cover the demand}
+\nomencldef{powerCoveredDemand}{\matharray{P}_{\mathrm{cdem}}}{Directly covered demand by the generation}
+\nomencldef{powerLossDirectUsage}{\matharray{P}_{\mathrm{duLoss}}}{Loss due to $\efficiencyDirectUsage$}
+\nomencldef{energyUsedGeneration}{\mathscalar{E}_{\mathrm{ugen}}}{The directly used generated energy}[A,01]
+\nomencldef{energyCoveredDemand}{\mathscalar{E}_{\mathrm{cdem}}}{The directly covered demanded energy}[A,01]
+\nomencldef{energyLossDirectUsage}{\mathscalar{E}_{\mathrm{duLoss}}}{Lossed energy due to $\efficiencyDirectUsage$}
+
+\nomencldef{energyGeneration}{\mathscalar{E}_{\generationSymbol}}{Generated energy}[A,00]
+\nomencldef{energyDemand}{\mathscalar{E}_{\demandSymbol}}{Demanded energy}[A,00]
+\nomencldef{energyDeficitInitial}{\mathscalar{E}_{\deficitSymbol,0}}{The initial energy deficit}[A,01]
+\nomencldef{energyExcessInitial}{\mathscalar{E}_{\excessSymbol,0}}{The initial energy excess}[A,01]
+
+\nomencldef{energyDeficit}{\mathscalar{E}_{\deficitSymbol}}{The remaining energy deficit}[A,01]
+\nomencldef{energyExcess}{\mathscalar{E}_{\excessSymbol}}{The remaining energy excess}[A,01]
+
+\newcommand{\ofC}{\left(\capacity\right)}
+\nomencldef{energyAdditional}{\mathscalar{E}^{+}}{The additional energy provided by an \ac{EES}}[A,02]
+\nomencldef{energyAdditionalMax}{\mathscalar{E}^{+}_{\maxSymbol}}{The maximum possible additional energy}
+
+\nomencldef{energyDeficitPhase}{\matharray{E}_{\deficitSymbol}}{The energy per deficit phase}
+
+\nomencldef{energyExcessPhase}{\matharray{E}_{\excessSymbol}}{The energy per excess phase}
+
+\newcommand\energyDeficitPhaseElement[1]{\matharrayelement{E}_{\deficitSymbol,\,#1}}
+\newcommand\energyExcessPhaseElement[1]{\matharrayelement{E}_{\excessSymbol,\,#1}}
+
+
+\nomencldef{capacitySupportPoints}{\matharray{C}}{The capacity values of the support points of $\energyAdditional\ofC$}[A,03]
+\newcommand\capacitySupportPointsElement[1]{\matharrayelement{C}_{#1}}
+
+\nomencldef{energyAdditionalSupportPoints}{\matharray{E}^{+}}{The energy values of the support points of $\energyAdditional\ofC$}[A,03]
+\newcommand\energyAdditionalSupportPointsElement[1]{\matharrayelement{E}^{+}_{#1}}
+
+\nomencldef{effectivenessLocal}{\mathscalar{m}}{The local effectiveness of an \ac{EES}}[A,03]
+\nomencldef{effectivenessArray}{\matharray{m}}{The local effectiveness of increasing the capacity at $\capacitySupportPoints$}[A,03]
+\newcommand\effectivenessArrayElement[1]{\matharrayelement{m}_{#1}}
+
+\nomencldef{selfSufficiency}{\mathsfit{\psi}_{\mathrm{ss}}}{The self-sufficiency}[A,03]
+\nomencldef{selfSufficiencyInitial}{\mathsfit{\psi}_{\mathrm{ss},0}}{The initial self-sufficiency}[A,03]
+\nomencldef{selfSufficiencyMax}{\mathsfit{\psi}_{\mathrm{ss},\maxSymbol}}{The maximum possible self-sufficiency}
+
+\nomencldef{selfConsumption}{\mathsfit{\psi}_{\mathrm{sc}}}{The self-consumption}[A,03]
+\nomencldef{selfConsumptionInitial}{\mathsfit{\psi}_{\mathrm{sc},0}}{The initial self-consumption}[A,03]
+\nomencldef{selfConsumptionMax}{\mathsfit{\psi}_{\mathrm{sc},\maxSymbol}}{The maximum possible self-consumption}
+
+\nomencldef{efficiencyDirectUsage}{\efficiency_{\mathrm{du}}}{The efficiency of directly using generation to cover demand}[A,04]
+\nomencldef{efficiencyCharging}{\efficiency_{\chargingSymbol}}{The charging efficiency of the \ac{EES}}[A,04]
+\nomencldef{efficiencyDischarging}{\efficiency_{\dischargingSymbol}}{The discharging efficiency of the \ac{EES}}[A,04]
+
+\nomencldef{capacity}{\mathscalar{C}}{The capacity of the \ac{EES}}[A,03]
+\nomencldef{effectiveness}{\mathit{\mu}}{The effectiveness of the \ac{EES}}[A,03]
+\nomencldef{gain}{\mathscalar{G}}{The gain of the \ac{EES}\ie the product of $\efficiencyDischarging$ and $\effectiveness$}
+
+\nomencldef{gainPerDay}{\gain_{\mathrm{day}}}{The gain per day of the \ac{EES}\ie the product of $\efficiencyDischarging$ and $\effectiveness$ normalized to one day}
+
+
+\nomencldef{rleStarts}{\matharray{s}_{\phaseSymbol}}{The starting indices of each phase in the run length encoded residual generation data}
+\nomencldef{rleLengths}{\matharray{d}_{\phaseSymbol}}{The length in indices of each phase in the run length encoded residual generation data}
+\nomencldef{rleValues}{\matharray{v}_{\phaseSymbol}}{The value of each phase in the run length encoded residual generation data}
+
+\newcommand\rleStartsElement[1]{\matharrayelement{s}_{\phaseSymbol,#1}}
+\newcommand\rleLengthsElement[1]{\matharrayelement{d}_{\phaseSymbol,#1}}
+\newcommand\rleValuesElement[1]{\matharrayelement{v}_{\phaseSymbol,#1}}
+
+
+% -------------------------------------------
+%Commands for cost-based measures
+% -------------------------------------------
+\DeclareMathOperator{\exportSymbol}{\mathrm{exp}}
+\DeclareMathOperator{\importSymbol}{\mathrm{imp}}
+\DeclareMathOperator{\investSymbol}{\mathrm{inv}}
+\DeclareMathOperator{\referenceSymbol}{\mathrm{ref}}
+\DeclareMathOperator{\eesSymbol}{\mathrm{EES}}
+\DeclareMathOperator{\resSymbol}{\mathrm{RES}}
+\DeclareMathOperator{\systemSymbol}{\mathrm{sys}}
+
+\nomencldef{energyExport}{\mathscalar{E}_{\exportSymbol}}{The total exported energy}[B,01]
+\nomencldef{energyImport}{\mathscalar{E}_{\importSymbol}}{The total imported energy}[B,01]
+
+\nomencldef{efficiencyExport}{\efficiency_{\exportSymbol}}{The export efficiency of the system}[B,04]
+\nomencldef{efficiencyImport}{\efficiency_{\importSymbol}}{The import efficiency of the system}[B,04]
+
+\nomencldef{timeInvestRES}{\mathscalar{d}_{\investSymbol,\resSymbol}}{The lifetime/investment time of the \ac{RES}}[B,01]
+\nomencldef{timeInvestEES}{\mathscalar{d}_{\investSymbol,\eesSymbol}}{The lifetime/investment time of the \ac{EES}}[B,01]
+%\nomencldef{timeReference}{\mathscalar{t}_{\referenceSymbol}}{A reference time to compare investment to running costs}[B]
+%\nomencldef{relationTime}{\mathscalar{a}_{\mathrm{t}}}{A conversion factor to normalize to a reference time}[B]
+
+\nomencldef{costs}{\mathscalar{c}}{The total costs for the system}[B,03]
+\nomencldef{costsReference}{\costs_{\referenceSymbol}}{The reference costs for a system without \ac{RES} and \ac{EES}}[B,03]
+\nomencldef{costsImport}{\costs_{\importSymbol}}{The import costs for energy bought at the energy market/grid}[B,03]
+\nomencldef{costsExport}{\costs_{\exportSymbol}}{The export revenue for energy sold at the energy market/grid}[B,03]
+\nomencldef{costsInvest}{\costs_{\investSymbol}}{The total investment, maintenance, repair and replacement costs}[B,03]
+\nomencldef{costsInvestRES}{\costs_{\investSymbol,\resSymbol}}{The investment, maintenance, repair and replacement costs for the \ac{RES} normalized to $\timeTotal$}[B,03]
+\nomencldef{costsInvestEES}{\costs_{\investSymbol,\eesSymbol}}{The investment, maintenance, repair and replacement costs for the \ac{EES} normalized to $\timeTotal$}[B,03]
+\nomencldef{costsInvestRESTotal}{\hat{\costs}_{\investSymbol,\resSymbol}}{The total investment, maintenance, repair and replacement costs for the \ac{RES}}[B,03]
+\nomencldef{costsInvestEESTotal}{\hat{\costs}_{\investSymbol,\eesSymbol}}{The total investment, maintenance, repair and replacement costs for the \ac{EES}}[B,03]
+\nomencldef{costsInitial}{\costs_{0}}{The costs/revenue when only \ac{RES} is added to the reference system}[B,03]
+
+\nomencldef{price}{\mathscalar{p}}{The energy price\ie costs per unit of energy}[B,02]
+\newcommand{\priceSupportPoints}{\matharray{p}}
+\newcommand{\priceSupportPointsElement}[1]{\matharrayelement{p}_{#1}}
+\nomencldef{priceImport}{\price_{\importSymbol}}{The import price for buying energy}[B,02]
+\newcommand{\priceImportSupportPoints}{\priceSupportPoints_{\importSymbol}}
+\newcommand{\priceImportSupportPointsElement}[1]{\priceSupportPointsElement{\importSymbol,#1}}
+\nomencldef{priceExport}{\price_{\exportSymbol}}{The export price for selling energy}[B,02]
+\newcommand{\priceExportSupportPoints}{\priceSupportPoints_{\exportSymbol}}
+\newcommand{\priceExportSupportPointsElement}[1]{\priceSupportPointsElement{\exportSymbol,#1}}
+\nomencldef{priceInvest}{\price_{\investSymbol}}{The total levelized price for investment costs per unit of generated or additional energy  normalized to $\timeTotal$}[B,02]
+\nomencldef{priceInvestRES}{\price_{\investSymbol,\resSymbol}}{The levelized price for investment costs per unit of generated energy by the \ac{RES} normalized to $\timeTotal$}[B,02]
+\nomencldef{priceInvestEES}{\price_{\investSymbol,\eesSymbol}}{The levelized price for investment costs per unit of usable capacity of the \ac{EES} normalized to $\timeTotal$}[B,02]
+\nomencldef{priceInvestEESTotal}{\hat{\price}_{\investSymbol, \eesSymbol}}{The total levelized price for investment costs per unit of usable capacity of the \ac{EES}}[B,02]
+\newcommand{\priceInvestEESTotalSupportPoints}{\hat{\priceSupportPoints}_{\investSymbol, \eesSymbol}}
+\newcommand{\priceInvestEESTotalSupportPointsElement}[1]{\priceSupportPointsElement{\investSymbol, \eesSymbol,#1}}
+
+\nomencldef{priceInvestRESTotal}{\hat{\price}_{\investSymbol, \resSymbol}}{The total levelized price for investment costs per unit of generated energy of the \ac{RES}}[B,02]
+\nomencldef{priceAdditional}{\price^{+}}{The price per unit of $\energyAdditional$ that describes the \ac{LACE} provided by the \ac{EES}}[B,02]
+
+\DeclareMathOperator{\ratio}{\mathscalar{r}}
+\nomencldef{ratioPrice}{\ratio_{\price}}{A function of an efficiency $\efficiency$ that describes the price premium relative to the import price of energy, that passes a subsystem\eg an inverter for direct usage or an \ac{EES}}[B,03]
+\nomencldef{ratioExport}{\ratio_{\exportSymbol}}{The ratio of $\priceExport$ relative to $\priceImport$}[B,03]
+\nomencldef{ratioInvestRES}{\ratio_{\investSymbol,\resSymbol}}{The ratio of $\priceInvestRES$ relative to $\priceImport$}[B,03]
+\nomencldef{ratioInvestEES}{\ratio_{\investSymbol,\eesSymbol}}{The ratio of $\priceInvestEES$ relative to $\priceImport$}[B,03]
+\newcommand{\ratioExportThreshold}{\ratio_{\exportSymbol,0}}
+
+\nomencldef{priceGenerationLCOE}{\price_{\text{LCOE,}\resSymbol}}{The \ac{LCOE} for the generation by the \ac{RES}}[B,05]
+\nomencldef{priceLCOG}{\price_{\text{LCOG}}}{The \ac{LCOG} of the \ac{RES}}[B,05]
+\nomencldef{priceGenerationLACE}{\price_{\text{LACE,}\resSymbol}}{The \ac{LACE} by the \ac{RES}}[B,05]
+
+\nomencldef{priceStorageLCOE}{\price_{\text{LCOE,}\eesSymbol}}{The \ac{LCOE} for the energy provided by the \ac{EES}}[B,05]
+\nomencldef{priceLCOS}{\price_{\text{LCOS}}}{The \ac{LCOS} of the \ac{EES}}[B,05]
+\nomencldef{priceStorageLACE}{\price_{\text{LACE,}\eesSymbol}}{The \ac{LACE} by the \ac{EES}}[B,05]
+
+\nomencldef{priceSystemLCOE}{\price_{\text{LCOE,sys}}}{The \ac{LCOE} for the whole system (\ac{RES} and \ac{EES})}[B,05]
+
+\nomencldef{indexOptimal}{\mathscalar{i}^{*}}{The cost-optimal index}[B,00]
+\nomencldef{capacityOptimal}{\capacity^{*}}{The cost-optimal usable capacity of the \ac{EES}}[B,00]
+\nomencldef{effectivenessLocalOptimal}{\effectivenessLocal^{*}}{The cost-optimal local effectiveness of the \ac{EES}}[B,00]
+\nomencldef{costsOptimal}{\costs^{*}}{The minimal costs of the whole system}[B,00]
+
+\begin{comment}
+\DeclareMathOperator{\price}{\mathscalar{p}}
+\DeclareMathOperator{\costs}{\mathscalar{c}}
+
+\nomencldef{costsReference}{\costs_{\referenceSymbol}}{The total cost for importing energy without any \ac{RES} and \ac{EES}}
+
+\nomencldef{deltaCostsSystem}{\Delta\costs_{\systemSymbol}}{The total cost difference from $\costsReference$ when extending the system by a \ac{RES} and/or \ac{EES}}
+
+\nomencldef{costsExport}{\costs_{\exportSymbol}}{The total revenue from exporting energy}
+\nomencldef{costsImport}{\costs_{\importSymbol}}{The total costs for importing energy}
+
+\nomencldef{costsExportInitial}{\costs_{\exportSymbol,0}}{The revenue from exporting energy without any \ac{EES}}
+\nomencldef{costsImportInitial}{\costs_{\importSymbol,0}}{The costs for importing energy without any \ac{EES}}
+\nomencldef{costsInitial}{\costs_{0}}{The running costs for a system with \ac{RES}, without \ac{EES}}
+
+
+\nomencldef{priceExport}{\price_{\exportSymbol}}{The average price per exported unit of energy}
+\nomencldef{priceImport}{\price_{\importSymbol}}{The average price per imported unit of energy}
+
+\nomencldef{costsTotal}{\costs_{\systemSymbol}}{The costs including investment costs for generation and \ac{EES} and potential revenues do to energy export and energy savings}
+\nomencldef{costsInvestementGeneration}{\costs_{\mathrm{inv},0}}{The investment and maintenance costs for the energy generation system}
+\nomencldef{costsInvestementEES}{\costs_{\mathrm{inv}}^{+}}{The investment costs for an additional \ac{EES} over capacity}
+
+\nomencldef{deltaCostsInitial}{\Delta\costs_{0}}{The revenue for the system when installing \ac{RES} only}
+\nomencldef{deltaCostsAdditional}{\Delta\costs^{+}}{The revenue for the system when installing an additional \ac{EES}}
+
+\nomencldef{revenueGeneration}{\costs_{\generationSymbol}}{The revenue from a system with own energy generation but no additional \ac{EES} without investment costs}
+\nomencldef{revenueEES}{\costs_{\exportSymbol}^{+}}{The revenue from an additional \ac{EES}, without investment costs}
+
+\nomencldef{priceInvestementGeneration}{\price_{\generationSymbol}}{The price for the total energy generation per unit of energy}
+\nomencldef{priceInvestementEES}{\price_{\mathrm{inv}}^{+}}{The price per unit of usable capacity of an \ac{EES}}
+\nomencldef{priceAdditional}{\price^{+}}{The price per unit of additional energy $\energyAdditional$}
+\nomencldef{ratioPrices}{\mathscalar{r}_{\mathrm{p}}}{The ratio of $\priceExport$ to $\priceImport$}
+\nomencldef{priceCoveredDemand}{\price_{\mathrm{cdem}}}{The costs generated by the directly covered demand}
+\nomencldef{priceUsedGeneration}{\price_{\mathrm{ugen}}}{The costs generated by the directly used generation}
+\end{comment}

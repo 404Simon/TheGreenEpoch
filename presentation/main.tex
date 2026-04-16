@@ -1,0 +1,183 @@
+% ..............................................................................
+% Demo of the fau-beamer template.
+%
+% Copyright 2022 by Tim Roith <tim.roith@fau.de>
+%
+% This program can be redistributed and/or modified under the terms
+% of the GNU Public License, version 2.
+%
+% ------------------------------------------------------------------------------
+\documentclass[final]{beamer}
+\def\fauThemeLanguage{Eng}  % simple remove this line, if your presentation is in German
+\usepackage{preamble}
+
+% ========================================================================================
+% Theme: inner, outer, font and colors
+% ----------------------------------------------------------------------------------------
+\usepackage[institute=Tech,
+			%SecondLogo = template-art/i7-logo.pdf,
+			%ThirdLogo = template-art/FAUWortmarkeBlau.pdf,
+			%WordMark=None,
+			aspectratio=169,
+			fontsize=11,
+			fontbaselineskip=13,
+			scale=1.,
+			%InsertTotalFoot
+		   ]{styles/beamerthemefau}
+
+
+% ----------------------------------------------------------------------------------------
+% Input and output encoding
+%\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+% ----------------------------------------------------------------------------------------
+% Language settings
+\usepackage[english]{babel}
+
+% ========================================================================================
+% Fonts
+% - Helvet is loaded by styles/beamerfonts
+% - We use serif for math environements
+% - isomath is used for upGreek letters
+% ----------------------------------------------------------------------------------------
+\usepackage{isomath}
+\usefonttheme[onlymath]{serif}
+\usepackage{exscale}
+\usepackage{anyfontsize}
+\setbeamercolor{alerted text}{fg=BaseColor}
+% ----------------------------------------------------------------------------------------
+% custom commands for symbols
+\usepackage{styles/symbols}
+
+\sisetup{detect-weight,mode=text}
+
+
+
+% ========================================================================================
+% Setup for Titlepage
+% ----------------------------------------------------------------------------------------
+\title[Short title]{Long title}
+%\subtitle{precise, complete, fast}
+\author[Short form author 1]{
+List of authors%
+}
+%
+\institute[FAU]{%
+Friedrich-Alexander-Universität Erlangen-Nürnberg, Computer Science 7%
+}
+
+% Instead of \institute you can also use the \thanks command
+% ------------------------------------------------
+%\author[T. Roith]{
+%Tim Roith\thanks{Friedrich-Alexander Universität Erlangen-Nürnberg, Department Mathematik}\and%
+%Second Author\thanks{Second Insitute}\and%
+%Third Author\thanks{Third Insitute}%
+%}
+
+\date{presentation date}
+
+
+% ================================================
+% Bibliography
+% ------------------------------------------------
+%\usepackage{csquotes}
+\usepackage[style=numeric, %alternatively: numeric, numeric-comp, and other from biblatex
+			defernumbers=true,
+			useprefix=true,%
+			giveninits=true,%
+			hyperref=true,%
+			autocite=inline,%
+			maxcitenames=5,%
+			maxbibnames=20,%
+			uniquename=init,%
+			sortcites=true,% sort citations when multiple entries are passed to one cite command
+			doi=true,%
+			isbn=false,%
+			url=false,%
+			eprint=false,%
+			backend=bibtex%
+		   ]{biblatex}
+\addbibresource{bibliography.bib}
+%\bibliographystyle{splncs04}
+%\bibliography{bibliography}
+\setbeamertemplate{bibliography item}[text]
+
+
+% ================================================
+% Hyperref and setup
+% ------------------------------------------------
+\hypersetup{
+	colorlinks = true,
+	final=true, 
+	plainpages=false,
+	pdfstartview=FitV,
+	pdftoolbar=true,
+	pdfmenubar=true,
+	pdfencoding=auto,
+	psdextra,
+	bookmarksopen=true,
+	bookmarksnumbered=true,
+	breaklinks=true,
+	linktocpage=true,
+	urlcolor=BaseColor,
+	citecolor=BaseColor,
+	linkcolor=BaseColor
+}
+
+
+% ================================================
+% Additional packages
+% ------------------------------------------------
+
+
+% ================================================
+% Various custom commands
+% ------------------------------------------------
+%\setbeameroption{show notes on second screen}
+\begingroup\expandafter\expandafter\expandafter\endgroup
+\expandafter\ifx\csname pdfsuppresswarningpagegroup\endcsname\relax
+\else
+  \pdfsuppresswarningpagegroup=1\relax
+\fi
+% Change color for cite locally
+\newcommand{\colorcite}[3]{{\hypersetup{citecolor=#1}{\cite[#2]{#3}}}} 
+
+% ------------------------------------------------
+% ================================================
+% The main document
+% ------------------------------------------------
+\begin{document}
+	% Title page
+	\begin{frame}[t,titleimagenofooter]{-}
+		\titlepage%
+	\end{frame}
+
+	\input{sections/01_introduction}
+
+	\input{sections/02_motivation}
+	
+	\input{sections/03_related_work}
+
+	\input{sections/04_methodology}
+
+	\input{sections/05_novelty}
+	
+	% Experiment runs or additional chapters for more detailed descriptions could go here
+		
+	\input{sections/18_results}
+	
+	\input{sections/19_conclusion}
+	
+	\input{sections/20_outlook}
+
+	\begin{frame}[titleimagenofooter]{}{}
+		\centering
+		Thank you very much 
+
+		and I hope for an interesting discussion!
+	\end{frame}
+
+	\input{sections/99_backmatter}
+	
+	
+\end{document}

@@ -1,0 +1,166 @@
+\ProvidesPackage{preamble}
+
+\ifdefined\fauThemeLanguage
+\else
+	\def\fauThemeLanguage{}
+\fi
+%
+%% #########################################################
+%% [BEGIN] packages
+%% #########################################################
+\usepackage{float}
+%\usepackage{graphicx}
+%% For including figures, graphicx.sty has been loaded in
+%% elsarticle.cls. If you prefer to use the old commands
+%% please give \usepackage{epsfig}
+
+%% The lineno packages adds line numbers. Start line numbering with
+%% \begin{linenumbers}, end it with \end{linenumbers}. Or switch it on
+%% for the whole article with \linenumbers.
+%% \usepackage{lineno}
+
+%
+% If you use the hyperref package, please uncomment the following line
+% to display URLs in blue roman font according to Springer's eBook style:
+%\renewcommand\UrlFont{\color{blue}\rmfamily}
+\usepackage[caption=false]{subfig}
+\captionsetup{font=footnotesize,labelfont={bf,sf}}
+\captionsetup[sub]{font=footnotesize,labelfont={bf,sf}}
+
+%% ###########################
+%%% User packages
+%% ###########################
+\usepackage[T1]{fontenc}
+
+\usepackage{comment}
+\usepackage[colorinlistoftodos]{todonotes}
+\usepackage{import}
+
+\usepackage{siunitx}
+\DeclareSIUnit\year{yr}
+\DeclareSIUnit{\EUR}{\text{\euro}}
+\DeclareSIUnit{\CENT}{\text{ct}}
+\DeclareSIUnit{\Wh}{\text{Wh}}
+% Zahlen
+%     \num{0.123}
+% Einheiten
+%     \unit{\kilo\gram\metre\per\square\second}
+% Größen
+%     \qty{2e8}{\meter\per\second}
+% Auf deutsches Typesetting umschalten
+%     \sisetup{locale=DE}
+
+\usepackage{xparse}
+\usepackage[]{acro}
+\NewDocumentCommand\acrodef{mO{#1}mG{}}{\DeclareAcronym{#1}{short={#2}, long={#3}, #4}}
+\input{acronyms}
+
+\usepackage{nomencl}
+\makenomenclature
+
+\usepackage{mathtools} % for 'dcases*' env.
+%\usepackage{amsmath}
+\usepackage{wasysym}
+%\usepackage{amssymb}
+\usepackage{amsfonts}
+
+\usepackage{hyperref}
+%\usepackage[bookmarksnumbered,unicode]{hyperref}
+%\renewcommand\UrlFont{\color{blue}\rmfamily}
+\usepackage[english]{babel}
+\usepackage[capitalize,noabbrev]{cleveref}
+\usepackage{csquotes}
+\MakeOuterQuote{"}
+
+\newcommand{\closedInterval}[2]{\left[#1, #2\right]}
+\newcommand{\lopenInterval}[2]{\left(#1, #2\right]}
+\newcommand{\ropenInterval}[2]{\left[#1, #2\right)}
+\newcommand{\openInterval}[2]{\left(#1, #2\right)}
+
+\DeclareMathOperator{\Multiply}{\cdot}
+\DeclareMathOperator{\Divide}{\div}
+
+\newcommand{\SetBegin}{\left\langle\begin{matrix}}
+\newcommand{\SetEnd}{\end{matrix}\right\rangle}
+\newcommand{\ArrayBegin}{\begin{bmatrix}}
+\newcommand{\ArrayEnd}{\end{bmatrix}}
+\newcommand{\TupleBegin}{\begin{pmatrix}}
+\newcommand{\TupleEnd}{\end{pmatrix}}
+
+\usepackage[ruled]{algorithm2e}
+\newcommand\mycommfont[1]{\footnotesize\ttfamily\textcolor{blue}{#1}}
+\SetCommentSty{mycommfont}
+
+\usepackage{tabularx} 
+\usepackage{caption}
+%\usepackage{subcaption}
+
+\usepackage{readarray}
+\readarraysepchar{;}
+%\usepackage{forloop}
+
+\usepackage{pgfplotstable} % loads also tikz
+\pgfplotsset{compat=newest}% <- set a compat!
+\usepgfplotslibrary{fillbetween, groupplots}
+\usetikzlibrary{patterns, patterns.meta, matrix, fit, positioning, arrows.meta, backgrounds, shapes,snakes,calc}
+%\usepackage[dvipsnames]{xcolor}
+\usepackage{multirow}
+\usepackage{booktabs}
+\usepackage[outline]{contour}
+\contourlength{1.2pt}
+
+\newcommand{\pgfplotNotation}[3]{\draw[black, line width = 0.5pt] #1--#2 node[anchor=center, pos=1, font=\footnotesize] {\contour{white}{#3}}; \node[circle, draw=black, fill=black, minimum size=0.1cm, inner sep=0pt, outer sep=0pt] at #1 {}}
+
+\usepackage{tcolorbox}
+%% #########################################################
+%% [END] packages
+%% #########################################################
+
+%% #########################################################
+%% [BEGIN] new commands
+%% #########################################################
+
+%% This package creates the groups in the nomenclature
+% -----------------------------------------
+\usepackage{etoolbox}
+
+% -----------------------------------------
+\NewDocumentCommand\nomencldef{mmmO{}}{
+  \newcounter{COUNT_#1}
+  \expandafter\DeclareMathOperator\csname #1\endcsname{#2\stepcounter{COUNT_#1}}
+  \AtEndDocument{%
+    \ifthenelse{\value{COUNT_#1}>0}{
+        \nomenclature[#4]{\(#2\)}{#3}
+    }{}
+  }
+}
+\input{nomenclature}
+
+\newcommand{\eg}{\xspace, e.g.\,,\xspace}
+\newcommand{\ie}{\xspace, i.e.\,,\xspace}
+
+\definecolor{color_generation}{rgb}{0.53,0.80,0.00}
+\definecolor{color_demand}{rgb}{1.00,0.47,0.20}
+\definecolor{color_gray}{rgb}{0.7,0.7,0.7}
+\definecolor{color_effectiveness}{rgb}{0.0,0.49,0.67}
+\definecolor{color_effectiveness_light}{rgb}{0.475,0.725,0.816}
+
+% grey scale
+%\definecolor{color_phase1}{rgb}{0.8,0.8,0.8}
+%\definecolor{color_phase2}{rgb}{0.75,0.75,0.75}
+%\definecolor{color_phase3}{rgb}{0.6,0.6,0.6}
+%\definecolor{color_phase4}{rgb}{0.55,0.55,0.55}
+%\definecolor{color_phase5}{rgb}{0.40,0.40,0.40}
+
+% color blind friendly
+\definecolor{color_phase1}{HTML}{E69F00}
+\definecolor{color_phase2}{HTML}{CC79A7}
+\definecolor{color_phase5}{HTML}{56B4E9}
+\definecolor{color_phase3}{HTML}{009E73}
+\definecolor{color_phase4}{HTML}{D55E00}
+
+
+%% #########################################################
+%% [END] new commands
+%% #########################################################
+

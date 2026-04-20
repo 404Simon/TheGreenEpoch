@@ -1,0 +1,72 @@
+# Green Gas Emission aware Optimization of Large-Language-Model Training
+
+Bastian Wiesner, Julian Kraus, Simon Wittmann
+
+August 2026
+
+## Introduction
+
+LLM training can involve thousands of GPUs running over the period of a couple of months. During this time, energy consumption and thereby CO2 consumption is immense, which is one of the arguments against LLMs in general. The CO2 consumption could possibly be reduced, if the model training stops during times, where the CO2 intensity of the energy grid is high, and resumes when the CO2 Intensity is lower. This change of CO2 intensity mostly depends on the usage of renewable energy during this period in the specified area.
+
+This project builds a simulation of CO2-aware LLM training to evaluate the effect of stopping and starting the training process on the CO2 consumption of the overall process.
+
+## Definition of Optimization Problem
+
+### Targetfunction
+
+The primary goal function is the maximization of the score of decreased C02eq emissions divided by increased training duration in the training of an LLM with a specific number of parameters and tokens in trainings set relative to the normal training.
+
+### Optimization Variables
+
+| Objective | Unit |
+| -------------- | --------------- |
+| Training duration | seconds |
+| CO2eq emissions | gCO2eq |
+
+
+### Constants and Parameters
+
+| Constant | Unit |
+| -------------- | --------------- |
+| LLM Model Parameters | int |
+| Number of tokens in dataset | int |
+|Checkpoint Overhead Time |seconds|
+|GPU TDP | Watts |
+|Compute Efficiency | FLOPS/Watt |
+|Start time | datetime |
+| Thresholds to test | List(CO2eq/kWattH) |
+| Regions to test | List(region) |
+| Number of GPUs to test | List(int) |
+
+
+
+| Internal Factor | Unit |
+| -------------- | --------------- |
+| CO2 intensity | gCO2eq/kWh |
+| electricity prices | €/kWh |
+
+C02 intensity can be optained for multiple/different past years, Optimization can be run over different scenarios.
+
+TODO: some explanation here maybe
+
+## Software Use and Programming Language
+
+- Python
+- Rust
+- Java
+
+## Feedback
+
+TODO
+
+- Maintenance of the PV system and the battery
+- customer selects vehicle(yes/no) - we calculate the additional demand
+- heat pump calculation:
+  - specify the coeffienent of performance
+  bla
+
+## Resources
+
+- "Electricity Maps" API for CO2 intensity data (https://app.electricitymaps.com/map/live/fifteen_minutes)
+- LLM Providers to find out about the training duration and energy consumption during training
+    TODO: info about LLM Models

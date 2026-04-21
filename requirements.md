@@ -84,6 +84,28 @@ Optional constraint for practical recommendations:
 | `accumulated_emissions` | gCO2eq | Total emissions accumulated during run |
 | `pause_count` | count | Number of pause/resume cycles |
 
+### Objectives of the Simulation Study
+
+#### **1. Obligatory: Carbon Intensity & Temporal Trade-offs**
+
+The study shall **quantify the trade-off** between carbon intensity thresholds ($gCO_{2}eq/kWh$) and total training duration (latency), establishing a Pareto frontier for carbon-aware scheduling.
+
+#### **2. Obligatory: Impact Assessment on SOTA Architectures**
+
+The study shall **benchmark the absolute and relative carbon reduction potential** across state-of-the-art (SOTA) model architectures, evaluating how model scale and complexity influence the efficacy of carbon-aware training policies.
+
+#### **3. Wishful: Spatiotemporal Optimization**
+
+The study shall **identify the optimal temporal and geographical windows** for model training by analyzing the intersection of seasonal grid variability, regional renewable energy penetration, and local time-of-use carbon signals.
+
+#### **4. Wishful: Geospatial Grid Analysis**
+
+The study shall **conduct a comparative regional analysis** to determine the most sustainable geographical locations for training, accounting for carbon intensity.
+
+#### **5. Optional: Computational Granularity & Resumption Logic**
+
+The study shall **evaluate the optimal checkpointing granularity** (e.g., batch-level vs. epoch-level) to determine the ideal breakpoint for pausing and resuming training, balancing carbon savings against the energy overhead of frequent state-saving and re-initialization.
+
 ## Software Use and Programming Language
 
 - Python

@@ -8,11 +8,11 @@ August 2026
 
 LLM training can involve thousands of GPUs running over the period of a couple of months. During this time, energy consumption and thereby CO2 consumption is immense, which is one of the arguments against LLMs in general. The CO2 consumption could possibly be reduced, if the model training stops during times, where the CO2 intensity of the energy grid is high, and resumes when the CO2 Intensity is lower. This change of CO2 intensity mostly depends on the usage of renewable energy during this period in the specified area.
 
-This project builds a simulation of CO2-aware LLM training to evaluate the effect of stopping and starting the training process on the CO2 consumption of the overall process.
+The simulation goal is to quantify the trade-off between reduced CO2eq emissions and increased wall-clock training duration, compared to uninterrupted baseline training.
 
 ## Definition of Optimization Problem
 
-### Targetfunction
+### Target Function
 
 The primary goal function is the maximization of the score of decreased C02eq emissions divided by increased training duration in the training of an LLM with a specific number of parameters and tokens in trainings set relative to the normal training.
 

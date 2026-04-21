@@ -90,16 +90,6 @@ Optional constraint for practical recommendations:
 - Rust
 - Java
 
-## Feedback
-
-TODO
-
-- Maintenance of the PV system and the battery
-- customer selects vehicle(yes/no) - we calculate the additional demand
-- heat pump calculation:
-  - specify the coeffienent of performance
-  bla
-
 ## Resources
 
 - "Electricity Maps" API for CO2 intensity data (https://app.electricitymaps.com/map/live/fifteen_minutes)

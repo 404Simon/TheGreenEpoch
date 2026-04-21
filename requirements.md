@@ -1,4 +1,4 @@
-# Green Gas Emission aware Optimization of Large-Language-Model Training
+# Greenhouse-Gas-Emission-Aware Optimization of Large-Language-Model Training
 
 Bastian Wiesner, Julian Kraus, Simon Wittmann
 

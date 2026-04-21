@@ -116,4 +116,21 @@ The study shall **evaluate the optimal checkpointing granularity** (e.g., batch-
 
 - "Electricity Maps" API for CO2 intensity data (https://app.electricitymaps.com/map/live/fifteen_minutes)
 - LLM Providers to find out about the training duration and energy consumption during training
-    TODO: info about LLM Models
+
+### [DeepSeek V3 Technical Report](https://doi.org/10.48550/arXiv.2412.19437)
+
+#### Training Pipeline
+
+- **Pretraining** on 14.8T tokens (~2.788M GPU hours on 2048 H800 GPUs)
+- **Long Context Extension** (32K then 128K)
+- **Post-Training** with Supervised Fine-Tuning (SFT) and Reinforcement Learning (RL)
+
+#### Simulation Inputs
+
+- model_params: 671B
+- dataset_tokens: 14.8T
+- gpu_count: 2048
+- gpu_power_train/pause: can be looked up for Nvidia H800
+- pue: ?
+- checkpoint_overhead_time/energy: ?
+- baseline_training_time (67.867 hours = 2.788M GPU hours / 2048 GPUs / 3600)

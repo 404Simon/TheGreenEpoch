@@ -134,3 +134,21 @@ The study shall **evaluate the optimal checkpointing granularity** (e.g., batch-
 - pue: ?
 - checkpoint_overhead_time/energy: ?
 - baseline_training_time (67.867 hours = 2.788M GPU hours / 2048 GPUs / 3600)
+
+
+### [Llama-3.1 405B](https://build.nvidia.com/meta/llama-3_1-405b-instruct/modelcard)
+
+#### Training Pipeline
+
+- **Pretraining** on 15T tokens (~30.84M GPU hours)
+- **Fine-tuning** on publicly available instruction datasets, as well as over 25M synthetically generated examples
+
+#### Simulation Inputs
+
+- model_params: 405B
+- dataset_tokens: 15T
+- gpu_count: ?
+- gpu_power_train/pause: TDP: 700W
+- pue: ?
+- checkpoint_overhead_time/energy: ?
+- baseline_training_time: 30.84M GPU hours

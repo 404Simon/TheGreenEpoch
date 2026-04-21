@@ -16,6 +16,19 @@ The simulation goal is to quantify the trade-off between reduced CO2eq emissions
 
 The optimization target is to maximize CO2eq reduction with minimal time overhead relative to baseline training.
 
+Primary key performance indicators (KPIs):
+
+- `CO2_savings_pct = (E_baseline - E_policy) / E_baseline * 100`
+- `time_overhead_pct = (T_policy - T_baseline) / T_baseline * 100`
+
+Composite score used for ranking policies:
+
+- `score = CO2_savings_pct / max(time_overhead_pct, epsilon)` with `epsilon > 0`
+
+Optional constraint for practical recommendations:
+
+- `time_overhead_pct <= overhead_budget_pct`
+
 ### Optimization Variables
 
 | Objective | Unit |

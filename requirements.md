@@ -31,36 +31,58 @@ Optional constraint for practical recommendations:
 
 ### Optimization Variables
 
-| Objective | Unit |
-| -------------- | --------------- |
-| Training duration | seconds |
-| CO2eq emissions | gCO2eq |
-
+| Variable | Unit | Description |
+| -------------- | --------------- | --------------- |
+| `theta_pause` | gCO2eq/kWh | Pause threshold (training pauses if grid intensity is above threshold) |
+| `delta_hyst` | gCO2eq/kWh | Hysteresis margin for resume threshold (`theta_resume = theta_pause - delta_hyst`) |
+| `t_start` | datetime | Start time of training run |
+| `region` | categorical | Grid region used for carbon-intensity time series |
+| `pause_granularity` | categorical | Allowed pause points (e.g., checkpoint, epoch) |
 
 ### Constants and Parameters
 
-| Constant | Unit |
-| -------------- | --------------- |
-| LLM Model Parameters | int |
-| Number of tokens in dataset | int |
-|Checkpoint Overhead Time |seconds|
-|GPU TDP | Watts |
-|Compute Efficiency | FLOPS/Watt |
-|Start time | datetime |
-| Thresholds to test | List(CO2eq/kWattH) |
-| Regions to test | List(region) |
-| Number of GPUs to test | List(int) |
+#### Fixed constants per training-run profile
 
+| Constant | Unit | Description |
+| -------------- | --------------- | --------------- |
+| `model_params` | count | Number of model parameters |
+| `dataset_tokens` | count | Number of training tokens |
+| `gpu_count` | count | Number of GPUs in cluster |
+| `gpu_power_train` | W/GPU | Average active GPU power during training |
+| `gpu_power_pause` | W/GPU | Average paused/idle GPU power |
+| `pue` | ratio | Data-center power usage effectiveness |
+| `checkpoint_overhead_time` | s/checkpoint | Time penalty per pause/resume checkpoint |
+| `checkpoint_overhead_energy` | Wh/checkpoint | Extra energy per pause/resume cycle |
+| `baseline_training_time` | h | Uninterrupted training duration |
 
+#### Scenario parameters (swept during study)
 
-| Internal Factor | Unit |
-| -------------- | --------------- |
-| CO2 intensity | gCO2eq/kWh |
-| electricity prices | €/kWh |
+| Parameter | Unit | Description |
+| -------------- | --------------- | --------------- |
+| `threshold_set` | list(gCO2eq/kWh) | Candidate pause thresholds |
+| `hysteresis_set` | list(gCO2eq/kWh) | Candidate hysteresis margins |
+| `regions_set` | list(region) | Regions included in study |
+| `start_times_set` | list(datetime) | Candidate start dates/times |
+| `historical_years` | list(year) | Historical periods used for replay |
+| `overhead_budget_pct` | % | Maximum acceptable time overhead |
 
-C02 intensity can be optained for multiple/different past years, Optimization can be run over different scenarios.
+#### Internal factors (time-dependent exogenous inputs)
 
-TODO: some explanation here maybe
+| Internal Factor | Unit | Description |
+| -------------- | --------------- | --------------- |
+| `co2_intensity(t)` | gCO2eq/kWh | Grid carbon intensity time series |
+| `electricity_price(t)` | EUR/kWh | Optional electricity price series for secondary analysis |
+| `data_availability_flag(t)` | binary | Indicates missing/invalid external data points |
+
+#### Internal state variables (simulation state)
+
+| State Variable | Unit | Description |
+| -------------- | --------------- | --------------- |
+| `training_progress` | % | Fraction of total training work completed |
+| `is_paused` | binary | Current pause/resume state |
+| `elapsed_wall_time` | h | Accumulated wall-clock duration |
+| `accumulated_emissions` | gCO2eq | Total emissions accumulated during run |
+| `pause_count` | count | Number of pause/resume cycles |
 
 ## Software Use and Programming Language
 

@@ -14,7 +14,7 @@ The simulation goal is to quantify the trade-off between reduced CO2eq emissions
 
 ### Target Function
 
-The primary goal function is the maximization of the score of decreased C02eq emissions divided by increased training duration in the training of an LLM with a specific number of parameters and tokens in trainings set relative to the normal training.
+The optimization target is to maximize CO2eq reduction with minimal time overhead relative to baseline training.
 
 ### Optimization Variables
 

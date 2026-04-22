@@ -53,7 +53,7 @@ Optional constraint for practical recommendations:
 | `pue` | ratio | Data-center power usage effectiveness |
 | `checkpoint_overhead_time` | s/checkpoint | Time penalty per pause/resume checkpoint |
 | `checkpoint_overhead_energy` | Wh/checkpoint | Extra energy per pause/resume cycle |
-| `baseline_training_time` | h | Uninterrupted training duration |
+<!-- | `baseline_training_time` | h | Uninterrupted training duration | -->
 
 #### Scenario parameters (swept during study)
 
@@ -133,7 +133,7 @@ The study shall **evaluate the optimal checkpointing granularity** (e.g., batch-
 - gpu_power_train/pause: can be looked up for Nvidia H800
 - pue: ?
 - checkpoint_overhead_time/energy: ?
-- baseline_training_time (67.867 hours = 2.788M GPU hours / 2048 GPUs / 3600)
+- baseline_training_time (67.867 seconds = 2.788M GPU hours / 2048 GPUs / 3600)
 
 
 ### [Llama-3.1 405B](https://build.nvidia.com/meta/llama-3_1-405b-instruct/modelcard)

@@ -18,26 +18,26 @@ The optimization target is to maximize CO2eq reduction with minimal time overhea
 
 Primary key performance indicators (KPIs):
 
-- `CO2_savings_pct = (E_baseline - E_policy) / E_baseline * 100`
-- `time_overhead_pct = (T_policy - T_baseline) / T_baseline * 100`
+- $\text{CO2\_savings\_pct} = \frac{E_{\text{baseline}} - E_{\text{policy}}}{E_{\text{baseline}}} \times 100$
+- $\text{time\_overhead\_pct} = \frac{T_{\text{policy}} - T_{\text{baseline}}}{T_{\text{baseline}}} \times 100$
 
 Composite score used for ranking policies:
 
-- `score = CO2_savings_pct / max(time_overhead_pct, epsilon)` with `epsilon > 0`
+- $\text{score} = \frac{\text{CO2\_savings\_pct}}{\max(\text{time\_overhead\_pct}, \, \epsilon)}$ with $\epsilon > 0$
 
 Optional constraint for practical recommendations:
 
-- `time_overhead_pct <= overhead_budget_pct`
+- $\text{time\_overhead\_pct} \leq \text{overhead\_budget\_pct}$
 
 ### Optimization Variables
 
 | Variable | Unit | Description |
 | -------------- | --------------- | --------------- |
-| `theta_pause` | gCO2eq/kWh | Pause threshold (training pauses if grid intensity is above threshold) |
-| `delta_hyst` | gCO2eq/kWh | Hysteresis margin for resume threshold (`theta_resume = theta_pause - delta_hyst`) |
-| `t_start` | datetime | Start time of training run |
-| `region` | categorical | Grid region used for carbon-intensity time series |
-| `pause_granularity` | categorical | Allowed pause points (e.g., checkpoint, epoch) |
+| $\theta_{\text{pause}}$ | gCO2eq/kWh | Pause threshold (training pauses if grid intensity is above threshold) |
+| $\delta_{\text{hyst}}$ | gCO2eq/kWh | Hysteresis margin for resume threshold ($\theta_{\text{resume}} = \theta_{\text{pause}} - \delta_{\text{hyst}}$) |
+| $t_{\text{start}}$ | datetime | Start time of training run |
+| $\mathit{region}$ | categorical | Grid region used for carbon-intensity time series |
+| $\mathit{pause\_granularity}$ | categorical | Allowed pause points (e.g., checkpoint, epoch) |
 
 ### Constants and Parameters
 
@@ -45,44 +45,43 @@ Optional constraint for practical recommendations:
 
 | Constant | Unit | Description |
 | -------------- | --------------- | --------------- |
-| `model_params` | count | Number of model parameters |
-| `dataset_tokens` | count | Number of training tokens |
-| `gpu_count` | count | Number of GPUs in cluster |
-| `gpu_power_train` | W/GPU | Average active GPU power during training |
-| `gpu_power_pause` | W/GPU | Average paused/idle GPU power |
-| `pue` | ratio | Data-center power usage effectiveness |
-| `checkpoint_overhead_time` | s/checkpoint | Time penalty per pause/resume checkpoint |
-| `checkpoint_overhead_energy` | Wh/checkpoint | Extra energy per pause/resume cycle |
-<!-- | `baseline_training_time` | h | Uninterrupted training duration | -->
+| $\mathit{model\_params}$ | count | Number of model parameters |
+| $\mathit{dataset\_tokens}$ | count | Number of training tokens |
+| $\mathit{gpu\_count}$ | count | Number of GPUs in cluster |
+| $\mathit{gpu\_power\_train}$ | W/GPU | Average active GPU power during training |
+| $\mathit{gpu\_power\_pause}$ | W/GPU | Average paused/idle GPU power |
+| $\mathit{pue}$ | ratio | Data-center power usage effectiveness |
+| $\mathit{checkpoint\_overhead\_time}$ | s/checkpoint | Time penalty per pause/resume checkpoint |
+| $\mathit{checkpoint\_overhead\_energy}$ | Wh/checkpoint | Extra energy per pause/resume cycle |
 
 #### Scenario parameters (swept during study)
 
 | Parameter | Unit | Description |
 | -------------- | --------------- | --------------- |
-| `threshold_set` | list(gCO2eq/kWh) | Candidate pause thresholds |
-| `hysteresis_set` | list(gCO2eq/kWh) | Candidate hysteresis margins |
-| `regions_set` | list(region) | Regions included in study |
-| `start_times_set` | list(datetime) | Candidate start dates/times |
-| `historical_years` | list(year) | Historical periods used for replay |
-| `overhead_budget_pct` | % | Maximum acceptable time overhead |
+| $\mathit{threshold\_set}$ | list(gCO2eq/kWh) | Candidate pause thresholds |
+| $\mathit{hysteresis\_set}$ | list(gCO2eq/kWh) | Candidate hysteresis margins |
+| $\mathit{regions\_set}$ | list(region) | Regions included in study |
+| $\mathit{start\_times\_set}$ | list(datetime) | Candidate start dates/times |
+| $\mathit{historical\_years}$ | list(year) | Historical periods used for replay |
+| $\mathit{overhead\_budget\_pct}$ | % | Maximum acceptable time overhead |
 
 #### Internal factors (time-dependent exogenous inputs)
 
 | Internal Factor | Unit | Description |
 | -------------- | --------------- | --------------- |
-| `co2_intensity(t)` | gCO2eq/kWh | Grid carbon intensity time series |
-| `electricity_price(t)` | EUR/kWh | Optional electricity price series for secondary analysis |
-| `data_availability_flag(t)` | binary | Indicates missing/invalid external data points |
+| $\mathit{co2\_intensity}(t)$ | gCO2eq/kWh | Grid carbon intensity time series |
+| $\mathit{electricity\_price}(t)$ | EUR/kWh | Optional electricity price series for secondary analysis |
+| $\mathit{data\_availability\_flag}(t)$ | binary | Indicates missing/invalid external data points |
 
 #### Internal state variables (simulation state)
 
 | State Variable | Unit | Description |
 | -------------- | --------------- | --------------- |
-| `training_progress` | % | Fraction of total training work completed |
-| `is_paused` | binary | Current pause/resume state |
-| `elapsed_wall_time` | h | Accumulated wall-clock duration |
-| `accumulated_emissions` | gCO2eq | Total emissions accumulated during run |
-| `pause_count` | count | Number of pause/resume cycles |
+| $\mathit{training\_progress}$ | % | Fraction of total training work completed |
+| $\mathit{is\_paused}$ | binary | Current pause/resume state |
+| $\mathit{elapsed\_wall\_time}$ | h | Accumulated wall-clock duration |
+| $\mathit{accumulated\_emissions}$ | gCO2eq | Total emissions accumulated during run |
+| $\mathit{pause\_count}$ | count | Number of pause/resume cycles |
 
 ### Objectives of the Simulation Study
 
@@ -127,13 +126,13 @@ The study shall **evaluate the optimal checkpointing granularity** (e.g., batch-
 
 #### Simulation Inputs
 
-- model_params: 671B
-- dataset_tokens: 14.8T
-- gpu_count: 2048
-- gpu_power_train/pause: can be looked up for Nvidia H800
-- pue: ?
-- checkpoint_overhead_time/energy: ?
-- baseline_training_time (67.867 seconds = 2.788M GPU hours / 2048 GPUs / 3600)
+- $\mathit{model\_params}$: 671B
+- $\mathit{dataset\_tokens}$: 14.8T
+- $\mathit{gpu\_count}$: 2048
+- $\mathit{gpu\_power\_train}$/$\mathit{gpu\_power\_pause}$: can be looked up for Nvidia H800
+- $\mathit{pue}$: ?
+- $\mathit{checkpoint\_overhead\_time}$/$\mathit{checkpoint\_overhead\_energy}$: ?
+- $\mathit{baseline\_training\_time}$ (67.867 seconds = 2.788M GPU hours / 2048 GPUs / 3600)
 
 
 ### [Llama-3.1 405B](https://build.nvidia.com/meta/llama-3_1-405b-instruct/modelcard)
@@ -145,10 +144,10 @@ The study shall **evaluate the optimal checkpointing granularity** (e.g., batch-
 
 #### Simulation Inputs
 
-- model_params: 405B
-- dataset_tokens: 15T
-- gpu_count: ?
-- gpu_power_train/pause: TDP: 700W
-- pue: ?
-- checkpoint_overhead_time/energy: ?
-- baseline_training_time: 30.84M GPU hours
+- $\mathit{model\_params}$: 405B
+- $\mathit{dataset\_tokens}$: 15T
+- $\mathit{gpu\_count}$: ?
+- $\mathit{gpu\_power\_train}$/$\mathit{gpu\_power\_pause}$: TDP: 700W
+- $\mathit{pue}$: ?
+- $\mathit{checkpoint\_overhead\_time}$/$\mathit{checkpoint\_overhead\_energy}$: ?
+- $\mathit{baseline\_training\_time}$: 30.84M GPU hours

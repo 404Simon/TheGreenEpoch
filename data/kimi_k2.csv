@@ -1,0 +1,4 @@
+variable,unit,requirements_section,report_value,report_evidence
+model_params,count,Fixed constant,1.04T,"1.04 trillion total parameters"
+dataset_tokens,count,Fixed constant,15.5T,"pre-trained on 15.5 trillion tokens"
+gpu_count,count,Fixed constant,256,OBACHT! kimi can be trained on any number of nodes that is a multiple of 32 (a node has 8 GPUs -> 8 x 32 = 256)

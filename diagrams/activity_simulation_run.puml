@@ -1,0 +1,109 @@
+@startuml
+title CO2-aware LLM Training Simulation Run
+
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam activity {
+  BorderColor #2E3A46
+  BackgroundColor #F7F9FB
+  BarColor #5B8FF9
+  StartColor #2FB344
+  EndColor #D6336C
+  DiamondBackgroundColor #FFF3BF
+  DiamondBorderColor #B08900
+}
+
+start
+
+partition "Study Setup" {
+  :Load TrainingRunProfile;
+  :Select ScenarioParameters;
+  :Choose region, start time,
+  threshold_set, hysteresis_set,
+  and historical_years;
+  :Fetch GridData time series
+  for the selected region/window;
+  :Validate data availability flag;
+}
+
+if (Data available?) then (yes)
+  partition "Simulation Engine" {
+    :Initialize Simulation;
+    :Reset InternalState;
+    :Compute baseline reference
+    for uninterrupted training;
+  }
+
+  repeat
+    partition "Grid Replay" {
+      :Read co2_intensity(t);
+      :Read electricity_price(t)
+      for secondary analysis;
+    }
+
+    if (Grid data valid?) then (yes)
+      partition "Policy Control" {
+        :Evaluate PauseResumeLogic;
+        if (co2_intensity(t) > theta_pause?) then (pause)
+          if (At allowed pause granularity?) then (yes)
+            :Trigger Checkpointing;
+            :Set is_paused = true;
+            :Increment pause_count;
+          else (no)
+            :Defer pause until next
+            checkpoint boundary;
+          endif
+        else (continue)
+          if (is_paused and co2_intensity(t) < resume_threshold?) then (resume)
+            :Set is_paused = false;
+          endif
+        endif
+      }
+
+      partition "Simulation Engine" {
+        if (is_paused?) then (yes)
+          :Accumulate paused wall time;
+          :Add paused energy using
+          gpu_power_pause and pue;
+        else (no)
+          :Advance training_progress_pct;
+          :Add active energy using
+          gpu_power_train and pue;
+          :Update accumulated_emissions;
+        endif
+        :Advance elapsed_wall_time by dt;
+      }
+    else (no)
+      partition "Simulation Engine" {
+        :Handle missing or invalid data
+        using fallback rule;
+        :Advance simulation conservatively;
+      }
+    endif
+
+  repeat while (training_progress_pct < 100%) is (yes) not (no)
+
+  partition "Outputs" {
+    :Compute CO2_savings_pct;
+    :Compute time_overhead_pct;
+    :Compute score;
+    if (time_overhead_pct <= overhead_budget_pct?) then (yes)
+      :Mark policy as feasible;
+    else (no)
+      :Mark policy as infeasible;
+    endif
+    :Store Results for comparison
+    across thresholds, regions,
+    start times, and architectures;
+  }
+
+  stop
+else (no)
+  partition "Outputs" {
+    :Abort run and report
+    missing-data condition;
+  }
+  stop
+endif
+
+@enduml

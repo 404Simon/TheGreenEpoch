@@ -1,0 +1,84 @@
+@startuml
+title CO2-aware LLM Training Simulation Class Diagram
+
+package Inputs_Constants {
+  class TrainingRunProfile {
+    - model_params: count
+    - dataset_tokens: count
+    - gpu_count: count
+    - gpu_power_train: W_per_GPU
+    - gpu_power_pause: W_per_GPU
+    - pue: ratio
+  }
+
+  class GridData {
+    - co2_intensity_t: gCO2eq_per_kWh
+    - electricity_price_t: EUR_per_kWh
+    - data_availability_flag_t: bool
+  }
+
+  class ScenarioParameters {
+    - threshold_set: list
+    - hysteresis_set: list
+    - regions_set: list
+    - start_times_set: list
+    - historical_years: list
+    - overhead_budget_pct: pct
+  }
+}
+
+package Policy_Controls {
+  class OptimizationPolicy {
+    - theta_pause: gCO2eq_per_kWh
+    - delta_hyst: gCO2eq_per_kWh
+    - region: string
+    - pause_granularity: enum
+  }
+
+  class PauseResumeLogic {
+    - resume_threshold: gCO2eq_per_kWh
+    - is_paused: bool
+    + evaluate(gridIntensity): action
+  }
+
+  class Checkpointing {
+    - granularity: enum
+    - overhead_time: s_per_checkpoint
+    - overhead_energy: Wh_per_checkpoint
+  }
+}
+
+package "Execution" {
+  class Simulation {
+    + run(policy, profile, grid, scenario): Results
+    + step(dt): updates
+  }
+
+  class InternalState {
+    - training_progress_pct: pct
+    - elapsed_wall_time: h
+    - accumulated_emissions: gCO2eq
+    - pause_count: count
+  }
+
+  class Metrics {
+    - CO2_savings_pct: pct
+    - time_overhead_pct: pct
+    - score: float
+  }
+}
+
+' Relationships
+Simulation --> TrainingRunProfile : uses
+Simulation --> GridData : consumes
+Simulation --> OptimizationPolicy : applies
+Simulation --> ScenarioParameters : configuredBy
+Simulation --> InternalState : updates
+Simulation --> Metrics : produces
+
+OptimizationPolicy *-- PauseResumeLogic : contains
+OptimizationPolicy *-- Checkpointing : uses
+Checkpointing --> TrainingRunProfile : dependsOn
+PauseResumeLogic --> GridData : reads
+InternalState --> Checkpointing : triggers
+@enduml

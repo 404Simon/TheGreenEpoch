@@ -1,10 +1,11 @@
 {
-  "api_token": "BMZQ4kgY7VCFMGXzTMqw",
+  "api_token": "YOUR_TOKEN",
   "zones": ["DE","SE","FR","IT","ES"],
-  "start_date": "2025-01-01",
-  "end_date": "2025-01-07",
+  "start_date": "2024-06-05",
+  "end_date": "2026-05-05",
   "temporal_granularity": "5_minutes",
+  "_comment": "5_minutes, 15_minutes, hourly, daily",
   "disable_estimations": false,
-  "sleep_seconds_between_requests": 0.2,
+  "max_requests_per_minute": 120,
   "output_dir": "output"
 }

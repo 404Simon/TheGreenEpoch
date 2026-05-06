@@ -53,6 +53,17 @@ def safe_zone_name(zone: str) -> str:
     return "".join(c if c.isalnum() or c in ("-", "_") else "_" for c in zone)
 
 
+def get_request_span_days(temporal_granularity: str) -> int:
+    """Return the number of days to fetch per request based on granularity."""
+    granularity_spans = {
+        "5_minutes": 1,
+        "15_minutes": 3,
+        "hourly": 10,
+        "daily": 365,
+    }
+    return granularity_spans.get(temporal_granularity, 1)
+
+
 def extract_rows(payload: Dict, zone: str, requested_day: str) -> List[Dict[str, str]]:
     # Handle single-point response (no history/data array)
     if "history" not in payload and "data" not in payload:
@@ -149,8 +160,15 @@ def fetch_for_day(
     return extract_rows(payload, zone, day_start.strftime("%Y-%m-%d"))
 
 
-def write_csv(output_dir: Path, zone: str, rows: List[Dict[str, str]]) -> Path:
-    output_path = output_dir / f"carbon_intensity_{safe_zone_name(zone)}.csv"
+def write_csv(output_dir: Path, zone: str, rows: List[Dict[str, str]], year: int = None) -> Path:
+    # Create zone subdirectory
+    zone_dir = output_dir / zone
+    zone_dir.mkdir(parents=True, exist_ok=True)
+    
+    if year:
+        output_path = zone_dir / f"carbon_intensity_{year}.csv"
+    else:
+        output_path = zone_dir / f"carbon_intensity.csv"
     fieldnames = ["zone", "requested_day", "timestamp", "carbonIntensity", "isEstimated", "estimationMethod"]
 
     logger.info("Writing %d rows to %s", len(rows), output_path)
@@ -183,40 +201,67 @@ def main() -> int:
     start_date = parse_date(config["start_date"])
     end_date = parse_date(config["end_date"])
     temporal_granularity = config.get("temporal_granularity", "5_minutes")
-    sleep_seconds = float(config.get("sleep_seconds_between_requests", 0.0))
     output_dir = Path(config.get("output_dir", "output"))
     output_dir.mkdir(parents=True, exist_ok=True)
-    daily_hour = config.get("daily_hour", "20:58")
-
-    logger.info(
-        "Starting fetch with zones=%s start_date=%s end_date=%s granularity=%s output_dir=%s",
-        zones,
-        config["start_date"],
-        config["end_date"],
-        temporal_granularity,
-        output_dir,
-    )
+    
+    # Calculate sleep seconds based on rate limit
+    sleep_seconds = float(config.get("sleep_seconds_between_requests", 0.0))
+    max_requests_per_minute = config.get("max_requests_per_minute", None)
+    
+    if max_requests_per_minute:
+        sleep_seconds = 60.0 / max_requests_per_minute
+        logger.info("Enforcing max_requests_per_minute=%d with sleep_seconds=%.3f", 
+                    max_requests_per_minute, sleep_seconds)
 
     if end_date < start_date:
         raise ValueError("end_date must be on or after start_date")
 
     session = requests.Session()
-    day_count = 0
+    request_span_days = get_request_span_days(temporal_granularity)
+    logger.info("Using request span of %d day(s) for granularity=%s", request_span_days, temporal_granularity)
+    
     for zone in zones:
-        day_count += 1
         all_rows = []
-        for day in daterange(start_date, end_date):
-            day_start = day.replace(hour=0, minute=0, second=0, microsecond=0)
-            day_end = day_start + timedelta(days=1)
+        request_count = 0
+        current_date = start_date
+        
+        while current_date <= end_date:
+            request_count += 1
+            # Calculate span end, but don't exceed end_date
+            span_end = current_date + timedelta(days=request_span_days - 1)
+            if span_end > end_date:
+                span_end = end_date
+            
+            span_start = current_date.replace(hour=0, minute=0, second=0, microsecond=0)
+            span_end_date = span_end + timedelta(days=1)
+            
             daily_rows = fetch_for_day(
-                session, token, zone, day_start, day_end, 
+                session, token, zone, span_start, span_end_date, 
                 temporal_granularity, config.get("disable_estimations", False), sleep_seconds
             )
             all_rows.extend(daily_rows)
+            
+            current_date = span_end + timedelta(days=1)
 
-        logger.info("Completed zone=%s across %d days with %d total rows", zone, day_count, len(all_rows))
-        path = write_csv(output_dir, zone, all_rows)
-        print(path)
+        logger.info("Completed zone=%s with %d requests and %d total rows", zone, request_count, len(all_rows))
+        
+        # Group rows by year if spanning multiple years
+        rows_by_year = {}
+        for row in all_rows:
+            if row["requested_day"]:
+                year = int(row["requested_day"][:4])
+                if year not in rows_by_year:
+                    rows_by_year[year] = []
+                rows_by_year[year].append(row)
+        
+        # Write separate files for each year if multiple years, otherwise single file
+        if len(rows_by_year) > 1:
+            for year in sorted(rows_by_year.keys()):
+                path = write_csv(output_dir, zone, rows_by_year[year], year=year)
+                print(path)
+        else:
+            path = write_csv(output_dir, zone, all_rows)
+            print(path)
 
     logger.info("All zones processed successfully")
     return 0

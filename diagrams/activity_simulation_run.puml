@@ -17,19 +17,44 @@ start
 
 partition "Study Setup" {
   :Load TrainingRunProfile;
-  :Select ScenarioParameters;
-  :Choose region, start time,
-  threshold_set, hysteresis_set,
-  and historical_years;
+  note right
+    class TrainingRunProfile:
+      model_name: str
+      model_params: int
+      dataset_tokens: int
+      gpu_count: int
+      gpu_power_train: float
+      gpu_power_pause: float
+      pue: float
+      checkpoint_overhead_time: float
+      checkpoint_overhead_energy: float
+  end note
+  :Load ScenarioParameters;
+  note right
+    class ScenarioParameters:
+      region: str  # e.g., "DE", "ES", "FR"
+      start_time: datetime
+      pause_threshold: float  # gCO2eq/kWh
+      hysteresis_margin: float  # gCO2eq/kWh
+      pause_granularity: enum (Batch, Epoch, etc.)
+      historical_year: int # e.g. 2024
+      overhead_budget_pct: float # tolerance for time overhead
+  end note
   :Fetch GridData time series
   for the selected region/window;
+  note right
+    Example time point (CSV row):
+    zone=DE, requested_day=2024-06-05,
+    timestamp=2024-06-05T00:00:00.000Z,
+    carbonIntensity=248, isEstimated=False,
+    estimationMethod=
+  end note
   :Validate data availability flag;
 }
 
 if (Data available?) then (yes)
   partition "Simulation Engine" {
     :Initialize Simulation;
-    :Reset InternalState;
     :Compute baseline reference
     for uninterrupted training;
   }
@@ -37,8 +62,8 @@ if (Data available?) then (yes)
   repeat
     partition "Grid Replay" {
       :Read co2_intensity(t);
-      :Read electricity_price(t)
-      for secondary analysis;
+      ' :Read electricity_price(t)
+      ' for secondary analysis;
     }
 
     if (Grid data valid?) then (yes)

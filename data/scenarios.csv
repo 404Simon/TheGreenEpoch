@@ -3,6 +3,8 @@ Original Deepseek training,Deepseek,"400,450","350,400","CN","2025-01-01,2025-02
 Deepseek training in USA,Deepseek,"300,350","250,300","US","2025-01-01,2025-02-18,2025-05-01","2022,2023,2024,2025",200
 Deepseek training in Sweden,Deepseek,"20,25","15,20","SE","2025-01-01,2025-02-18,2025-05-01","2022,2023,2024,2025",200
 Deepseek training in Germany,Deepseek,"300,350","250,300","DE","2025-01-01,2025-02-18,2025-05-01","2022,2023,2024,2025",200
-Deepseek training in multiple regions in EU,Deepseek,"30,35","25,30","FR,SE","2025-01-01,2025-05-01,2025-08-08","2022,2023,2024,2025",150
-Deepseek training in multiple regions in EU with worse gCO2eq/kWh,Deepseek,"300,350","250,300","DE,IT","2025-01-01,2025-05-01,2025-08-08","2022,2023,2024,2025",200
+Deepseek training in multiple regions in EU,Deepseek,"300,350","250,300","DE,IT","2025-01-01,2025-05-01,2025-08-08","2022,2023,2024,2025",200
 Deepseek training in China with stricter thresholds,Deepseek,"300,350","250,300","CN","2025-01-01,2025-05-01,2025-08-08","2021,2022,2023,2024,2025",150
+Kimi training in Sweden,Kimi,"20,25","15,20","SE","2025-01-01,2025-02-18,2025-05-01","2022,2023,2024,2025",200
+Kimi training in Germany,Kimi,"300,350","250,300","DE","2025-01-01,2025-02-18,2025-05-01","2022,2023,2024,2025",200
+Kimi training in multiple regions in EU,Kimi,"300,350","250,300","DE,IT","2025-01-01,2025-05-01,2025-08-08","2022,2023,2024,2025",200

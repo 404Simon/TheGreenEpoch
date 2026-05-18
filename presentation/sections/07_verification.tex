@@ -1,0 +1,103 @@
+% verification.tex
+
+\section{Verification Strategy}
+
+\begin{frame}{Verification}{Overview}
+  \begin{itemize}
+    \item 2.1 Energy and emissions accounting
+    \item 2.2 Pause / resume logic and hysteresis
+    \item 2.3 Progress and runtime consistency
+    \item 2.4 Handling of data gaps
+    \item 2.5 Unit tests for KPI functions
+  \end{itemize}
+  \vspace{0.5cm}
+  \begin{block}{Purpose}
+    Verification checks whether the implementation faithfully follows the
+    mathematical model: state updates, decision rules and KPI calculations
+    must be correct and internally consistent.
+  \end{block}
+\end{frame}
+
+% ---------------------------------------------------------------------------
+% Detailed example: 2.3 Progress and Runtime Consistency
+% ---------------------------------------------------------------------------
+
+\begin{frame}{Verification}{2.3 Progress and Runtime Consistency}
+  \textbf{Goal:} Ensure that training progress and wall-clock time evolve
+  consistently with the specified baseline training time and pausing behaviour.
+  \vspace{0.3cm}
+
+  \textbf{Key state variables}
+  \begin{itemize}
+    \item $\mathit{training\_progress}$: fraction of total work completed.
+    \item $\mathit{elapsed\_wall\_time}$: accumulated wall-clock time.
+    \item $\mathit{pause\_count}$: number of pause/resume cycles.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Verification}{2.3 Progress and Runtime Consistency}
+  \textbf{Intended update rules}
+
+  For a time step of length $\Delta t$:
+
+  \[
+    \Delta p_{\text{step}} =
+    \begin{cases}
+      \dfrac{\Delta t}{T_{\text{baseline}}} & \text{if not paused} \\
+      0 & \text{if paused}
+    \end{cases}
+  \]
+
+  \[
+    \mathit{training\_progress}(t_{k+1}) =
+    \mathit{training\_progress}(t_k) + \Delta p_{\text{step}}
+  \]
+
+  \[
+    \mathit{elapsed\_wall\_time}(t_{k+1}) =
+    \mathit{elapsed\_wall\_time}(t_k) + \Delta t
+  \]
+
+  Including checkpoint overhead:
+
+  \[
+    T_{\text{policy}}^{\star} =
+    T_{\text{baseline}} + T_{\text{paused}} +
+    \mathit{pause\_count} \cdot \mathit{checkpoint\_overhead\_time}.
+  \]
+\end{frame}
+
+\begin{frame}{Verification}{2.3 Progress and Runtime Consistency}
+  \textbf{Verification procedure (1/2): Baseline case}
+  \begin{enumerate}
+    \item Disable pausing (or set the threshold so that no pauses occur).
+    \item Run the simulation until completion.
+    \item Check numerically that:
+      \begin{itemize}
+        \item $\mathit{training\_progress} \approx 1.0$ at the final time step.
+        \item $\mathit{elapsed\_wall\_time} \approx T_{\text{baseline}}$.
+      \end{itemize}
+    \item Deviations should be within a small numerical tolerance.
+  \end{enumerate}
+\end{frame}
+
+\begin{frame}{Verification}{2.3 Progress and Runtime Consistency}
+  \textbf{Verification procedure (2/2): With pauses}
+  \begin{enumerate}
+    \item Construct a scenario that triggers a known amount of pausing:
+      \begin{itemize}
+        \item Measure total paused time $T_{\text{paused}}$.
+        \item Record $\mathit{pause\_count}$.
+      \end{itemize}
+    \item Compute the expected policy runtime
+      \[
+        T_{\text{policy}}^{\star} =
+        T_{\text{baseline}} + T_{\text{paused}} +
+        \mathit{pause\_count} \cdot \mathit{checkpoint\_overhead\_time}.
+      \]
+    \item Compare $T_{\text{policy}}^{\star}$ to the simulated
+      $\mathit{elapsed\_wall\_time}$ at completion.
+    \item If they match within tolerance, the progress and time accounting are
+      consistent with the model.
+  \end{enumerate}
+\end{frame}

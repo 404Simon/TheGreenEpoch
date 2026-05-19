@@ -1,42 +1,44 @@
 \begin{frame}[t]{Parameters I}{}
 
-\small
+  \small
 
-\textbf{Optimization Variables:}
-\newline
-%\resizebox{\textwidth}{!}{%
-\begin{tabular}{l|c|l}
-\toprule
-Variable & Unit & Description \\
-\midrule
-$\theta_{\text{pause}}$ & gCO$_2$eq/kWh & Pause threshold \\
-$\delta_{\text{hyst}}$ & gCO$_2$eq/kWh & Hysteresis margin \\
-$t_{\text{start}}$ & datetime & Start time \\
-$\mathit{region}$ & categorical & Grid region \\
-$\mathit{pause\_granularity}$ & categorical & Pause points (checkpoint, epoch) \\
-\bottomrule
-\end{tabular}%
-%}
+  \textbf{Optimization Variables:}
+  \newline
+  %\resizebox{\textwidth}{!}{%
+  \begin{tabular}{l|c|l}
+    \toprule
+    Variable & Unit & Description \\
+    \midrule
+    $\theta_{\text{pause}}$ & gCO$_2$eq/kWh & Pause threshold \\
+    $\delta_{\text{hyst}}$ & gCO$_2$eq/kWh & Hysteresis margin \\
+    $t_{\text{start}}$ & datetime & Start time \\
+    $\mathit{region}$ & categorical & Grid region \\
+    $\mathit{pause\_granularity}$ & categorical & Pause points
+    (checkpoint, epoch) \\
+    \bottomrule
+  \end{tabular}%
+  %}
 
-\vspace{1cm}
+  \vspace{1cm}
 
-\textbf{Scenario Parameters (swept during study):}
-\newline
-%\resizebox{\textwidth}{!}{%
-\begin{tabular}{l|c|l}
-\toprule
-Parameter & Unit & Description \\
-\midrule
-$\mathit{threshold\_set}$ & list(gCO$_2$eq/kWh) & Candidate pause thresholds \\
-$\mathit{hysteresis\_set}$ & list(gCO$_2$eq/kWh) & Candidate hysteresis margins \\
-$\mathit{regions\_set}$ & list(region) & Regions included \\
-$\mathit{start\_times\_set}$ & list(datetime) & Candidate start dates/times \\
-$\mathit{historical\_years}$ & list(year) & Historical periods \\
-$\mathit{overhead\_budget\_pct}$ & \% & Maximum time overhead \\
-\bottomrule
-\end{tabular}%
-%}
-
-
+  \textbf{Scenario Parameters (swept during study):}
+  \newline
+  %\resizebox{\textwidth}{!}{%
+  \begin{tabular}{l|c|l}
+    \toprule
+    Parameter & Unit & Description \\
+    \midrule
+    $\mathit{threshold\_set}$ & list(gCO$_2$eq/kWh) & Candidate pause
+    thresholds \\
+    $\mathit{hysteresis\_set}$ & list(gCO$_2$eq/kWh) & Candidate
+    hysteresis margins \\
+    $\mathit{regions\_set}$ & list(region) & Regions included \\
+    $\mathit{start\_times\_set}$ & list(datetime) & Candidate start
+    dates/times \\
+    $\mathit{historical\_years}$ & list(year) & Historical periods \\
+    $\mathit{overhead\_budget\_pct}$ & \% & Maximum time overhead \\
+    \bottomrule
+  \end{tabular}%
+  %}
 
 \end{frame}

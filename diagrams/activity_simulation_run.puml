@@ -1,5 +1,5 @@
 @startuml
-title CO2-aware LLM Training Simulation Run
+'title CO2-aware LLM Training Simulation Run
 
 skinparam backgroundColor white
 skinparam shadowing false

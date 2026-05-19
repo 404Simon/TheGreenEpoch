@@ -1,5 +1,5 @@
 @startuml
-title CO2-aware LLM Training Simulation Class Diagram
+'title CO2-aware LLM Training Simulation Class Diagram
 
 package Inputs_Constants {
   class TrainingRunProfile {

@@ -1,0 +1,51 @@
+@startuml
+'title Hysteresis-Based Pause/Resume Logic
+
+skinparam backgroundColor white
+skinparam shadowing false
+
+actor Scheduler as S
+
+participant "CO₂ Monitor" as M
+participant "Policy Engine" as P
+database "State\n(paused / running)" as DB
+
+S -> M: Read co2_intensity(t)
+activate M
+
+M -> P: Evaluate thresholds
+activate P
+
+alt co2_intensity(t) > theta_pause AND state == running
+  P -> DB: Set state = paused
+  P -->> S: Trigger Checkpoint & Pause
+  note right P
+    Pause condition:
+    carbon intensity exceeds
+    θ_pause (e.g. 200 gCO₂/kWh)
+  end note
+
+else co2_intensity(t) < theta_resume AND state == paused
+  P -> DB: Set state = running
+  P -->> S: Resume Training
+  note right P
+    Resume condition:
+    carbon intensity drops below
+    θ_resume
+    e.g. 180 gCO₂/kWh
+  end note
+
+else theta_resume ≤ co2_intensity(t) ≤ theta_pause
+  P -->> S: No state change
+  note right P
+    Hysteresis Zone:
+    System holds current state
+    to avoid rapid toggling
+    (flutter prevention)
+  end note
+end
+
+deactivate P
+deactivate M
+
+@enduml

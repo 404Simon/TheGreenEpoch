@@ -1,0 +1,67 @@
+@startuml
+'title Part 1: Setup & Data Validation
+
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam activity {
+  BorderColor #2E3A46
+  BackgroundColor #F7F9FB
+  BarColor #5B8FF9
+  StartColor #2FB344
+  EndColor #D6336C
+  DiamondBackgroundColor #FFF3BF
+  DiamondBorderColor #B08900
+}
+
+start
+
+partition "Study Setup" {
+  :Load TrainingRunProfile;
+  note right
+    class TrainingRunProfile:
+      model_name: str
+      model_params: int
+      dataset_tokens: int
+      gpu_count: int
+      gpu_power_train: float
+      gpu_power_pause: float
+      pue: float
+      checkpoint_overhead_time: float
+      checkpoint_overhead_energy: float
+  end note
+  :Load ScenarioParameters;
+  note right
+    class ScenarioParameters:
+      region: str  # e.g., "DE", "ES", "FR"
+      start_time: datetime
+      pause_threshold: float  # gCO2eq/kWh
+      hysteresis_margin: float  # gCO2eq/kWh
+      pause_granularity: enum (Batch, Epoch, etc.)
+      historical_year: int # e.g. 2024
+      overhead_budget_pct: float # tolerance for overhead
+  end note
+  :Fetch GridData time series\nfor the selected region/window;
+  note right
+    Example time point (CSV row):
+    zone=DE, requested_day=2024-06-05,
+    timestamp=2024-06-05T00:00:00.000Z,
+    carbonIntensity=248, isEstimated=False,
+    estimationMethod=
+  end note
+  :Validate data availability flag;
+}
+
+if (Data available?) then (yes)
+  :Proceed to Simulation;
+  note right
+    → continued in Part 2
+  end note
+  kill
+else (no)
+  partition "Outputs" {
+    :Abort run and report\nmissing-data condition;
+  }
+  stop
+endif
+
+@enduml

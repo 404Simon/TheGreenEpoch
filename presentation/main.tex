@@ -8,23 +8,23 @@
 %
 % ------------------------------------------------------------------------------
 \documentclass[final]{beamer}
-\def\fauThemeLanguage{Eng}  % simple remove this line, if your presentation is in German
+\def\fauThemeLanguage{Eng}  % simple remove this line, if your
+% presentation is in German
 \usepackage{preamble}
 
 % ========================================================================================
 % Theme: inner, outer, font and colors
 % ----------------------------------------------------------------------------------------
 \usepackage[institute=Tech,
-			%SecondLogo = template-art/i7-logo.pdf,
-			%ThirdLogo = template-art/FAUWortmarkeBlau.pdf,
-			%WordMark=None,
-			aspectratio=169,
-			fontsize=11,
-			fontbaselineskip=13,
-			scale=1.,
-			%InsertTotalFoot
-		   ]{styles/beamerthemefau}
-
+  %SecondLogo = template-art/i7-logo.pdf,
+  %ThirdLogo = template-art/FAUWortmarkeBlau.pdf,
+  %WordMark=None,
+  aspectratio=169,
+  fontsize=11,
+  fontbaselineskip=13,
+  scale=1.,
+  %InsertTotalFoot
+]{styles/beamerthemefau}
 
 % ----------------------------------------------------------------------------------------
 % Input and output encoding
@@ -51,84 +51,83 @@
 
 \sisetup{detect-weight,mode=text}
 
-
-
 % ========================================================================================
 % Setup for Titlepage
 % ----------------------------------------------------------------------------------------
-\title[Short title]{Long title}
+\title[Short title]{Greenhouse-Gas-Emission-Aware Optimization
+  of
+Large-Language-Model Training}
 %\subtitle{precise, complete, fast}
 \author[Short form author 1]{
-List of authors%
+  Ankur TODO, Bastian Wiesner, Julian Kraus, Simon Wittmann%
 }
 %
 \institute[FAU]{%
-Friedrich-Alexander-Universität Erlangen-Nürnberg, Computer Science 7%
+  Friedrich-Alexander-Universität Erlangen-Nürnberg, Computer Science 7%
 }
 
 % Instead of \institute you can also use the \thanks command
 % ------------------------------------------------
 %\author[T. Roith]{
-%Tim Roith\thanks{Friedrich-Alexander Universität Erlangen-Nürnberg, Department Mathematik}\and%
+%Tim Roith\thanks{Friedrich-Alexander Universität Erlangen-Nürnberg,
+% Department Mathematik}\and%
 %Second Author\thanks{Second Insitute}\and%
 %Third Author\thanks{Third Insitute}%
 %}
 
-\date{presentation date}
-
+\date{21.05.2026}
 
 % ================================================
 % Bibliography
 % ------------------------------------------------
 %\usepackage{csquotes}
-\usepackage[style=numeric, %alternatively: numeric, numeric-comp, and other from biblatex
-			defernumbers=true,
-			useprefix=true,%
-			giveninits=true,%
-			hyperref=true,%
-			autocite=inline,%
-			maxcitenames=5,%
-			maxbibnames=20,%
-			uniquename=init,%
-			sortcites=true,% sort citations when multiple entries are passed to one cite command
-			doi=true,%
-			isbn=false,%
-			url=false,%
-			eprint=false,%
-			backend=bibtex%
-		   ]{biblatex}
+\usepackage[style=numeric, %alternatively: numeric, numeric-comp, and
+  % other from biblatex
+  defernumbers=true,
+  useprefix=true,%
+  giveninits=true,%
+  hyperref=true,%
+  autocite=inline,%
+  maxcitenames=5,%
+  maxbibnames=20,%
+  uniquename=init,%
+  sortcites=true,% sort citations when multiple entries are passed to
+  % one cite command
+  doi=true,%
+  isbn=false,%
+  url=false,%
+  eprint=false,%
+  backend=bibtex%
+]{biblatex}
 \addbibresource{bibliography.bib}
 %\bibliographystyle{splncs04}
 %\bibliography{bibliography}
 \setbeamertemplate{bibliography item}[text]
 
-
 % ================================================
 % Hyperref and setup
 % ------------------------------------------------
 \hypersetup{
-	colorlinks = true,
-	final=true, 
-	plainpages=false,
-	pdfstartview=FitV,
-	pdftoolbar=true,
-	pdfmenubar=true,
-	pdfencoding=auto,
-	psdextra,
-	bookmarksopen=true,
-	bookmarksnumbered=true,
-	breaklinks=true,
-	linktocpage=true,
-	urlcolor=BaseColor,
-	citecolor=BaseColor,
-	linkcolor=BaseColor
+  colorlinks = true,
+  final=true,
+  plainpages=false,
+  pdfstartview=FitV,
+  pdftoolbar=true,
+  pdfmenubar=true,
+  pdfencoding=auto,
+  psdextra,
+  bookmarksopen=true,
+  bookmarksnumbered=true,
+  breaklinks=true,
+  linktocpage=true,
+  urlcolor=BaseColor,
+  citecolor=BaseColor,
+  linkcolor=BaseColor
 }
-
 
 % ================================================
 % Additional packages
 % ------------------------------------------------
-
 
 % ================================================
 % Various custom commands
@@ -137,34 +136,28 @@ Friedrich-Alexander-Universität Erlangen-Nürnberg, Computer Science 7%
 \begingroup\expandafter\expandafter\expandafter\endgroup
 \expandafter\ifx\csname pdfsuppresswarningpagegroup\endcsname\relax
 \else
-  \pdfsuppresswarningpagegroup=1\relax
+\pdfsuppresswarningpagegroup=1\relax
 \fi
 % Change color for cite locally
-\newcommand{\colorcite}[3]{{\hypersetup{citecolor=#1}{\cite[#2]{#3}}}} 
+\newcommand{\colorcite}[3]{{\hypersetup{citecolor=#1}{\cite[#2]{#3}}}}
 
 % ------------------------------------------------
 % ================================================
 % The main document
 % ------------------------------------------------
 \begin{document}
-	% Title page
-	\begin{frame}[t,titleimagenofooter]{-}
-		\titlepage%
-	\end{frame}
+% Title page
+\begin{frame}[t,titleimagenofooter]{-}
+  \titlepage%
+\end{frame}
 
-	\input{sections/01_introduction}
+%\input{sections/01_introduction}
 
-	\input{sections/02_motivation}
-	
-	\input{sections/03_related_work}
+\input{sections/02_motivation}
 
-	\input{sections/04_methodology}
+%\input{sections/03_related_work}
 
 	\input{sections/05_novelty}
-	
-	\input{sections/06_validation}
-
-    \input{sections/07_verification}
 	
 	% Experiment runs or additional chapters for more detailed descriptions could go here
 		
@@ -174,14 +167,49 @@ Friedrich-Alexander-Universität Erlangen-Nürnberg, Computer Science 7%
 	
 	\input{sections/20_outlook}
 
-	\begin{frame}[titleimagenofooter]{}{}
-		\centering
-		Thank you very much 
+%\input{sections/05_novelty}
 
-		and I hope for an interesting discussion!
-	\end{frame}
+\input{sections/06_objectives}
 
-	\input{sections/99_backmatter}
-	
-	
+\input{sections/07_electricity_map}
+
+\input{sections/08a_parameters}
+
+\input{sections/08b_parameters}
+
+\input{sections/09_optimization_problem}
+
+% Experiment runs or additional chapters for more detailed
+% descriptions could go here
+
+\input{sections/10_hysteresis}
+
+\input{sections/11_project_design}
+
+\input{sections/12_scenarios}
+
+\input{sections/13_result_evaluation}
+
+\input{sections/14_activity}
+
+\input{sections/15_validation}
+
+\input{sections/16_verification}
+
+%\input{sections/18_results}
+
+%\input{sections/19_conclusion}
+
+\input{sections/20_outlook}
+
+\begin{frame}[titleimagenofooter]{}{}
+  \centering
+  Thank you very much
+
+  and I hope for an interesting discussion!
+\end{frame}
+
+\input{sections/99_backmatter}
+
+
 \end{document}

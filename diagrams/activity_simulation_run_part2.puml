@@ -1,0 +1,85 @@
+@startuml
+'title Part 2: Simulation Loop & Results
+
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam activity {
+  BorderColor #2E3A46
+  BackgroundColor #F7F9FB
+  BarColor #5B8FF9
+  StartColor #2FB344
+  EndColor #D6336C
+  DiamondBackgroundColor #FFF3BF
+  DiamondBorderColor #B08900
+}
+
+start
+
+note left
+  ← continued from Part 1
+  (Data available)
+end note
+
+partition "Simulation Engine" {
+  :Initialize Simulation;
+  :Compute baseline reference\nfor uninterrupted training;
+}
+
+repeat
+  partition "Grid Replay" {
+    :Read co2_intensity(t);
+  }
+
+  if (Grid data valid?) then (yes)
+    partition "Policy Control" {
+      :Evaluate PauseResumeLogic;
+      if (co2_intensity(t) > theta_pause?) then (pause)
+        if (At allowed pause granularity?) then (yes)
+          :Trigger Checkpointing;
+          :Set is_paused = true;
+          :Increment pause_count;
+        else (no)
+          :Defer pause until next\ncheckpoint boundary;
+        endif
+      else (continue)
+        if (is_paused and co2_intensity(t) < resume_threshold?) then (resume)
+          :Set is_paused = false;
+        endif
+      endif
+    }
+
+    partition "Simulation Engine" {
+      if (is_paused?) then (yes)
+        :Accumulate paused wall time;
+        :Add paused energy using\ngpu_power_pause and pue;
+      else (no)
+        :Advance training_progress_pct;
+        :Add active energy using\ngpu_power_train and pue;
+        :Update accumulated_emissions;
+      endif
+      :Advance elapsed_wall_time by dt;
+    }
+  else (no)
+    partition "Simulation Engine" {
+      :Handle missing or invalid data\nusing fallback rule;
+      :Advance simulation conservatively;
+    }
+  endif
+
+repeat while (training_progress_pct < 100%) is (yes) not (no)
+
+partition "Outputs" {
+  :Compute CO2_savings_pct;
+  :Compute time_overhead_pct;
+  :Compute score;
+  if (time_overhead_pct <= overhead_budget_pct?) then (yes)
+    :Mark policy as feasible;
+  else (no)
+    :Mark policy as infeasible;
+  endif
+  :Store Results for comparison\nacross thresholds, regions,\nstart times, and architectures;
+}
+
+stop
+
+@enduml

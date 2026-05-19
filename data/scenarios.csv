@@ -1,10 +1,9 @@
 description,model,threshold,hysteresis,regions,start_times_set,historical,overhead_budget_pct
-Original Deepseek training,Deepseek,"400,450","350,400","CN","2025-01-01,2025-02-18,2025-05-01","2022,2023,2024,2025",200
-Deepseek training in USA,Deepseek,"300,350","250,300","US","2025-01-01,2025-02-18,2025-05-01","2022,2023,2024,2025",200
-Deepseek training in Sweden,Deepseek,"20,25","15,20","SE","2025-01-01,2025-02-18,2025-05-01","2022,2023,2024,2025",200
-Deepseek training in Germany,Deepseek,"300,350","250,300","DE","2025-01-01,2025-02-18,2025-05-01","2022,2023,2024,2025",200
-Deepseek training in multiple regions in EU,Deepseek,"300,350","250,300","DE,IT","2025-01-01,2025-05-01,2025-08-08","2022,2023,2024,2025",200
-Deepseek training in China with stricter thresholds,Deepseek,"300,350","250,300","CN","2025-01-01,2025-05-01,2025-08-08","2021,2022,2023,2024,2025",150
-Kimi training in Sweden,Kimi,"20,25","15,20","SE","2025-01-01,2025-02-18,2025-05-01","2022,2023,2024,2025",200
-Kimi training in Germany,Kimi,"300,350","250,300","DE","2025-01-01,2025-02-18,2025-05-01","2022,2023,2024,2025",200
-Kimi training in multiple regions in EU,Kimi,"300,350","250,300","DE,IT","2025-01-01,2025-05-01,2025-08-08","2022,2023,2024,2025",200
+Original Deepseek training,Deepseek,"350,400,450","300,350,400","CN","2025-01-01,2025-02-18,2025-06-01","2022,2023,2024,2025",200
+Deepseek training in Sweden,Deepseek,"20,25","15,20","SE","2025-01-01,2025-02-18,2025-06-01","2022,2023,2024,2025",200
+Deepseek training in Germany,Deepseek,"300,350","250,300","DE","2025-01-01,2025-02-18,2025-06-01","2022,2023,2024,2025",200
+Deepseek training with multiple regions,Deepseek,"300,350","250,300","DE,IT,US","2025-01-01,2025-06-01,2025-08-08","2022,2023,2024,2025",150
+Kimi training in China,Kimi,"350,400,450","300,350,400","CN","2025-01-01,2025-02-18,2025-06-01","2022,2023,2024,2025",200
+Kimi training in Sweden,Kimi,"20,25","15,20","SE","2025-01-01,2025-02-18,2025-06-01","2022,2023,2024,2025",200
+Kimi training in Germany,Kimi,"300,350","250,300","DE","2025-01-01,2025-02-18,2025-06-01","2022,2023,2024,2025",200
+Kimi training with multiple regions,Kimi,"300,350","250,300","DE,IT,US","2025-01-01,2025-06-01,2025-08-08","2022,2023,2024,2025",150

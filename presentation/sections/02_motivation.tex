@@ -4,22 +4,23 @@
 \begin{frame}[t]{Motivation}{Why is it relevant and what's the goal?}
 
   \begin{itemize}
-    \item LLM pretraining can use \emph{thousands of GPUs} over \emph{weeks to months}
-          $\Rightarrow$ very high energy and CO$_2$ footprint.
+    \item LLM pretraining can use \emph{thousands of GPUs} over
+      \emph{weeks to months}
+      $\Rightarrow$ very high energy and CO$_2$ footprint.
     \item Grid CO$_2$ intensity varies strongly over time and region
-          (renewable share, time of day, season).
+      (renewable share, time of day, season).
     \item Idea: pause training during \emph{high-carbon} periods and resume in
-          \emph{low-carbon} periods to reduce emissions.
+      \emph{low-carbon} periods to reduce emissions.
     \item But: pausing/resuming introduces extra wall-clock time and
-          checkpoint overhead (time and energy).
+      checkpoint overhead (time and energy).
     \item Our simulation study aims to \textbf{quantify the trade-off}
-          between
-          \begin{itemize}
-            \item reduced CO$_2$ emissions and
-            \item increased training duration
-          \end{itemize}
-          in the \textbf{\emph{pretraining phase}}.
-    \vspace{0.5cm}
+      between
+      \begin{itemize}
+        \item reduced CO$_2$ emissions and
+        \item increased training duration
+      \end{itemize}
+      in the \textbf{\emph{pretraining phase}}.
+      \vspace{0.5cm}
     \item Citations:
       \begin{itemize}
         \item KIMI K2: Open Agentic Intelligence, 2023
@@ -28,3 +29,8 @@
   \end{itemize}
 
 \end{frame}
+
+\begin{frame}[t]{Motivation}{We are only simulating the Pretraining Phase}
+  \includegraphics[width=\textwidth,height=0.8\textheight,keepaspectratio]{assets/LLM_training.png}
+\end{frame}
+

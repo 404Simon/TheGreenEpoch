@@ -9,4 +9,7 @@ clean:
 	latexmk -C
 	rm -f *.bbl *.run.xml
 
-.PHONY: all clean
+fmt:
+	tex-fmt *.tex --recursive
+
+.PHONY: all clean fmt

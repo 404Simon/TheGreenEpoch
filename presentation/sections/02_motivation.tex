@@ -4,23 +4,27 @@
 \begin{frame}[t]{Motivation}{Why is it relevant and what's the goal?}
 
   \begin{itemize}
-    \item LLM training involves thousands of GPU cycles over a period
-      of couple of months.
-    \item CO2 consumption from LLM is immense, resulting in high
-      amount of CO2 emission.
-    \item The change of CO2 intensity depends on renewable energy
-      used during training in an area.
-    \item Proper coordination between training times and energy grid
-      usage reduces CO2 emission.
-    \item Simulation study quantify trade-off between reduced CO2
-      emissions and training duration in the pretraining phase.
-    %\item TODO: Were only simulating the pretraining phase (and show
-    %  diagram that it is the most time/energy consuming phase)
-    \vspace{1cm}
+    \item LLM pretraining can use \emph{thousands of GPUs} over \emph{weeks to months}
+          $\Rightarrow$ very high energy and CO$_2$ footprint.
+    \item Grid CO$_2$ intensity varies strongly over time and region
+          (renewable share, time of day, season).
+    \item Idea: pause training during \emph{high-carbon} periods and resume in
+          \emph{low-carbon} periods to reduce emissions.
+    \item But: pausing/resuming introduces extra wall-clock time and
+          checkpoint overhead (time and energy).
+    \item Our simulation study aims to \textbf{quantify the trade-off}
+          between
+          \begin{itemize}
+            \item reduced CO$_2$ emissions and
+            \item increased training duration
+          \end{itemize}
+          in the \textbf{\emph{pretraining phase}}.
+    \vspace{0.5cm}
     \item Citations:
       \begin{itemize}
-        \item KIMI K2: OPEN AGENTIC INTELLIGENCE, 2023
+        \item KIMI K2: Open Agentic Intelligence, 2023
         \item DeepSeek-V3 Technical Report, 2026
       \end{itemize}
   \end{itemize}
+
 \end{frame}

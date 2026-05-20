@@ -2,7 +2,7 @@
 
 \ifdefined\fauThemeLanguage
 \else
-	\def\fauThemeLanguage{}
+\def\fauThemeLanguage{}
 \fi
 %
 %% #########################################################
@@ -52,7 +52,8 @@
 
 \usepackage{xparse}
 \usepackage[]{acro}
-\NewDocumentCommand\acrodef{mO{#1}mG{}}{\DeclareAcronym{#1}{short={#2}, long={#3}, #4}}
+\NewDocumentCommand\acrodef{mO{#1}mG{}}{\DeclareAcronym{#1}{short={#2},
+long={#3}, #4}}
 \input{acronyms}
 
 \usepackage{nomencl}
@@ -80,18 +81,24 @@
 \DeclareMathOperator{\Multiply}{\cdot}
 \DeclareMathOperator{\Divide}{\div}
 
-\newcommand{\SetBegin}{\left\langle\begin{matrix}}
-\newcommand{\SetEnd}{\end{matrix}\right\rangle}
-\newcommand{\ArrayBegin}{\begin{bmatrix}}
-\newcommand{\ArrayEnd}{\end{bmatrix}}
-\newcommand{\TupleBegin}{\begin{pmatrix}}
-\newcommand{\TupleEnd}{\end{pmatrix}}
+\newcommand{\SetBegin}{\left\langle
+\begin{matrix}}
+  \newcommand{\SetEnd}{
+\end{matrix}\right\rangle}
+\newcommand{\ArrayBegin}{
+\begin{bmatrix}}
+  \newcommand{\ArrayEnd}{
+\end{bmatrix}}
+\newcommand{\TupleBegin}{
+\begin{pmatrix}}
+  \newcommand{\TupleEnd}{
+\end{pmatrix}}
 
 \usepackage[ruled]{algorithm2e}
 \newcommand\mycommfont[1]{\footnotesize\ttfamily\textcolor{blue}{#1}}
 \SetCommentSty{mycommfont}
 
-\usepackage{tabularx} 
+\usepackage{tabularx}
 \usepackage{caption}
 %\usepackage{subcaption}
 
@@ -102,7 +109,8 @@
 \usepackage{pgfplotstable} % loads also tikz
 \pgfplotsset{compat=newest}% <- set a compat!
 \usepgfplotslibrary{fillbetween, groupplots}
-\usetikzlibrary{patterns, patterns.meta, matrix, fit, positioning, arrows.meta, backgrounds, shapes,snakes,calc}
+\usetikzlibrary{patterns, patterns.meta, matrix, fit, positioning,
+arrows.meta, backgrounds, shapes,snakes,calc}
 %\usepackage[dvipsnames]{xcolor}
 \usepackage{multirow}
 \usepackage{booktabs}
@@ -110,7 +118,10 @@
 \usepackage[outline]{contour}
 \contourlength{1.2pt}
 
-\newcommand{\pgfplotNotation}[3]{\draw[black, line width = 0.5pt] #1--#2 node[anchor=center, pos=1, font=\footnotesize] {\contour{white}{#3}}; \node[circle, draw=black, fill=black, minimum size=0.1cm, inner sep=0pt, outer sep=0pt] at #1 {}}
+\newcommand{\pgfplotNotation}[3]{\draw[black, line width = 0.5pt]
+  #1--#2 node[anchor=center, pos=1, font=\footnotesize]
+  {\contour{white}{#3}}; \node[circle, draw=black, fill=black, minimum
+size=0.1cm, inner sep=0pt, outer sep=0pt] at #1 {}}
 
 \usepackage{tcolorbox}
 %% #########################################################
@@ -131,7 +142,7 @@
   \expandafter\DeclareMathOperator\csname #1\endcsname{#2\stepcounter{COUNT_#1}}
   \AtEndDocument{%
     \ifthenelse{\value{COUNT_#1}>0}{
-        \nomenclature[#4]{\(#2\)}{#3}
+      \nomenclature[#4]{\(#2\)}{#3}
     }{}
   }
 }
@@ -160,8 +171,6 @@
 \definecolor{color_phase3}{HTML}{009E73}
 \definecolor{color_phase4}{HTML}{D55E00}
 
-
 %% #########################################################
 %% [END] new commands
 %% #########################################################
-

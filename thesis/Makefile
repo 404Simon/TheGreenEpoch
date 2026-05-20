@@ -44,7 +44,7 @@ $(ODTFILE): $(TEXFILE) $(DEPFILES) $(SVG_PDFS)
 	pandoc $< -t odt -o $@
 
 $(PDFFILE): $(TEXFILE) $(DEPFILES) $(SVG_PDFS) # $(SVG_EPSS)
-	latexmk -synctex=1 -f $(LATEXMK_SILENT) -pdf -pdflatex="pdflatex -interactive=nonstopmode --shell-escape %O %S" $(TEXFILE)
+	latexmk -synctex=1 -f $(LATEXMK_SILENT) -pdf -pdflatex="pdflatex -interaction=nonstopmode --shell-escape %O %S" $(TEXFILE)
 # for gnuplot support: latexmk -pdf -pdflatex="pdflatex -interactive=nonstopmode --shell-escape" $(TEXFILE)
 # For LuaTex: latexmk -pdf -pdflatex="lualatex -interactive=nonstopmode" $(TEXFILE)
 
@@ -54,3 +54,8 @@ clean:
 	rm -f generated/* plots/*.tex
 	rm -f $(SVG_PDFS) # $(SVG_EPSS)
 	rm -f $(ODTFILE)
+
+fmt:
+	tex-fmt *.tex --recursive
+
+.PHONY: all clean fmt

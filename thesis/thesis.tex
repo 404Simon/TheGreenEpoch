@@ -7,7 +7,8 @@
 % [phdthesis] - switch to PhD thesis style (incompatible with cscoversheet)
 % [twoside] - double sided
 % [cscoversheet] - Add thesis cover sheet in FAU CS style
-% [colorcoversheet] - Use print version of the PhD thesis cover sheet (only with phdthesis)
+% [colorcoversheet] - Use print version of the PhD thesis cover sheet
+% (only with phdthesis)
 
 % ########################################
 % Settings
@@ -16,8 +17,10 @@
 %\birthplace{Erlangen}
 %\matriculationnumber{123456789ABC} % not requied for phdthesis
 
-\germantitle{Green Epoch: Treibhausgas-Emissionsbewusste Optimierung von Large-Language-Model-Training}
-\title{Green Epoch: Greenhouse-Gas-Emission-Aware Optimization of Large-Language-Model Training}
+\germantitle{Green Epoch: Treibhausgas-Emissionsbewusste Optimierung
+von Large-Language-Model-Training}
+\title{Green Epoch: Greenhouse-Gas-Emission-Aware Optimization of
+Large-Language-Model Training}
 
 \course{Informatik}
 \fakulty{Technische Fakultät}
@@ -28,14 +31,16 @@
 \address{Martenstr.~3, 91058~Erlangen}
 \website{https://www.cs7.tf.fau.de/}
 
-\thesisend{21. May 2026}%disputation date in case of dissertation (Tag der mündl. Prüfung) [phdthesis], date of submission for everything else
+\thesisend{21. May 2026}%disputation date in case of dissertation
+% (Tag der mündl. Prüfung) [phdthesis], date of submission for everything else
 
-\advisors{Prof.\ Dr-Ing. Reinhard German\newline Saeid Jahandar, M.Sc.}%used as Gutachter/peer reviewer  for the option [phdthesis], otherwise as supervisors
+\advisors{Prof.\ Dr-Ing. Reinhard German\newline Saeid Jahandar,
+M.Sc.}%used as Gutachter/peer reviewer  for the option [phdthesis],
+% otherwise as supervisors
 
 \watermarklogo{i7/watermark-inf.pdf}
 \chairlogo{i7/i7-logo.pdf}
 \faulogo{i7/techfak-logo.pdf}
-
 
 % -----------------------------------------------------------------------------
 % Settings when NOT using option [phdthesis]
@@ -58,7 +63,8 @@
 
 % ########################################
 
-% all packages and new comamnds should be added to preamble.sty to minimize the size of out main document
+% all packages and new comamnds should be added to preamble.sty to
+% minimize the size of out main document
 \usepackage{preamble}
 
 \begin{document}
@@ -66,7 +72,8 @@
 % Frontmatter
 % -----------------------------------------------------------------------------
 \maketitle
-\pagenumbering{gobble}% gobble supresses page numbers. To use roman page numbering for abstract use \pagenumbering{roman}
+\pagenumbering{gobble}% gobble supresses page numbers. To use roman
+% page numbering for abstract use \pagenumbering{roman}
 %\include{chapters/00-abstract.tex}
 %\cleardoublepage{}
 
@@ -93,8 +100,10 @@
 \include{chapters/06_requirements.tex}
 
 \ifthenelse{\boolean{phdthesis}}{
-    \include{chapters/93-publications.tex} % If the own publications are relevant, e.g., for the option [phdthesis]
-    \include{chapters/94-CRediT.tex} % If authors contribution statements are relevant, e.g., for the option [phdthesis]
+  \include{chapters/93-publications.tex} % If the own publications
+  % are relevant, e.g., for the option [phdthesis]
+  \include{chapters/94-CRediT.tex} % If authors contribution
+  % statements are relevant, e.g., for the option [phdthesis]
 }
 % -----------------------------------------------------------------------------
 % Appendices and listings

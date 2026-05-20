@@ -146,9 +146,22 @@ The study shall \textbf{evaluate the optimal checkpointing granularity} (e.g., b
 
 \subsection{DeepSeek V3 Technical Report}
 
+We base the DeepSeek scenario inputs on the training details reported by
+\textcite{deepseek-ai_deepseek-v3_2024}.
+
 \begin{itemize}
   \item Training Pipeline: Pretraining on 14.8T tokens (~2.788M GPU hours on 2048 H800 GPUs), Long Context Extension (32K then 128K), Post-Training with SFT and RL.
   \item Simulation inputs: $\mathit{model\_params}=671\mathrm{B}$, $\mathit{dataset\_tokens}=14.8\mathrm{T}$, $\mathit{gpu\_count}=2048$, GPU power and PUE to be looked up.
+\end{itemize}
+
+\subsection{Kimi K2 Technical Report}
+
+We base the Kimi scenario inputs on the training details reported by
+\textcite{kimi_team_kimi_2025}.
+
+\begin{itemize}
+  \item Training Pipeline: Pretraining on 15.5T tokens, post-training with a multi-stage agentic data synthesis pipeline and RL.
+  \item Simulation inputs: $\mathit{model\_params}=1\mathrm{T}$ total ($32\mathrm{B}$ active), $\mathit{dataset\_tokens}=15.5\mathrm{T}$, GPU power and PUE to be looked up.
 \end{itemize}
 
 \subsection{Llama-3.1 405B}

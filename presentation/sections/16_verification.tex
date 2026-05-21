@@ -53,14 +53,6 @@
     \mathit{elapsed\_wall\_time}(t_{k+1}) =
     \mathit{elapsed\_wall\_time}(t_k) + \Delta t
   \]
-
-  Including checkpoint overhead:
-
-  \[
-    T_{\text{policy}}^{\star} =
-    T_{\text{baseline}} + T_{\text{paused}} +
-    \mathit{pause\_count} \cdot \mathit{checkpoint\_overhead\_time}.
-  \]
 \end{frame}
 
 \begin{frame}{Verification}{2.3 Progress and Runtime Consistency}
@@ -73,7 +65,6 @@
         \item $\mathit{training\_progress} \approx 1.0$ at the final time step.
         \item $\mathit{elapsed\_wall\_time} \approx T_{\text{baseline}}$.
       \end{itemize}
-    \item Deviations should be within a small numerical tolerance.
   \end{enumerate}
 \end{frame}
 
@@ -93,7 +84,5 @@
       \]
     \item Compare $T_{\text{policy}}^{\star}$ to the simulated
       $\mathit{elapsed\_wall\_time}$ at completion.
-    \item If they match within tolerance, the progress and time accounting are
-      consistent with the model.
   \end{enumerate}
 \end{frame}

@@ -2,4 +2,5 @@ variable,unit,requirements_section,report_value,report_evidence
 gpu_power_train,Watt,Fixed constant,700,H800 maximum 700W
 gpu_power_pause,Watt,Fixed constant,60,H800 50-70W idle power
 pue,float,Fixed constant,1.27,Deepseek pue 1.27
-checkpoint_overhead_time,seconds,Fixed constant,148.8,Distributed Checkpointing in 148.8 seconds
+checkpoint_pause_time,seconds,Fixed constant,148.8,Distributed Checkpointing in 148.8 seconds
+checkpoint_resume_time,seconds,Fixed constant,0,TODO: set proper resume time once measured

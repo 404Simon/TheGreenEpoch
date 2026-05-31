@@ -69,8 +69,10 @@ class TrainingRunProfile:
         Average paused/idle GPU power draw in W.
     pue : float
         Data-centre power usage effectiveness ratio.
-    checkpoint_overhead_time : float
-        Time penalty per pause/resume checkpoint in seconds.
+    checkpoint_pause_time : float
+        Time penalty for saving a checkpoint on pause, in seconds.
+    checkpoint_resume_time : float
+        Time penalty for loading a checkpoint on resume, in seconds.
     """
 
     name: str
@@ -80,7 +82,8 @@ class TrainingRunProfile:
     gpu_power_train: float
     gpu_power_pause: float
     pue: float
-    checkpoint_overhead_time: float
+    checkpoint_pause_time: float
+    checkpoint_resume_time: float
 
 
 @dataclass(frozen=True)
@@ -196,7 +199,8 @@ def load_training_profiles(data_dir: str | Path) -> dict[str, TrainingRunProfile
             gpu_power_train=constants.get("gpu_power_train", 0.0),
             gpu_power_pause=constants.get("gpu_power_pause", 0.0),
             pue=constants.get("pue", 0.0),
-            checkpoint_overhead_time=constants.get("checkpoint_overhead_time", 0.0),
+            checkpoint_pause_time=constants.get("checkpoint_pause_time", 0.0),
+            checkpoint_resume_time=constants.get("checkpoint_resume_time", 0.0),
         )
         logger.info("Loaded training profile: %s", name)
 

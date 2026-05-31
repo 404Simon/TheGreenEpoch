@@ -2,7 +2,6 @@
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any
 
 
 class PolicyAction(Enum):
@@ -50,3 +49,4 @@ class PolicyControl:
             return PolicyAction.PAUSE
 
         return PolicyAction.CONTINUE
+

@@ -1,5 +1,7 @@
 """Data models and loading code for the CO2-aware LLM training simulation."""
 
+from __future__ import annotations
+
 import csv
 import logging
 import re
@@ -117,6 +119,38 @@ class ScenarioParameters:
     region: str
     start_times: list[datetime]
     historical_years: list[int]
+    overhead_budget_pct: float
+
+    def expand(self) -> list[SimulationConfig]:
+        """Yield one ``SimulationConfig`` per threshold/start-time combo."""
+        configs: list[SimulationConfig] = []
+        for start in self.start_times:
+            for thresh, hyst in zip(self.thresholds, self.hysteresis):
+                configs.append(
+                    SimulationConfig(
+                        scenario_description=self.description,
+                        region=self.region,
+                        historical_years=self.historical_years,
+                        start_time=start,
+                        theta_pause=thresh,
+                        theta_resume=hyst,
+                        overhead_budget_pct=self.overhead_budget_pct,
+                    )
+                )
+        return configs
+
+
+@dataclass(frozen=True)
+class SimulationConfig:
+    """Parameters for a single simulation run (one threshold pair +
+    one start time)."""
+
+    scenario_description: str
+    region: str
+    historical_years: list[int]
+    start_time: datetime
+    theta_pause: float
+    theta_resume: float
     overhead_budget_pct: float
 
 

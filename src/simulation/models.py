@@ -97,8 +97,8 @@ class ScenarioParameters:
         Pause thresholds :math:`\\theta_{\\text{pause}}` in gCO₂eq/kWh.
     hysteresis : list[float]
         Hysteresis margins :math:`\\delta_{\\text{hyst}}` in gCO₂eq/kWh.
-    regions : list[str]
-        Grid zone codes (e.g. ``"DE"``, ``"SE"``).
+    region : str
+        Grid zone code (e.g. ``"DE"``, ``"SE"``).
     start_times : list[datetime]
         Candidate training start datetimes (UTC).
     historical_years : list[int]
@@ -111,7 +111,7 @@ class ScenarioParameters:
     model: str
     thresholds: list[float]
     hysteresis: list[float]
-    regions: list[str]
+    region: str
     start_times: list[datetime]
     historical_years: list[int]
     overhead_budget_pct: float
@@ -224,7 +224,7 @@ def load_scenarios(data_dir: str | Path) -> list[ScenarioParameters]:
                     model=row["model"].strip(),
                     thresholds=_parse_csv_list(row["threshold"], float),
                     hysteresis=_parse_csv_list(row["hysteresis"], float),
-                    regions=_parse_csv_list(row["regions"]),
+                    region=row["region"].strip(),
                     start_times=[
                         datetime.fromisoformat(ts).replace(tzinfo=timezone.utc)
                         for ts in _parse_csv_list(row["start_times_set"])

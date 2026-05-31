@@ -1,5 +1,6 @@
 """CO2-aware LLM training simulation engine."""
 
+from .policy_control import PolicyAction, PolicyControl
 from .models import (
     GridData,
     ScenarioParameters,
@@ -11,6 +12,8 @@ from .models import (
 )
 
 __all__ = [
+    "PolicyAction",
+    "PolicyControl",
     "GridData",
     "ScenarioParameters",
     "TrainingRunProfile",

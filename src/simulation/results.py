@@ -62,6 +62,10 @@ class SimulationResult:
     carbon_intensity_series: list[float] = field(default_factory=list)
     state_series: list[str] = field(default_factory=list)
 
+    # -- diagnostics ------------------------------------------------------
+    issues: list[str] = field(default_factory=list)
+    stop_reason: str = ""
+
     # ------------------------------------------------------------------
     @property
     def completion_pct(self) -> float:
@@ -74,6 +78,10 @@ class SimulationResult:
         """Total non-training time (paused + checkpoint)."""
         return self.paused_time_h + self.checkpoint_overhead_h
 
+    @property
+    def ok(self) -> bool:
+        return self.completed and self.within_overhead_budget and not self.issues
+
     def __repr__(self) -> str:
         """One-line human-readable summary."""
         years = (
@@ -81,6 +89,15 @@ class SimulationResult:
             if len(self.historical_years) == 1
             else f"y[{self.historical_years[0]}..{self.historical_years[-1]}]"
         )
+        flags = ""
+        if not self.completed:
+            flags += "✗"
+        elif not self.within_overhead_budget:
+            flags += "✗BUDGET"
+        else:
+            flags += "✓"
+        if self.issues:
+            flags += f" ({len(self.issues)} issue{'s' if len(self.issues) > 1 else ''})"
         return (
             f"[{self.region} {years}] "
             f"θ={self.threshold:.0f} δ={self.hysteresis_margin:.0f} | "
@@ -90,6 +107,5 @@ class SimulationResult:
             f"overhead={self.actual_overhead_pct:.1f}% "
             f"pauses={self.num_pauses} "
             f"emissions={self.total_emissions_kgco2:.0f}kg "
-            f"{'✓' if self.completed else '✗'}"
-            f"{' BUDGET' if not self.within_overhead_budget else ''}"
+            f"{flags}"
         )

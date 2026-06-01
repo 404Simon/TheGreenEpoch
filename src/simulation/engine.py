@@ -159,10 +159,12 @@ class SimulationRunner:
         train_power_w = profile.gpu_count * profile.gpu_power_train * profile.pue
         pause_power_w = profile.gpu_count * profile.gpu_power_pause * profile.pue
 
-        mean_co2 = float(
+        year_avg = float(
             self._provider.year_average(config.region, config.historical_years)
-            or carbon.mean()
         )
+        mean_co2 = year_avg if isfinite(year_avg) else float(np.nanmean(carbon))
+        if not isfinite(mean_co2):
+            mean_co2 = 0.0
 
         # step duration from data granularity (uniform for looping)
         granularity = self._provider.granularity(config.region, config.historical_years)

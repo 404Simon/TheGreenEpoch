@@ -98,16 +98,36 @@ class SimulationRunner:
             profile = self._profiles.get(scenario.model)
             if profile is None:
                 logger.warning(
-                    "Unknown model '%s' in scenario '%s' — skipping",
+                    "Unknown model '%s' in scenario '%s' - skipping",
                     scenario.model,
                     scenario.description,
                 )
                 continue
 
             for config in scenario.expand():
-                result = self.run_one(
-                    profile, config, record_time_series=record_time_series
-                )
+                try:
+                    result = self.run_one(
+                        profile, config, record_time_series=record_time_series
+                    )
+                except ValueError as exc:
+                    logger.error(
+                        "Simulation failed for %s / %s: %s",
+                        config.region,
+                        config.historical_years,
+                        exc,
+                    )
+                    result = SimulationResult(
+                        scenario_description=config.scenario_description,
+                        model=profile.name,
+                        region=config.region,
+                        historical_years=config.historical_years,
+                        start_time=config.start_time,
+                        threshold=config.theta_pause,
+                        hysteresis_margin=config.theta_resume,
+                        tokens_total=profile.dataset_tokens,
+                        issues=[f"ValueError: {exc}"],
+                        stop_reason="data_error",
+                    )
                 results.append(result)
                 logger.info(result)
 
@@ -130,21 +150,8 @@ class SimulationRunner:
             config.region, config.historical_years
         )
         if len(timestamps) < 2:
-            logger.warning(
-                "Insufficient grid data for %s / %s — returning empty result",
-                config.region,
-                config.historical_years,
-            )
-            # TODO: raise error here, this should never succeed
-            return SimulationResult(
-                scenario_description=config.scenario_description,
-                model=profile.name,
-                region=config.region,
-                historical_years=config.historical_years,
-                start_time=start_time,
-                threshold=config.theta_pause,
-                hysteresis_margin=config.theta_resume,
-                tokens_total=profile.dataset_tokens,
+            raise ValueError(
+                f"Insufficient grid data for {config.region} / {config.historical_years}"
             )
 
         # -- derived constants -------------------------------------------
@@ -179,7 +186,6 @@ class SimulationRunner:
             theta_pause=config.theta_pause, theta_resume=config.theta_resume
         )
 
-        # TODO: shouldnt we start pausing?? lets discuss this? what if the threshold isnt met initially?
         state = SimState.RUNNING
         transition_timer_s: float = 0.0
         target_after_transition: SimState | None = None
@@ -210,15 +216,35 @@ class SimulationRunner:
         ts_carbon: list[float] = []
         ts_state: list[str] = []
 
+        # diagnostics
+        issues: list[str] = []
+        nan_fallbacks: int = 0
+
+        # -- resolve initial state ---------------------------------------
+        init_co2 = float(carbon[start_idx])
+        if not isfinite(init_co2):
+            init_co2 = mean_co2
+            nan_fallbacks += 1
+
+        if init_co2 > config.theta_pause:
+            ckpt_s = profile.checkpoint_pause_time
+            if ckpt_s > 0:
+                transition_timer_s = ckpt_s
+                target_after_transition = SimState.PAUSED
+                num_pauses += 1
+            else:
+                state = SimState.PAUSED
+                num_pauses += 1
+
         # ----------------------------------------------------------------
         # Main loop
         # ----------------------------------------------------------------
         while tokens_remaining > 0:
             iterations += 1
             if iterations > max_iterations:
-                # lets add a field to the SimulationResult why the run was stopped (successfully, myx_iteration_limit, etc.)
+                issues.append(f"Iteration limit ({max_iterations}) reached - aborted")
                 logger.warning(
-                    "Iteration limit reached for %s / %s — aborting",
+                    "Iteration limit reached for %s / %s - aborting",
                     config.region,
                     config.historical_years,
                 )
@@ -226,12 +252,15 @@ class SimulationRunner:
 
             # budget check: stop if overhead already exceeded allowance
             if training_s > 0:
-                # Same here, we need to handle this to be able to read off why the hell the training wasnt fully carried out: lets add a field to the SimulationResult why the run was stopped (successfully, myx_iteration_limit, etc.)
                 overhead_s = paused_s + checkpoint_s
                 overhead_pct = 100.0 * overhead_s / training_s
                 if overhead_pct > config.overhead_budget_pct:
+                    issues.append(
+                        f"Overhead {overhead_pct:.1f}% exceeds budget "
+                        f"{config.overhead_budget_pct:.0f}% - stopped"
+                    )
                     logger.info(
-                        "Overhead %.1f%% exceeds budget %.0f%% — "
+                        "Overhead %.1f%% exceeds budget %.0f%% - "
                         "stopping simulation for %s / %s",
                         overhead_pct,
                         config.overhead_budget_pct,
@@ -243,8 +272,8 @@ class SimulationRunner:
             # resolve CO2 for this step (cycle through grid data)
             co2 = float(carbon[idx])
             if not isfinite(co2):
-                # TODO: maybe set a flag if we used shit data??
                 co2 = mean_co2
+                nan_fallbacks += 1
 
             dt_s = step_s
             cur_time = wall_clock
@@ -357,6 +386,25 @@ class SimulationRunner:
             0.0 if training_s == 0 else 100.0 * overhead_s / training_s
         )
 
+        if nan_fallbacks > 0:
+            issues.append(
+                f"{nan_fallbacks} CO2 data point(s) were NaN/inf - "
+                f"fell back to year-mean {mean_co2:.0f} gCO₂eq/kWh"
+            )
+
+        stop_reason = (
+            "completed"
+            if tokens_remaining <= 0
+            else (
+                "budget_exceeded"
+                if (
+                    overhead_s / max(training_s, 1.0)
+                    > config.overhead_budget_pct / 100.0
+                )
+                else "iteration_limit"
+            )
+        )
+
         return SimulationResult(
             scenario_description=config.scenario_description,
             model=profile.name,
@@ -386,6 +434,8 @@ class SimulationRunner:
             timestamps=ts_timestamps,
             carbon_intensity_series=ts_carbon,
             state_series=ts_state,
+            issues=issues,
+            stop_reason=stop_reason,
         )
 
 

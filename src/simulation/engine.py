@@ -124,7 +124,7 @@ class SimulationRunner:
                         start_time=config.start_time,
                         threshold=config.theta_pause,
                         hysteresis_margin=config.theta_resume,
-                        tokens_total=profile.dataset_tokens,
+                        tokens_total=profile.dataset_tokens * config.epochs,
                         issues=[f"ValueError: {exc}"],
                         stop_reason="data_error",
                     )
@@ -190,7 +190,7 @@ class SimulationRunner:
         transition_timer_s: float = 0.0
         target_after_transition: SimState | None = None
 
-        tokens_remaining = profile.dataset_tokens
+        tokens_remaining = profile.dataset_tokens * config.epochs
 
         # accumulators (seconds, Wh, g CO2)
         total_wall_s: float = 0.0
@@ -422,8 +422,8 @@ class SimulationRunner:
             paused_energy_kwh=paused_energy_wh / 1000.0,
             checkpoint_energy_kwh=checkpoint_energy_wh / 1000.0,
             total_emissions_kgco2=total_emissions_g / 1000.0,
-            tokens_processed=profile.dataset_tokens - tokens_remaining,
-            tokens_total=profile.dataset_tokens,
+            tokens_processed=profile.dataset_tokens * config.epochs - tokens_remaining,
+            tokens_total=profile.dataset_tokens * config.epochs,
             completed=(tokens_remaining <= 0),
             num_pauses=num_pauses,
             overhead_budget_pct=config.overhead_budget_pct,

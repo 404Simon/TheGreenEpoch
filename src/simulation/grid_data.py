@@ -1,58 +1,142 @@
 """Grid CO2 intensity data provider (dummy stub — not implemented yet)."""
 
+from __future__ import annotations
+
+import logging
 from datetime import datetime, timedelta
+from pathlib import Path
 
 import numpy as np
+import pandas as pd
 
-# Dummy mean intensities per zone (gCO2eq/kWh)
-_DUMMY_MEANS: dict[str, float] = {
-    "DE": 340,
-    "SE": 21,
-    "FR": 29,
-    "IT": 280,
-    "ES": 135,
-    "CN": 520,
-    "US": 380,
-}
+from .models import GridData
 
-_GRANULARITY = timedelta(minutes=5)
-_POINTS_PER_YEAR = 105120
+logger = logging.getLogger("simulation.grid_data")
 
 
 class GridDataProvider:
-    """Dummy CO2 intensity data source — returns synthetic values.
+    """CO2 intensity data source backed by per-year CSV files.
 
-    TODO: replace with real data loading via models.py.  The real
-    implementation will load per-year CSV files, align timestamps, and
-    average CO2 intensity across the requested *years* list.
+    The provider loads historical grid intensity series from the
+    ``data/co2_intensity/<zone>/carbon_intensity_<year>.csv`` files and
+    aggregates multiple years by matching the same timestamp within a year.
     """
 
     def __init__(self, data_dir: str | None = None) -> None:
-        pass
+        self._data_dir = Path(data_dir) if data_dir is not None else None
+
+    def _load_grid_data_for_years(
+        self, zone: str, years: list[int]
+    ) -> list[GridData]:
+        if self._data_dir is None:
+            raise ValueError("GridDataProvider requires a data_dir")
+        if not years:
+            raise ValueError("At least one historical year must be provided")
+
+        unique_years = sorted(set(years))
+        loaded: list[GridData] = []
+        missing: list[int] = []
+        for year in unique_years:
+            gd = load_grid_data(self._data_dir, zone, year)
+            if gd is None:
+                missing.append(year)
+            else:
+                loaded.append(gd)
+
+        if missing:
+            logger.warning("Missing grid data for %s years %s", zone, missing)
+        if not loaded:
+            raise ValueError(f"No grid data available for zone={zone} years={years}")
+        return loaded
+
+    @staticmethod
+    def _to_canonical_year_index(
+        timestamps: np.ndarray, target_year: int
+    ) -> pd.Index:
+        ts = pd.to_datetime(timestamps)
+        aligned: list[np.datetime64] = []
+
+        for value in ts:
+            try:
+                aligned_ts = value.replace(year=target_year)
+            except ValueError:
+                continue
+            aligned.append(np.datetime64(aligned_ts.to_datetime64()))
+
+        return pd.Index(aligned, dtype="datetime64[ns]")
+
+    def _data_frame_for_year(self, gd: GridData, canonical_year: int) -> pd.DataFrame:
+        aligned_timestamps: list[np.datetime64] = []
+        aligned_values: list[float] = []
+
+        for timestamp, value in zip(gd.timestamps, gd.carbon_intensity):
+            try:
+                aligned_ts = pd.to_datetime(timestamp).replace(year=canonical_year)
+            except ValueError:
+                continue
+            aligned_timestamps.append(np.datetime64(aligned_ts.to_datetime64()))
+            aligned_values.append(value)
+
+        if not aligned_timestamps:
+            return pd.DataFrame()
+
+        return pd.DataFrame(
+            {f"carbon_{gd.year}": np.array(aligned_values, dtype=np.float64)},
+            index=pd.Index(aligned_timestamps, dtype="datetime64[ns]"),
+        )
 
     def timeline(
         self, zone: str, years: list[int]
     ) -> tuple[np.ndarray, np.ndarray]:
         """Return (timestamps, carbon_intensity) averaged over *years*."""
-        base = datetime(years[0], 1, 1)
-        timestamps = np.array(
-            [base + i * _GRANULARITY for i in range(_POINTS_PER_YEAR)],
-            dtype="datetime64[ns]",
-        )
-        mean = _DUMMY_MEANS.get(zone, 300)
-        seed = abs(hash((zone, tuple(years)))) % (2**31)
-        rng = np.random.default_rng(seed)
-        carbon = (
-            rng.normal(mean, mean * 0.3, _POINTS_PER_YEAR)
-            .clip(0)
-            .astype(np.float64)
-        )
+        grid_data = self._load_grid_data_for_years(zone, years)
+        canonical_year = min(years)
+
+        if len(grid_data) == 1:
+            return grid_data[0].timestamps, grid_data[0].carbon_intensity
+
+        frames: list[pd.DataFrame] = []
+        for gd in grid_data:
+            frame = self._data_frame_for_year(gd, canonical_year)
+            if frame.empty:
+                continue
+            frames.append(frame)
+
+        if not frames:
+            raise ValueError(
+                f"Unable to align timestamps for zone={zone} years={years}"
+            )
+
+        merged = frames[0]
+        for frame in frames[1:]:
+            merged = merged.join(frame, how="inner")
+
+        if merged.empty:
+            raise ValueError(
+                f"No common datapoints for zone={zone} years={years}"
+            )
+
+        merged.sort_index(inplace=True)
+        timestamps = merged.index.to_numpy(dtype="datetime64[ns]")
+        carbon = merged.mean(axis=1).to_numpy(dtype=np.float64)
         return timestamps, carbon
 
     def granularity(
         self, zone: str, years: list[int]
     ) -> timedelta:
-        return _GRANULARITY
+        grid_data = self._load_grid_data_for_years(zone, [years[0]])
+        timestamps = grid_data[0].timestamps
+        if len(timestamps) < 2:
+            raise ValueError(
+                f"Insufficient timestamps to infer granularity for {zone}"
+            )
+        diff_ns = int(timestamps[1].astype("int64") - timestamps[0].astype("int64"))
+        return timedelta(microseconds=diff_ns / 1000)
 
     def year_average(self, zone: str, years: list[int]) -> float:
-        return _DUMMY_MEANS.get(zone, 300)
+        _, carbon = self.timeline(zone, years)
+        if len(carbon) == 0:
+            raise ValueError(
+                f"No aggregated carbon intensity available for {zone} years {years}"
+            )
+        return float(np.mean(carbon))

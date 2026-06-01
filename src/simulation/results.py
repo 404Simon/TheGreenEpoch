@@ -100,7 +100,7 @@ class SimulationResult:
             flags += f" ({len(self.issues)} issue{'s' if len(self.issues) > 1 else ''})"
         return (
             f"[{self.region} {years}] "
-            f"θ={self.threshold:.0f} δ={self.hysteresis_margin:.0f} | "
+            f"θ_pause={self.threshold:.0f} θ_resume={self.hysteresis_margin:.0f} | "
             f"wall={self.total_wall_time_h:.1f}h "
             f"train={self.training_time_h:.1f}h "
             f"pause={self.paused_time_h:.1f}h "

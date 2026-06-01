@@ -178,6 +178,8 @@ class SimulationRunner:
 
         # -- locate starting index ---------------------------------------
         start_idx = _find_start_index(timestamps, start_time)
+        base_year = timestamps[0].astype("datetime64[Y]").astype(int) + 1970
+        wall_clock = start_time.replace(year=int(base_year))
         idx = start_idx
         n_points = len(timestamps)
 
@@ -207,9 +209,6 @@ class SimulationRunner:
         # termination guards
         max_iterations = 10_000_000
         iterations = 0
-
-        # synthetic wall clock (advances with simulation time)
-        wall_clock = start_time
 
         # time series
         ts_timestamps: list[datetime] = []
@@ -445,8 +444,13 @@ class SimulationRunner:
 
 
 def _find_start_index(timestamps: np.ndarray, start_time: datetime) -> int:
-    ts_utc = start_time.astimezone(timezone.utc).replace(tzinfo=None)
-    target = np.datetime64(ts_utc)
+    base_year = timestamps[0].astype("datetime64[Y]").astype(int) + 1970
+    target_dt = start_time.replace(year=int(base_year))
+    if target_dt.tzinfo is None:
+        target_utc = target_dt
+    else:
+        target_utc = target_dt.astimezone(timezone.utc).replace(tzinfo=None)
+    target = np.datetime64(target_utc)
     idx = int(np.searchsorted(timestamps, target, side="left"))
     return min(idx, len(timestamps) - 1)
 

@@ -265,7 +265,7 @@ def load_scenarios(data_dir: str | Path) -> list[ScenarioParameters]:
                     hysteresis=_parse_csv_list(row["hysteresis"], float),
                     region=row["region"].strip(),
                     start_times=[
-                        datetime.fromisoformat(ts).replace(tzinfo=timezone.utc)
+                        datetime(1970, *map(int, ts.split("-")), tzinfo=timezone.utc)
                         for ts in _parse_csv_list(row["start_times_set"])
                     ],
                     historical_years=_parse_csv_list(row["historical"], int),

@@ -10,7 +10,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import numpy as np
-import pandas as pd
 
 logger = logging.getLogger("simulation.models")
 
@@ -277,86 +276,4 @@ def load_scenarios(data_dir: str | Path) -> list[ScenarioParameters]:
     return scenarios
 
 
-def load_grid_data(data_dir: str | Path, /, zone: str, year: int) -> GridData | None:
-    """Load CO₂ intensity time-series for *zone* and *year*.
 
-    Returns ``None`` if the CSV file does not exist.
-    """
-    data_dir = Path(data_dir)
-    csv_path = data_dir / "co2_intensity" / zone / f"carbon_intensity_{year}.csv"
-
-    if not csv_path.exists():
-        logger.warning("Grid data not found: %s", csv_path)
-        return None
-
-    df = pd.read_csv(
-        csv_path,
-        dtype={"carbonIntensity": float, "isEstimated": bool},
-        usecols=["timestamp", "carbonIntensity", "isEstimated"],
-    )
-    df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True)
-
-    timestamps = df["timestamp"].to_numpy(dtype="datetime64[ns]")
-    carbon_intensity = df["carbonIntensity"].to_numpy(dtype=np.float64)
-    is_estimated = df["isEstimated"].to_numpy(dtype=bool)
-
-    valid = ~is_estimated
-    if valid.any():
-        mean_intensity = float(carbon_intensity[valid].mean())
-    else:
-        mean_intensity = float(carbon_intensity.mean())
-
-    logger.info(
-        "Loaded grid data: zone=%s year=%d rows=%d mean_intensity=%.1f",
-        zone,
-        year,
-        len(df),
-        mean_intensity,
-    )
-
-    return GridData(
-        zone=zone,
-        year=year,
-        timestamps=timestamps,
-        carbon_intensity=carbon_intensity,
-        is_estimated=is_estimated,
-        mean_intensity=mean_intensity,
-    )
-
-
-def load_all_grid_data(
-    data_dir: str | Path,
-    /,
-    *,
-    zones: list[str] | None = None,
-    years: list[int] | None = None,
-) -> dict[tuple[str, int], GridData]:
-    """Bulk-load grid data for multiple zones and years.
-
-    If *zones* or *years* is ``None``, they are auto-discovered from the
-    ``co2_intensity/`` directory tree.
-    """
-    data_dir = Path(data_dir)
-    base = data_dir / "co2_intensity"
-
-    if zones is None:
-        zones = sorted(p.name for p in base.iterdir() if p.is_dir())
-
-    results: dict[tuple[str, int], GridData] = {}
-    for zone in zones:
-        zone_dir = base / zone
-        if not zone_dir.is_dir():
-            continue
-        if years is None:
-            for csv_path in sorted(zone_dir.glob("carbon_intensity_*.csv")):
-                year = int(csv_path.stem.rsplit("_", 1)[-1])
-                gd = load_grid_data(data_dir, zone, year)
-                if gd is not None:
-                    results[(zone, year)] = gd
-        else:
-            for year in years:
-                gd = load_grid_data(data_dir, zone, year)
-                if gd is not None:
-                    results[(zone, year)] = gd
-
-    return results

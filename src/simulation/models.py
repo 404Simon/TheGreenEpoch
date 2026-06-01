@@ -152,6 +152,7 @@ class SimulationConfig:
     theta_pause: float
     theta_resume: float
     overhead_budget_pct: float
+    epochs: int = 1
 
 
 @dataclass

@@ -1,9 +1,9 @@
-"""Grid CO2 intensity data provider (dummy stub — not implemented yet)."""
+"""Grid CO2 intensity data provider and CSV loading."""
 
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta
+from datetime import timedelta
 from pathlib import Path
 
 import numpy as np
@@ -12,6 +12,34 @@ import pandas as pd
 from .models import GridData
 
 logger = logging.getLogger("simulation.grid_data")
+
+
+def load_grid_data(data_dir: Path, zone: str, year: int) -> GridData | None:
+    """Load a single year of CO2 intensity CSV data into a GridData object."""
+    path = data_dir / "co2_intensity" / zone / f"carbon_intensity_{year}.csv"
+    if not path.exists():
+        return None
+
+    df = pd.read_csv(path)
+    timestamps = pd.to_datetime(df["timestamp"]).to_numpy(dtype="datetime64[ns]")
+    carbon_intensity = df["carbonIntensity"].to_numpy(dtype=np.float64)
+    is_estimated = df["isEstimated"].to_numpy(dtype=bool)
+
+    valid = ~is_estimated
+    mean_intensity = (
+        float(np.mean(carbon_intensity[valid]))
+        if valid.any()
+        else float(np.mean(carbon_intensity))
+    )
+
+    return GridData(
+        zone=zone,
+        year=year,
+        timestamps=timestamps,
+        carbon_intensity=carbon_intensity,
+        is_estimated=is_estimated,
+        mean_intensity=mean_intensity,
+    )
 
 
 class GridDataProvider:
@@ -25,9 +53,7 @@ class GridDataProvider:
     def __init__(self, data_dir: str | None = None) -> None:
         self._data_dir = Path(data_dir) if data_dir is not None else None
 
-    def _load_grid_data_for_years(
-        self, zone: str, years: list[int]
-    ) -> list[GridData]:
+    def _load_grid_data_for_years(self, zone: str, years: list[int]) -> list[GridData]:
         if self._data_dir is None:
             raise ValueError("GridDataProvider requires a data_dir")
         if not years:
@@ -50,9 +76,7 @@ class GridDataProvider:
         return loaded
 
     @staticmethod
-    def _to_canonical_year_index(
-        timestamps: np.ndarray, target_year: int
-    ) -> pd.Index:
+    def _to_canonical_year_index(timestamps: np.ndarray, target_year: int) -> pd.Index:
         ts = pd.to_datetime(timestamps)
         aligned: list[np.datetime64] = []
 
@@ -85,9 +109,7 @@ class GridDataProvider:
             index=pd.Index(aligned_timestamps, dtype="datetime64[ns]"),
         )
 
-    def timeline(
-        self, zone: str, years: list[int]
-    ) -> tuple[np.ndarray, np.ndarray]:
+    def timeline(self, zone: str, years: list[int]) -> tuple[np.ndarray, np.ndarray]:
         """Return (timestamps, carbon_intensity) averaged over *years*."""
         grid_data = self._load_grid_data_for_years(zone, years)
         canonical_year = min(years)
@@ -112,24 +134,18 @@ class GridDataProvider:
             merged = merged.join(frame, how="inner")
 
         if merged.empty:
-            raise ValueError(
-                f"No common datapoints for zone={zone} years={years}"
-            )
+            raise ValueError(f"No common datapoints for zone={zone} years={years}")
 
         merged.sort_index(inplace=True)
         timestamps = merged.index.to_numpy(dtype="datetime64[ns]")
         carbon = merged.mean(axis=1).to_numpy(dtype=np.float64)
         return timestamps, carbon
 
-    def granularity(
-        self, zone: str, years: list[int]
-    ) -> timedelta:
+    def granularity(self, zone: str, years: list[int]) -> timedelta:
         grid_data = self._load_grid_data_for_years(zone, [years[0]])
         timestamps = grid_data[0].timestamps
         if len(timestamps) < 2:
-            raise ValueError(
-                f"Insufficient timestamps to infer granularity for {zone}"
-            )
+            raise ValueError(f"Insufficient timestamps to infer granularity for {zone}")
         diff_ns = int(timestamps[1].astype("int64") - timestamps[0].astype("int64"))
         return timedelta(microseconds=diff_ns / 1000)
 

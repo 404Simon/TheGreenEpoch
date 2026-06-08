@@ -43,6 +43,7 @@ class SimulationResult:
     paused_energy_kwh: float = 0.0
     checkpoint_energy_kwh: float = 0.0
     total_emissions_kgco2: float = 0.0
+    baseline_emissions_kgco2: float = 0.0
 
     # -- progress --------------------------------------------------------
     tokens_processed: int = 0
@@ -102,28 +103,30 @@ class SimulationResult:
             return 0.0
         return 100.0 * (self.total_emissions_kgco2 - self.idle_emissions_kgco2) / self.total_emissions_kgco2
     
-    # WRONG
     @property
-    def baseline_emissions_kgco2(self) -> float:
-        """Estimated emissions if training had run uninterrupted."""
-        if self.training_energy_kwh == 0:
+    def co2_savings_pct(self) -> float:
+        """Percentage of emissions saved."""
+        if self.baseline_emissions_kgco2 == 0:
             return 0.0
-        avg_intensity = self._avg_carbon_intensity()
-        return self.training_energy_kwh * avg_intensity
+        return 100.0 * (self.baseline_emissions_kgco2 - self.total_emissions_kgco2) / self.baseline_emissions_kgco2
+
+    @property
+    def time_overhead_pct(self) -> float:
+        """Percentage of time overhead."""
+        if self.training_time_h == 0:
+            return 0.0
+        return 100.0 * (self.total_wall_time_h - self.training_time_h) / self.training_time_h
 
     # WRONG
     @property
     def score(self) -> float:
         """Custom score combining completion, overhead, and emissions."""
-        if self.overhead_budget_pct <= 0:
+        if not self.completed:
             return 0.0
         if not self.within_overhead_budget:
             return 0.0
-        co2_savings_pct = 100.0 * (self.total_emissions_kgco2 - self.idle_emissions_kgco2) / self.total_emissions_kgco2 if self.total_emissions_kgco2 > 0 else 0.0
-        time_overhead_pct = self.actual_overhead_pct
         epsilon = 1e-6
-        return co2_savings_pct / max(time_overhead_pct, epsilon)
-  
+        return self.co2_savings_pct / max(self.time_overhead_pct, epsilon)
 
     @property
     def ok(self) -> bool:

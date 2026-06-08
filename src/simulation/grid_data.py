@@ -78,35 +78,20 @@ class GridDataProvider:
     @staticmethod
     def _to_canonical_year_index(timestamps: np.ndarray, target_year: int) -> pd.Index:
         ts = pd.to_datetime(timestamps)
-        aligned: list[np.datetime64] = []
-
-        for value in ts:
-            try:
-                aligned_ts = value.replace(year=target_year)
-            except ValueError:
-                continue
-            aligned.append(np.datetime64(aligned_ts.to_datetime64()))
-
-        return pd.Index(aligned, dtype="datetime64[ns]")
+        year_diff = target_year - ts.year[0] if len(ts) else 0
+        if year_diff != 0:
+            ts = ts + pd.DateOffset(years=year_diff)
+        return pd.Index(ts, dtype="datetime64[ns]")
 
     def _data_frame_for_year(self, gd: GridData, canonical_year: int) -> pd.DataFrame:
-        aligned_timestamps: list[np.datetime64] = []
-        aligned_values: list[float] = []
-
-        for timestamp, value in zip(gd.timestamps, gd.carbon_intensity):
-            try:
-                aligned_ts = pd.to_datetime(timestamp).replace(year=canonical_year)
-            except ValueError:
-                continue
-            aligned_timestamps.append(np.datetime64(aligned_ts.to_datetime64()))
-            aligned_values.append(value)
-
-        if not aligned_timestamps:
-            return pd.DataFrame()
+        ts = pd.to_datetime(gd.timestamps)
+        year_diff = canonical_year - gd.year
+        if year_diff != 0:
+            ts = ts + pd.DateOffset(years=year_diff)
 
         return pd.DataFrame(
-            {f"carbon_{gd.year}": np.array(aligned_values, dtype=np.float64)},
-            index=pd.Index(aligned_timestamps, dtype="datetime64[ns]"),
+            {f"carbon_{gd.year}": gd.carbon_intensity},
+            index=pd.Index(ts, dtype="datetime64[ns]"),
         )
 
     def timeline(self, zone: str, years: list[int]) -> tuple[np.ndarray, np.ndarray]:

@@ -11,7 +11,7 @@ import logging
 from datetime import datetime, timedelta, timezone
 from math import isfinite
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Generator
 
 import numpy as np
 
@@ -23,7 +23,7 @@ from .models import (
 )
 from .physics import emissions_g, energy_wh, tokens_per_second
 from .policy_control import PolicyAction, PolicyControl
-from .results import SimState, SimulationResult
+from .results import SimProgress, SimState, SimulationResult
 
 if TYPE_CHECKING:
     from .grid_data import GridDataProvider
@@ -140,271 +140,37 @@ class SimulationRunner:
         *,
         record_time_series: bool = False,
     ) -> SimulationResult:
-        """Execute a single training simulation.
-
-        Returns a fully populated ``SimulationResult``.
-        """
+        """Execute a single training simulation. Returns a ``SimulationResult``."""
         start_time = config.start_time
+        gen = simulate_stepwise(profile, config, self._provider)
 
-        timestamps, carbon = self._provider.timeline(
-            config.region, config.historical_years
-        )
-        if len(timestamps) < 2:
-            raise ValueError(
-                f"Insufficient grid data for {config.region} / {config.historical_years}"
-            )
-
-        # -- derived constants -------------------------------------------
-        tps = tokens_per_second(profile.gpu_count)
-        train_power_w = profile.gpu_count * profile.gpu_power_train * profile.pue
-        pause_power_w = profile.gpu_count * profile.gpu_power_pause * profile.pue
-
-        year_avg = float(
-            self._provider.year_average(config.region, config.historical_years)
-        )
-        mean_co2 = year_avg if isfinite(year_avg) else float(np.nanmean(carbon))
-        if not isfinite(mean_co2):
-            mean_co2 = 0.0
-
-        # step duration from data granularity (uniform for looping)
-        granularity = self._provider.granularity(config.region, config.historical_years)
-        if granularity is None:
-            if len(timestamps) >= 2:
-                diff_ns = int(
-                    timestamps[1].astype("int64") - timestamps[0].astype("int64")
-                )
-                granularity = timedelta(microseconds=diff_ns / 1000)
-            else:
-                granularity = timedelta(minutes=5)
-        step_s = granularity.total_seconds()
-
-        # -- locate starting index ---------------------------------------
-        start_idx = _find_start_index(timestamps, start_time)
-        base_year = timestamps[0].astype("datetime64[Y]").astype(int) + 1970
-        wall_clock = start_time.replace(year=int(base_year))
-        idx = start_idx
-        n_points = len(timestamps)
-
-        # -- state machine -----------------------------------------------
-        policy = PolicyControl(
-            theta_pause=config.theta_pause, theta_resume=config.theta_resume
-        )
-
-        state = SimState.RUNNING
-        transition_timer_s: float = 0.0
-        target_after_transition: SimState | None = None
-
-        tokens_remaining = profile.dataset_tokens * config.epochs
-
-        # accumulators (seconds, Wh, g CO2)
-        total_wall_s: float = 0.0
-        training_s: float = 0.0
-        paused_s: float = 0.0
-        checkpoint_s: float = 0.0
-        total_energy_wh: float = 0.0
-        training_energy_wh: float = 0.0
-        paused_energy_wh: float = 0.0
-        checkpoint_energy_wh: float = 0.0
-        total_emissions_g: float = 0.0
-        num_pauses: int = 0
-
-        # termination guards
-        max_iterations = 10_000_000
-        iterations = 0
-
-        # time series
         ts_timestamps: list[datetime] = []
         ts_carbon: list[float] = []
         ts_state: list[str] = []
 
-        # diagnostics
-        issues: list[str] = []
-        nan_fallbacks: int = 0
-
-        # -- resolve initial state ---------------------------------------
-        init_co2 = float(carbon[start_idx])
-        if not isfinite(init_co2):
-            init_co2 = mean_co2
-            nan_fallbacks += 1
-
-        if init_co2 > config.theta_pause:
-            ckpt_s = profile.checkpoint_pause_time
-            if ckpt_s > 0:
-                transition_timer_s = ckpt_s
-                target_after_transition = SimState.PAUSED
-                num_pauses += 1
-            else:
-                state = SimState.PAUSED
-                num_pauses += 1
-
-        # ----------------------------------------------------------------
-        # Main loop
-        # ----------------------------------------------------------------
-        while tokens_remaining > 0:
-            iterations += 1
-            if iterations > max_iterations:
-                issues.append(f"Iteration limit ({max_iterations}) reached - aborted")
-                logger.warning(
-                    "Iteration limit reached for %s / %s - aborting",
-                    config.region,
-                    config.historical_years,
-                )
-                break
-
-            # budget check: stop if overhead already exceeded allowance
-            if training_s > 0:
-                overhead_s = paused_s + checkpoint_s
-                overhead_pct = 100.0 * overhead_s / training_s
-                if overhead_pct > config.overhead_budget_pct:
-                    issues.append(
-                        f"Overhead {overhead_pct:.1f}% exceeds budget "
-                        f"{config.overhead_budget_pct:.0f}% - stopped"
-                    )
-                    logger.info(
-                        "Overhead %.1f%% exceeds budget %.0f%% - "
-                        "stopping simulation for %s / %s",
-                        overhead_pct,
-                        config.overhead_budget_pct,
-                        config.region,
-                        config.historical_years,
-                    )
-                    break
-
-            # resolve CO2 for this step (cycle through grid data)
-            co2 = float(carbon[idx])
-            if not isfinite(co2):
-                co2 = mean_co2
-                nan_fallbacks += 1
-
-            dt_s = step_s
-            cur_time = wall_clock
-
-            # --- handle ongoing checkpoint transition -------------------
-            if transition_timer_s > 0:
-                spent_s = min(dt_s, transition_timer_s)
-                transition_timer_s -= spent_s
-
-                e_wh = energy_wh(train_power_w, spent_s)
-                em_g = emissions_g(e_wh, co2)
-                checkpoint_s += spent_s
-                checkpoint_energy_wh += e_wh
-                total_energy_wh += e_wh
-                total_emissions_g += em_g
-                total_wall_s += spent_s
-                wall_clock += timedelta(seconds=spent_s)
-
-                if record_time_series:
-                    ts_timestamps.append(cur_time)
-                    ts_carbon.append(co2)
-                    ts_state.append(
-                        f"checkpointing -> {_state_label(target_after_transition)}"
-                    )
-
-                dt_s -= spent_s
-
-                if transition_timer_s <= 0:
-                    assert target_after_transition is not None
-                    state = target_after_transition
-                    target_after_transition = None
-
-                if dt_s <= 0:
-                    idx = (idx + 1) % n_points
-                    continue
-                cur_time = wall_clock
-
-            # --- evaluate policy -----------------------------------------
-            action = policy.evaluate(co2, state == SimState.PAUSED)
-
-            if action == PolicyAction.PAUSE and state == SimState.RUNNING:
-                num_pauses += 1
-                overhead_s = profile.checkpoint_pause_time
-                if overhead_s <= 0:
-                    state = SimState.PAUSED
-                else:
-                    transition_timer_s = overhead_s
-                    target_after_transition = SimState.PAUSED
-                    continue
-
-            if action == PolicyAction.RESUME and state == SimState.PAUSED:
-                overhead_s = profile.checkpoint_resume_time
-                if overhead_s <= 0:
-                    state = SimState.RUNNING
-                else:
-                    transition_timer_s = overhead_s
-                    target_after_transition = SimState.RUNNING
-                    continue
-
-            # --- spend dt_s in current state ----------------------------
-            if state == SimState.RUNNING:
-                max_tokens = int(tps * dt_s)
-                tokens_step = min(max_tokens, tokens_remaining)
-                effective_s = dt_s if tokens_step >= max_tokens else (tokens_step / tps)
-                tokens_remaining -= tokens_step
-
-                e_wh = energy_wh(train_power_w, effective_s)
-                em_g = emissions_g(e_wh, co2)
-
-                training_s += effective_s
-                training_energy_wh += e_wh
-                total_energy_wh += e_wh
-                total_emissions_g += em_g
-                total_wall_s += effective_s
-                wall_clock += timedelta(seconds=effective_s)
-
-                # idle the remainder of the step if tokens finished early
-                idle_remainder_s = dt_s - effective_s
-                if idle_remainder_s > 0:
-                    idle_wh = energy_wh(pause_power_w, idle_remainder_s)
-                    paused_s += idle_remainder_s
-                    paused_energy_wh += idle_wh
-                    total_energy_wh += idle_wh
-                    total_emissions_g += emissions_g(idle_wh, co2)
-                    total_wall_s += idle_remainder_s
-                    wall_clock += timedelta(seconds=idle_remainder_s)
-            else:
-                e_wh = energy_wh(pause_power_w, dt_s)
-                em_g = emissions_g(e_wh, co2)
-
-                paused_s += dt_s
-                paused_energy_wh += e_wh
-                total_energy_wh += e_wh
-                total_emissions_g += em_g
-                total_wall_s += dt_s
-                wall_clock += timedelta(seconds=dt_s)
-
+        last = None
+        for progress in gen:
+            last = progress
             if record_time_series:
-                ts_timestamps.append(cur_time)
-                ts_carbon.append(co2)
-                ts_state.append(_state_label(state))
+                ts_timestamps.append(progress.timestamp)
+                ts_carbon.append(progress.carbon_intensity)
+                ts_state.append(progress.state.name.lower())
 
-            idx = (idx + 1) % n_points
+        assert last is not None, "Generator yielded no progress"
 
-        # ----------------------------------------------------------------
-        # Assemble result
-        # ----------------------------------------------------------------
-        overhead_s = paused_s + checkpoint_s
+        overhead_s = last.paused_s + last.checkpoint_s
+        training_s = last.training_s
         actual_overhead_pct = (
             0.0 if training_s == 0 else 100.0 * overhead_s / training_s
         )
 
-        if nan_fallbacks > 0:
+        issues = list(last.issues)
+        if last.nan_fallbacks > 0:
+            # Reconstruct the diagnostic message
             issues.append(
-                f"{nan_fallbacks} CO2 data point(s) were NaN/inf - "
-                f"fell back to year-mean {mean_co2:.0f} gCO₂eq/kWh"
+                f"{last.nan_fallbacks} CO2 data point(s) were NaN/inf - "
+                f"fell back to year-mean"
             )
-
-        stop_reason = (
-            "completed"
-            if tokens_remaining <= 0
-            else (
-                "budget_exceeded"
-                if (
-                    overhead_s / max(training_s, 1.0)
-                    > config.overhead_budget_pct / 100.0
-                )
-                else "iteration_limit"
-            )
-        )
 
         return SimulationResult(
             scenario_description=config.scenario_description,
@@ -414,19 +180,19 @@ class SimulationRunner:
             start_time=start_time,
             threshold=config.theta_pause,
             hysteresis_margin=config.theta_resume,
-            total_wall_time_h=total_wall_s / 3600.0,
-            training_time_h=training_s / 3600.0,
-            paused_time_h=paused_s / 3600.0,
-            checkpoint_overhead_h=checkpoint_s / 3600.0,
-            total_energy_kwh=total_energy_wh / 1000.0,
-            training_energy_kwh=training_energy_wh / 1000.0,
-            paused_energy_kwh=paused_energy_wh / 1000.0,
-            checkpoint_energy_kwh=checkpoint_energy_wh / 1000.0,
-            total_emissions_kgco2=total_emissions_g / 1000.0,
-            tokens_processed=profile.dataset_tokens * config.epochs - tokens_remaining,
-            tokens_total=profile.dataset_tokens * config.epochs,
-            completed=(tokens_remaining <= 0),
-            num_pauses=num_pauses,
+            total_wall_time_h=last.total_wall_s / 3600.0,
+            training_time_h=last.training_s / 3600.0,
+            paused_time_h=last.paused_s / 3600.0,
+            checkpoint_overhead_h=last.checkpoint_s / 3600.0,
+            total_energy_kwh=last.total_energy_wh / 1000.0,
+            training_energy_kwh=last.training_energy_wh / 1000.0,
+            paused_energy_kwh=last.paused_energy_wh / 1000.0,
+            checkpoint_energy_kwh=last.checkpoint_energy_wh / 1000.0,
+            total_emissions_kgco2=last.total_emissions_g / 1000.0,
+            tokens_processed=last.tokens_processed,
+            tokens_total=last.tokens_total,
+            completed=(last.tokens_remaining <= 0),
+            num_pauses=last.num_pauses,
             overhead_budget_pct=config.overhead_budget_pct,
             actual_overhead_pct=actual_overhead_pct,
             within_overhead_budget=(
@@ -436,8 +202,364 @@ class SimulationRunner:
             carbon_intensity_series=ts_carbon,
             state_series=ts_state,
             issues=issues,
-            stop_reason=stop_reason,
+            stop_reason=last.stop_reason,
         )
+
+
+# ---------------------------------------------------------------------------
+# Stepwise simulation generator (shared by batch and GUI)
+# ---------------------------------------------------------------------------
+
+
+def simulate_stepwise(
+    profile: TrainingRunProfile,
+    config: SimulationConfig,
+    provider: GridDataProvider,
+) -> Generator[SimProgress, None, None]:
+    """Yield ``SimProgress`` after every grid-data step.
+
+    The last yielded object carries ``done=True`` and the final
+    accumulator values.  Both ``SimulationRunner.run_one`` (batch) and
+    the interactive GUI consume this same function — there is exactly
+    **one** simulation loop.
+    """
+    start_time = config.start_time
+    timestamps, carbon = provider.timeline(config.region, config.historical_years)
+    if len(timestamps) < 2:
+        raise ValueError(
+            f"Insufficient grid data for {config.region} / {config.historical_years}"
+        )
+
+    tps = tokens_per_second(profile.gpu_count)
+    train_power_w = profile.gpu_count * profile.gpu_power_train * profile.pue
+    pause_power_w = profile.gpu_count * profile.gpu_power_pause * profile.pue
+
+    year_avg = float(provider.year_average(config.region, config.historical_years))
+    mean_co2 = year_avg if isfinite(year_avg) else float(np.nanmean(carbon))
+    if not isfinite(mean_co2):
+        mean_co2 = 0.0
+
+    granularity = provider.granularity(config.region, config.historical_years)
+    if granularity is None:
+        if len(timestamps) >= 2:
+            diff_ns = int(timestamps[1].astype("int64") - timestamps[0].astype("int64"))
+            granularity = timedelta(microseconds=diff_ns / 1000)
+        else:
+            granularity = timedelta(minutes=5)
+    step_s = granularity.total_seconds()
+
+    start_idx = _find_start_index(timestamps, start_time)
+    base_year = timestamps[0].astype("datetime64[Y]").astype(int) + 1970
+    wall_clock = start_time.replace(year=int(base_year))
+    idx = start_idx
+    n_points = len(timestamps)
+
+    policy = PolicyControl(
+        theta_pause=config.theta_pause, theta_resume=config.theta_resume
+    )
+
+    state = SimState.RUNNING
+    transition_timer_s: float = 0.0
+    target_after_transition: SimState | None = None
+
+    tokens_total = profile.dataset_tokens * config.epochs
+    tokens_remaining = tokens_total
+
+    total_wall_s: float = 0.0
+    training_s: float = 0.0
+    paused_s: float = 0.0
+    checkpoint_s: float = 0.0
+    total_energy_wh: float = 0.0
+    training_energy_wh: float = 0.0
+    paused_energy_wh: float = 0.0
+    checkpoint_energy_wh: float = 0.0
+    total_emissions_g: float = 0.0
+    num_pauses: int = 0
+
+    max_iterations = 10_000_000
+    iterations = 0
+    issues: list[str] = []
+    nan_fallbacks: int = 0
+
+    # resolve initial state
+    init_co2 = float(carbon[start_idx])
+    if not isfinite(init_co2):
+        init_co2 = mean_co2
+        nan_fallbacks += 1
+
+    if init_co2 > config.theta_pause:
+        ckpt_s = profile.checkpoint_pause_time
+        if ckpt_s > 0:
+            transition_timer_s = ckpt_s
+            target_after_transition = SimState.PAUSED
+            num_pauses += 1
+        else:
+            state = SimState.PAUSED
+            num_pauses += 1
+
+    while tokens_remaining > 0:
+        iterations += 1
+        if iterations > max_iterations:
+            issues.append(f"Iteration limit ({max_iterations}) reached")
+            break
+
+        if training_s > 0:
+            overhead_s = paused_s + checkpoint_s
+            overhead_pct = 100.0 * overhead_s / training_s
+            if overhead_pct > config.overhead_budget_pct:
+                issues.append(
+                    f"Overhead {overhead_pct:.1f}% exceeds budget "
+                    f"{config.overhead_budget_pct:.0f}%"
+                )
+                break
+
+        co2 = float(carbon[idx])
+        if not isfinite(co2):
+            co2 = mean_co2
+            nan_fallbacks += 1
+
+        dt_s = step_s
+        cur_time = wall_clock
+
+        # checkpoint transition
+        if transition_timer_s > 0:
+            spent_s = min(dt_s, transition_timer_s)
+            transition_timer_s -= spent_s
+            e_wh = energy_wh(train_power_w, spent_s)
+            em_g = emissions_g(e_wh, co2)
+            checkpoint_s += spent_s
+            checkpoint_energy_wh += e_wh
+            total_energy_wh += e_wh
+            total_emissions_g += em_g
+            total_wall_s += spent_s
+            wall_clock += timedelta(seconds=spent_s)
+            dt_s -= spent_s
+            if transition_timer_s <= 0:
+                assert target_after_transition is not None
+                state = target_after_transition
+                target_after_transition = None
+            if dt_s <= 0:
+                idx = (idx + 1) % n_points
+                yield _build_progress(
+                    cur_time,
+                    co2,
+                    state,
+                    tokens_remaining,
+                    tokens_total,
+                    total_wall_s,
+                    training_s,
+                    paused_s,
+                    checkpoint_s,
+                    total_energy_wh,
+                    training_energy_wh,
+                    paused_energy_wh,
+                    checkpoint_energy_wh,
+                    total_emissions_g,
+                    num_pauses,
+                    False,
+                    issues,
+                    nan_fallbacks,
+                )
+                continue
+            cur_time = wall_clock
+
+        # policy evaluation
+        action = policy.evaluate(co2, state == SimState.PAUSED)
+
+        if action == PolicyAction.PAUSE and state == SimState.RUNNING:
+            num_pauses += 1
+            overhead_s = profile.checkpoint_pause_time
+            if overhead_s <= 0:
+                state = SimState.PAUSED
+            else:
+                transition_timer_s = overhead_s
+                target_after_transition = SimState.PAUSED
+                yield _build_progress(
+                    cur_time,
+                    co2,
+                    state,
+                    tokens_remaining,
+                    tokens_total,
+                    total_wall_s,
+                    training_s,
+                    paused_s,
+                    checkpoint_s,
+                    total_energy_wh,
+                    training_energy_wh,
+                    paused_energy_wh,
+                    checkpoint_energy_wh,
+                    total_emissions_g,
+                    num_pauses,
+                    False,
+                    issues,
+                    nan_fallbacks,
+                )
+                continue
+
+        if action == PolicyAction.RESUME and state == SimState.PAUSED:
+            overhead_s = profile.checkpoint_resume_time
+            if overhead_s <= 0:
+                state = SimState.RUNNING
+            else:
+                transition_timer_s = overhead_s
+                target_after_transition = SimState.RUNNING
+                yield _build_progress(
+                    cur_time,
+                    co2,
+                    state,
+                    tokens_remaining,
+                    tokens_total,
+                    total_wall_s,
+                    training_s,
+                    paused_s,
+                    checkpoint_s,
+                    total_energy_wh,
+                    training_energy_wh,
+                    paused_energy_wh,
+                    checkpoint_energy_wh,
+                    total_emissions_g,
+                    num_pauses,
+                    False,
+                    issues,
+                    nan_fallbacks,
+                )
+                continue
+
+        # spend dt_s in current state
+        if state == SimState.RUNNING:
+            max_t = int(tps * dt_s)
+            tokens_step = min(max_t, tokens_remaining)
+            effective_s = dt_s if tokens_step >= max_t else (tokens_step / tps)
+            tokens_remaining -= tokens_step
+            e_wh = energy_wh(train_power_w, effective_s)
+            em_g = emissions_g(e_wh, co2)
+            training_s += effective_s
+            training_energy_wh += e_wh
+            total_energy_wh += e_wh
+            total_emissions_g += em_g
+            total_wall_s += effective_s
+            wall_clock += timedelta(seconds=effective_s)
+            idle_s = dt_s - effective_s
+            if idle_s > 0:
+                i_wh = energy_wh(pause_power_w, idle_s)
+                paused_s += idle_s
+                paused_energy_wh += i_wh
+                total_energy_wh += i_wh
+                total_emissions_g += emissions_g(i_wh, co2)
+                total_wall_s += idle_s
+                wall_clock += timedelta(seconds=idle_s)
+        else:
+            e_wh = energy_wh(pause_power_w, dt_s)
+            em_g = emissions_g(e_wh, co2)
+            paused_s += dt_s
+            paused_energy_wh += e_wh
+            total_energy_wh += e_wh
+            total_emissions_g += em_g
+            total_wall_s += dt_s
+            wall_clock += timedelta(seconds=dt_s)
+
+        idx = (idx + 1) % n_points
+
+        yield _build_progress(
+            cur_time,
+            co2,
+            state,
+            tokens_remaining,
+            tokens_total,
+            total_wall_s,
+            training_s,
+            paused_s,
+            checkpoint_s,
+            total_energy_wh,
+            training_energy_wh,
+            paused_energy_wh,
+            checkpoint_energy_wh,
+            total_emissions_g,
+            num_pauses,
+            False,
+            issues,
+            nan_fallbacks,
+        )
+
+    # final snapshot
+    stop_reason = (
+        "completed"
+        if tokens_remaining <= 0
+        else (
+            "budget_exceeded"
+            if (
+                (paused_s + checkpoint_s) / max(training_s, 1.0)
+                > config.overhead_budget_pct / 100.0
+            )
+            else "iteration_limit"
+        )
+    )
+
+    yield _build_progress(
+        wall_clock,
+        co2,
+        state,
+        tokens_remaining,
+        tokens_total,
+        total_wall_s,
+        training_s,
+        paused_s,
+        checkpoint_s,
+        total_energy_wh,
+        training_energy_wh,
+        paused_energy_wh,
+        checkpoint_energy_wh,
+        total_emissions_g,
+        num_pauses,
+        True,
+        issues,
+        nan_fallbacks,
+        stop_reason,
+    )
+
+
+def _build_progress(
+    ts,
+    co2,
+    state,
+    tokens_rem,
+    tokens_tot,
+    wall_s,
+    train_s,
+    pause_s,
+    ckpt_s,
+    energy_wh,
+    train_ewh,
+    pause_ewh,
+    ckpt_ewh,
+    em_g,
+    pauses,
+    done,
+    issues,
+    nan_fb,
+    stop_reason="",
+) -> SimProgress:
+    return SimProgress(
+        timestamp=ts,
+        carbon_intensity=co2,
+        state=state,
+        tokens_remaining=tokens_rem,
+        tokens_total=tokens_tot,
+        total_wall_s=wall_s,
+        training_s=train_s,
+        paused_s=pause_s,
+        checkpoint_s=ckpt_s,
+        total_energy_wh=energy_wh,
+        training_energy_wh=train_ewh,
+        paused_energy_wh=pause_ewh,
+        checkpoint_energy_wh=ckpt_ewh,
+        total_emissions_g=em_g,
+        num_pauses=pauses,
+        done=done,
+        stop_reason=stop_reason,
+        issues=tuple(issues),
+        nan_fallbacks=nan_fb,
+    )
 
 
 # ---------------------------------------------------------------------------

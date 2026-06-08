@@ -15,6 +15,51 @@ class SimState(Enum):
 
 
 @dataclass
+class SimProgress:
+    """Intermediate simulation state yielded after each grid-data step.
+
+    All accumulators use SI base units (seconds, Wh, g CO₂).
+    Both the stepwise GUI and batch ``run_one`` consume this.
+    """
+
+    timestamp: datetime
+    carbon_intensity: float
+    state: SimState
+    tokens_remaining: int
+    tokens_total: int
+
+    # Accumulators
+    total_wall_s: float
+    training_s: float
+    paused_s: float
+    checkpoint_s: float
+    total_energy_wh: float
+    training_energy_wh: float
+    paused_energy_wh: float
+    checkpoint_energy_wh: float
+    total_emissions_g: float
+    num_pauses: int
+
+    # Termination
+    done: bool
+    stop_reason: str = ""
+    issues: tuple[str, ...] = ()
+    nan_fallbacks: int = 0
+
+    @property
+    def tokens_processed(self) -> int:
+        return self.tokens_total - self.tokens_remaining
+
+    @property
+    def completion_pct(self) -> float:
+        return (
+            100.0 * self.tokens_processed / self.tokens_total
+            if self.tokens_total > 0
+            else 0.0
+        )
+
+
+@dataclass
 class SimulationResult:
     """Aggregated output for a single (scenario, region, years,
     start, threshold) combination.

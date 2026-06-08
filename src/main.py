@@ -4,9 +4,10 @@ Runs simulation scenarios with available CO2 intensity data and
 prints a summary table + CSV output.
 
 Usage:
-    python src/main.py                # fast: 2 representative scenarios
-    python src/main.py --all           # all available scenarios (slow)
-    python src/main.py --limit N       # first N scenarios only
+    python src/main.py                           # fast: 2 representative scenarios
+    python src/main.py --all                     # all available scenarios (slow)
+    python src/main.py --limit N                 # first N scenarios only
+    python src/main.py --gui                     # interactive simulation GUI
 """
 
 from __future__ import annotations
@@ -113,7 +114,18 @@ def main() -> None:
     parser.add_argument(
         "--limit", type=int, default=None, help="Limit to first N scenarios"
     )
+    parser.add_argument(
+        "--gui",
+        action="store_true",
+        help="Launch interactive simulation GUI",
+    )
     args = parser.parse_args()
+
+    if args.gui:
+        from gui import run_gui
+
+        run_gui(DATA_DIR)
+        return
 
     logging.basicConfig(
         level=logging.INFO,

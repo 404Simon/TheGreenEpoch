@@ -11,15 +11,11 @@ Usage:
 
 from __future__ import annotations
 
+import argparse
 import csv
 import logging
-import sys
 import time
 from pathlib import Path
-
-_src = Path(__file__).resolve().parent
-if str(_src) not in sys.path:
-    sys.path.insert(0, str(_src))
 
 from simulation import ScenarioParameters, SimulationRunner, load_scenarios
 
@@ -108,8 +104,6 @@ def save_results(results, path: Path) -> None:
 
 
 def main() -> None:
-    import argparse
-
     parser = argparse.ArgumentParser(description="TheGreenEpoch pilot simulation run")
     parser.add_argument(
         "--all",

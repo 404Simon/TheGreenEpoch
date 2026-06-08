@@ -79,6 +79,53 @@ class SimulationResult:
         return self.paused_time_h + self.checkpoint_overhead_h
 
     @property
+    def idle_energy_kwh(self) -> float:
+        """Total non-training energy (paused + checkpoint)."""
+        return self.paused_energy_kwh + self.checkpoint_energy_kwh
+    
+    @property
+    def idle_emissions_kgco2(self) -> float:
+        """Total non-training emissions (paused + checkpoint)."""
+        return self.paused_energy_kwh * self._avg_carbon_intensity() + self.checkpoint_energy_kwh * self._avg_carbon_intensity()
+    
+    @property
+    def training_efficiency_pct(self) -> float:
+        """Percentage of total wall time spent training."""
+        if self.total_wall_time_h == 0:
+            return 0.0
+        return 100.0 * self.training_time_h / self.total_wall_time_h
+    
+    @property
+    def carbon_efficiency_pct(self) -> float:
+        """Percentage of total emissions that were from training."""
+        if self.total_emissions_kgco2 == 0:
+            return 0.0
+        return 100.0 * (self.total_emissions_kgco2 - self.idle_emissions_kgco2) / self.total_emissions_kgco2
+    
+    # WRONG
+    @property
+    def baseline_emissions_kgco2(self) -> float:
+        """Estimated emissions if training had run uninterrupted."""
+        if self.training_energy_kwh == 0:
+            return 0.0
+        avg_intensity = self._avg_carbon_intensity()
+        return self.training_energy_kwh * avg_intensity
+
+    # WRONG
+    @property
+    def score(self) -> float:
+        """Custom score combining completion, overhead, and emissions."""
+        if self.overhead_budget_pct <= 0:
+            return 0.0
+        if not self.within_overhead_budget:
+            return 0.0
+        co2_savings_pct = 100.0 * (self.total_emissions_kgco2 - self.idle_emissions_kgco2) / self.total_emissions_kgco2 if self.total_emissions_kgco2 > 0 else 0.0
+        time_overhead_pct = self.actual_overhead_pct
+        epsilon = 1e-6
+        return co2_savings_pct / max(time_overhead_pct, epsilon)
+  
+
+    @property
     def ok(self) -> bool:
         return self.completed and self.within_overhead_budget and not self.issues
 

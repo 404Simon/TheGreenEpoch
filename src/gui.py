@@ -781,20 +781,17 @@ class SimulationGUI(tk.Tk):
         self._pos_marker.set_xdata([ts_hist[-1], ts_hist[-1]])
         self._pos_dot.set_offsets([[ts_hist[-1], carb_hist[-1]]])
 
-        # Update zoom slider max as history grows
-        n_pts = len(ts_hist)
-        if n_pts > self._zoom_slider.cget("to"):
-            self._zoom_slider.configure(to=n_pts)
-
-        # Zoom to recent N points (controlled by zoom slider)
+        # Time-based zoom window (stable under history decimation)
         n = self._zoom_var.get()
-        if n_pts == 1:
+        n_pts = len(ts_hist)
+        if n_pts <= 1:
             self._ax.set_xlim(
-                ts_hist[0] - timedelta(hours=1), ts_hist[0] + timedelta(hours=1)
+                ts_hist[-1] - timedelta(hours=1), ts_hist[-1] + timedelta(hours=1)
             )
         else:
-            n = min(n, n_pts)
-            self._ax.set_xlim(ts_hist[-n], ts_hist[-1])
+            avg_delta = (ts_hist[-1] - ts_hist[0]) / (n_pts - 1)
+            window = avg_delta * n
+            self._ax.set_xlim(ts_hist[-1] - window, ts_hist[-1])
 
         vals = carb_hist + (
             [self._config.theta_pause] if hasattr(self, "_config") else []

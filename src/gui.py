@@ -17,6 +17,7 @@ from typing import Any
 import matplotlib
 
 matplotlib.use("TkAgg")
+import matplotlib.dates as mdates
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 
@@ -40,6 +41,7 @@ CHECKPOINT_COLOR = "#6a1b9a"
 CO2_LINE = "#00838f"
 THRESH_PAUSE = "#d32f2f"
 THRESH_RESUME = "#388e3c"
+NOON_COLOR = "#f9a825"
 
 
 def _btn(parent, text, command, **kw):
@@ -180,6 +182,8 @@ class SimulationGUI(tk.Tk):
         self._finished = False
         self._steps_per_tick = 5
         self._tick_count = 0
+        self._show_noon = tk.BooleanVar(value=True)
+        self._noon_lines: list = []
 
         self.title("TheGreenEpoch - CO2-Aware Training Simulator")
         self.minsize(1200, 720)
@@ -345,6 +349,14 @@ class SimulationGUI(tk.Tk):
         )
         self._speed_lbl.grid(row=1, column=2, sticky="w", padx=(4, 0), pady=(0, 6))
 
+        tk.Checkbutton(
+            frame,
+            text="☀ Noon",
+            variable=self._show_noon,
+            command=self._toggle_noon,
+            font=("sans-serif", 9),
+        ).grid(row=2, column=0, columnspan=3, sticky="w", padx=2, pady=(0, 4))
+
     def _build_stats(self, parent: tk.Frame) -> None:
         frame = tk.LabelFrame(
             parent, text="Statistics", font=("sans-serif", 10, "bold")
@@ -441,6 +453,9 @@ class SimulationGUI(tk.Tk):
     def _idle_plot(self) -> None:
         """Show a welcome placeholder on the canvas."""
         self._ax.clear()
+        for line in self._noon_lines:
+            line.remove()
+        self._noon_lines.clear()
         self._ax.text(
             0.5,
             0.5,
@@ -511,6 +526,10 @@ class SimulationGUI(tk.Tk):
 
     def _setup_plot(self, config: Any) -> None:
         self._ax.clear()
+
+        for line in self._noon_lines:
+            line.remove()
+        self._noon_lines.clear()
 
         self._ax.axhline(
             config.theta_pause,
@@ -644,6 +663,9 @@ class SimulationGUI(tk.Tk):
         self._carb_min = 0.0
         self._carb_max = 0.0
         self._tick_count = 0
+        for line in self._noon_lines:
+            line.remove()
+        self._noon_lines.clear()
         self._play_btn.configure(text="Play", bg=ACCENT)
         self._prog_var.set(0.0)
         self._prog_lbl.configure(text="0.0%")
@@ -684,6 +706,12 @@ class SimulationGUI(tk.Tk):
         self._prog_var.set(p.completion_pct)
         self._prog_lbl.configure(text=f"{p.completion_pct:.1f}%")
 
+    def _toggle_noon(self) -> None:
+        if self._ts_hist:
+            self._update_plot()
+        else:
+            self._canvas.draw_idle()
+
     def _update_plot(self) -> None:
         """Update matplotlib artists and redraw (cheaper with display decimation)."""
         if not self._ts_hist:
@@ -723,6 +751,34 @@ class SimulationGUI(tk.Tk):
             max(0, min(self._carb_min, theta) - 50),
             max(self._carb_max, theta) + 50,
         )
+
+        # noon markers
+        for line in self._noon_lines:
+            line.remove()
+        self._noon_lines.clear()
+
+        if self._show_noon.get():
+            xmin_f, xmax_f = self._ax.get_xlim()
+            try:
+                tmin = mdates.num2date(xmin_f).replace(
+                    hour=12, minute=0, second=0, microsecond=0
+                ).astimezone(timezone.utc)
+                tmax = mdates.num2date(xmax_f).astimezone(timezone.utc)
+                while tmin <= tmax:
+                    line = self._ax.axvline(
+                        tmin,
+                        color=NOON_COLOR,
+                        linewidth=1.0,
+                        alpha=0.55,
+                        linestyle="--",
+                        zorder=2,
+                    )
+                    self._noon_lines.append(line)
+                    tmin += timedelta(days=1)
+                    if len(self._noon_lines) > 366:
+                        break
+            except (ValueError, OverflowError):
+                pass
 
         self._canvas.draw_idle()
 

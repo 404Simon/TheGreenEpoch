@@ -1,7 +1,6 @@
-"""Interactive GUI for CO₂-aware LLM training simulation.
+"""Interactive GUI for CO2-aware LLM training simulation.
 
-Uses the same ``simulate_stepwise`` generator as the batch runner —
-zero code duplication.
+Shares the ``simulate_stepwise`` generator with the batch runner.
 """
 
 from __future__ import annotations
@@ -9,6 +8,7 @@ from __future__ import annotations
 import csv
 import logging
 import tkinter as tk
+from collections.abc import Generator
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
@@ -17,8 +17,6 @@ from typing import Any
 import matplotlib
 
 matplotlib.use("TkAgg")
-matplotlib.rcParams["font.family"] = "sans-serif"
-matplotlib.rcParams["font.sans-serif"] = ["DejaVu Sans", "sans-serif"]
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 
@@ -32,29 +30,27 @@ from simulation import (
     simulate_stepwise,
 )
 
-# ---------------------------------------------------------------------------
-# Theme
-# ---------------------------------------------------------------------------
-
-BG = "#1a1a2e"
-BG2 = "#16213e"
-FG = "#e0e0e0"
-ACCENT = "#4caf50"
-ACCENT2 = "#00bcd4"
-PAUSE_COLOR = "#ff9800"
-RUNNING_COLOR = "#4caf50"
-CHECKPOINT_COLOR = "#9c27b0"
-CO2_LINE = "#00bcd4"
-THRESH_PAUSE = "#ef5350"
-THRESH_RESUME = "#66bb6a"
-
 logger = logging.getLogger("gui")
 
-_AUI = {
-    "font": ("sans-serif", 10),
-    "bg": BG,
-    "fg": FG,
-}
+ACCENT = "#2e7d32"
+ACCENT2 = "#00838f"
+PAUSE_COLOR = "#e65100"
+RUNNING_COLOR = "#2e7d32"
+CHECKPOINT_COLOR = "#6a1b9a"
+CO2_LINE = "#00838f"
+THRESH_PAUSE = "#d32f2f"
+THRESH_RESUME = "#388e3c"
+
+
+def _btn(parent, text, command, **kw):
+    defaults = dict(relief="flat", cursor="hand2")
+    defaults.update(kw)
+    return tk.Button(parent, text=text, command=command, **defaults)
+
+
+# -- max display points for plotting performance --
+_MAX_DISPLAY_PTS = 2_000
+
 
 # ---------------------------------------------------------------------------
 # New-scenario dialog
@@ -78,7 +74,6 @@ class NewScenarioDialog(tk.Toplevel):
     def __init__(self, parent: tk.Tk, models: list[str]) -> None:
         super().__init__(parent)
         self.title("New Scenario")
-        self.configure(bg=BG)
         self.resizable(False, False)
         self.transient(parent)
         self.grab_set()
@@ -87,44 +82,29 @@ class NewScenarioDialog(tk.Toplevel):
         self._entries: dict[str, tk.Entry] = {}
 
         for i, (key, label) in enumerate(self.FIELDS):
-            tk.Label(self, text=label, **_AUI).grid(
+            tk.Label(self, text=label).grid(
                 row=i, column=0, sticky="w", padx=10, pady=3
             )
-            entry = tk.Entry(
-                self,
-                width=40,
-                bg=BG2,
-                fg=FG,
-                insertbackground=FG,
-                relief="flat",
-                highlightthickness=1,
-            )
+            entry = tk.Entry(self, width=40)
             entry.grid(row=i, column=1, padx=10, pady=3)
             self._entries[key] = entry
 
-        # Buttons
-        btn_frame = tk.Frame(self, bg=BG)
+        btn_frame = tk.Frame(self)
         btn_frame.grid(row=len(self.FIELDS), column=0, columnspan=2, pady=12)
 
-        tk.Button(
+        _btn(
             btn_frame,
-            text="Run",
-            width=10,
+            "Run",
+            self._accept,
             bg=ACCENT,
             fg="white",
-            relief="flat",
-            cursor="hand2",
-            command=self._accept,
-        ).pack(side="left", padx=4)
-        tk.Button(
-            btn_frame,
-            text="Cancel",
             width=10,
-            bg="#37474f",
-            fg=FG,
-            relief="flat",
-            cursor="hand2",
-            command=self.destroy,
+        ).pack(side="left", padx=4)
+        _btn(
+            btn_frame,
+            "Cancel",
+            self.destroy,
+            width=10,
         ).pack(side="left", padx=4)
 
         self.wait_window()
@@ -145,19 +125,9 @@ class NewScenarioDialog(tk.Toplevel):
             ]
             start_strs = [x.strip() for x in raw["start_times"].split(",") if x.strip()]
             start_times = [
-                (
-                    datetime.strptime(f"1970-{s}", "%Y-%m-%d")
-                    if "-" in s
-                    else datetime.strptime(f"1970-{s}", "%Y-%m-%d")
-                )
-                for s in start_strs
-            ]
-            # Re-parse properly
-            start_times = [
                 datetime(1970, *map(int, s.split("-")), tzinfo=timezone.utc)
                 for s in start_strs
             ]
-
             self.result = ScenarioParameters(
                 description=raw["description"],
                 model=raw["model"],
@@ -183,6 +153,7 @@ class SimulationGUI(tk.Tk):
 
     REFRESH_MS = 40
     MAX_HISTORY = 10_000
+    PLOT_INTERVAL = 3  # redraw canvas every N animation ticks
 
     def __init__(
         self,
@@ -198,19 +169,20 @@ class SimulationGUI(tk.Tk):
         self.data_dir = data_dir
 
         # simulation state
-        self._gen: Any = None
+        self._gen: Generator[SimProgress, None, None] | None = None
+        self._config: Any = None
         self._history: list[SimProgress] = []
+        self._ts_hist: list[datetime] = []
+        self._carb_hist: list[float] = []
+        self._carb_min: float = 0.0  # incremental y-range tracking
+        self._carb_max: float = 0.0
         self._playing = False
         self._finished = False
         self._steps_per_tick = 5
+        self._tick_count = 0
 
-        self.title("TheGreenEpoch — CO₂-Aware Training Simulator")
-        self.configure(bg=BG)
+        self.title("TheGreenEpoch - CO2-Aware Training Simulator")
         self.minsize(1200, 720)
-
-        style = ttk.Style(self)
-        style.theme_use("clam")
-        style.configure(".", background=BG, foreground=FG, font=("sans-serif", 10))
 
         self._build_ui()
         self._setup_scenario_selector()
@@ -229,24 +201,21 @@ class SimulationGUI(tk.Tk):
         # title
         tk.Label(
             self,
-            text="🌱  TheGreenEpoch  —  CO₂-Aware Training Simulator",
+            text="TheGreenEpoch  -  CO2-Aware Training Simulator",
             font=("sans-serif", 16, "bold"),
-            bg=BG,
-            fg=ACCENT,
             pady=10,
         ).grid(row=0, column=0, columnspan=2, sticky="ew")
 
         # ---- left: plot ----
-        plot_frame = tk.Frame(self, bg=BG)
+        plot_frame = tk.Frame(self)
         plot_frame.grid(row=1, column=0, sticky="nsew", padx=(10, 5), pady=(0, 10))
         plot_frame.grid_rowconfigure(1, weight=1)
         plot_frame.grid_columnconfigure(0, weight=1)
 
-        # scenario selector row
-        sel_frame = tk.Frame(plot_frame, bg=BG)
+        sel_frame = tk.Frame(plot_frame)
         sel_frame.grid(row=0, column=0, sticky="ew", pady=(0, 5))
 
-        tk.Label(sel_frame, text="Scenario:", **_AUI).pack(side="left", padx=(0, 4))
+        tk.Label(sel_frame, text="Scenario:").pack(side="left", padx=(0, 4))
         self._sc_var = tk.StringVar()
         self._sc_menu = ttk.Combobox(
             sel_frame,
@@ -256,63 +225,51 @@ class SimulationGUI(tk.Tk):
         )
         self._sc_menu.pack(side="left", fill="x", expand=True)
 
-        tk.Button(
+        _btn(
             sel_frame,
-            text="＋ New",
+            "+ New",
+            self._new_scenario,
             width=6,
-            bg="#37474f",
-            fg=FG,
-            relief="flat",
-            cursor="hand2",
-            command=self._new_scenario,
         ).pack(side="left", padx=(4, 0))
 
-        # matplotlib canvas + zoom toolbar
-        self._fig = Figure(figsize=(8, 4.5), dpi=110, facecolor=BG)
-        self._ax = self._fig.add_subplot(111, facecolor=BG2)
+        # matplotlib canvas
+        self._fig = Figure(figsize=(8, 4.5), dpi=100)
+        self._ax = self._fig.add_subplot(111)
         self._canvas = FigureCanvasTkAgg(self._fig, master=plot_frame)
         self._canvas_widget = self._canvas.get_tk_widget()
         self._canvas_widget.grid(row=1, column=0, sticky="nsew")
 
-        # X-axis zoom slider
-        zoom_frame = tk.Frame(plot_frame, bg=BG2)
+        # zoom slider
+        zoom_frame = tk.Frame(plot_frame)
         zoom_frame.grid(row=2, column=0, sticky="ew", pady=(2, 0))
         zoom_frame.grid_columnconfigure(1, weight=1)
 
-        tk.Label(
-            zoom_frame, text="View range:", font=("sans-serif", 9), bg=BG2, fg=FG
-        ).grid(row=0, column=0, padx=(4, 2))
+        tk.Label(zoom_frame, text="View range:").grid(row=0, column=0, padx=(4, 2))
 
         self._zoom_var = tk.IntVar(value=50)
-        self._zoom_slider = tk.Scale(
+        tk.Scale(
             zoom_frame,
             from_=10,
             to=5000,
             orient="horizontal",
             variable=self._zoom_var,
-            bg=BG2,
-            fg=FG,
-            troughcolor="#0d1117",
-            highlightthickness=0,
             resolution=10,
             command=self._on_zoom_change,
             length=200,
             sliderlength=14,
-        )
-        self._zoom_slider.grid(row=0, column=1, sticky="ew", padx=2)
+        ).grid(row=0, column=1, sticky="ew", padx=2)
 
         self._zoom_lbl = tk.Label(
             zoom_frame,
             text="50 pts",
             width=8,
             font=("sans-serif", 9),
-            bg=BG2,
             fg=ACCENT2,
         )
         self._zoom_lbl.grid(row=0, column=2, padx=(2, 4))
 
         # ---- right panel ----
-        right = tk.Frame(self, bg=BG)
+        right = tk.Frame(self)
         right.grid(row=1, column=1, sticky="nsew", padx=(5, 10), pady=(0, 10))
         right.grid_rowconfigure(3, weight=1)
         right.grid_columnconfigure(0, weight=1)
@@ -323,82 +280,50 @@ class SimulationGUI(tk.Tk):
         self._build_save(right)
 
         # status bar
-        self._status_var = tk.StringVar(
-            value="Ready  —  select scenario and press Play"
-        )
+        self._status_var = tk.StringVar(value="Ready - select scenario and press Play")
         tk.Label(
             self,
             textvariable=self._status_var,
             font=("sans-serif", 9),
-            bg=BG2,
-            fg=FG,
             anchor="w",
             padx=10,
             pady=3,
         ).grid(row=2, column=0, columnspan=2, sticky="ew")
 
     def _build_controls(self, parent: tk.Frame) -> None:
-        frame = tk.LabelFrame(
-            parent,
-            text="Controls",
-            font=("sans-serif", 10, "bold"),
-            bg=BG,
-            fg=FG,
-        )
+        frame = tk.LabelFrame(parent, text="Controls", font=("sans-serif", 10, "bold"))
         frame.grid(row=0, column=0, sticky="ew", pady=(0, 8), padx=2)
         frame.grid_columnconfigure(2, weight=1)
 
-        btn_row = tk.Frame(frame, bg=BG)
+        btn_row = tk.Frame(frame)
         btn_row.grid(row=0, column=0, columnspan=3, pady=(6, 8))
 
-        def _mk_btn(text, cmd, *, font=None, **kw):
-            return tk.Button(
-                btn_row,
-                text=text,
-                width=8,
-                font=font or ("sans-serif", 11, "bold"),
-                relief="flat",
-                cursor="hand2",
-                command=cmd,
-                **kw,
-            )
-
-        self._play_btn = _mk_btn(
-            "▶ Play",
+        self._play_btn = _btn(
+            btn_row,
+            "Play",
             self._toggle_play,
             bg=ACCENT,
             fg="white",
-            activebackground="#388e3c",
+            font=("sans-serif", 11, "bold"),
         )
         self._play_btn.pack(side="left", padx=2)
 
-        self._step_btn = _mk_btn(
-            "⏭ Step",
+        _btn(
+            btn_row,
+            "Step",
             self._step_once,
-            bg="#37474f",
-            fg=FG,
-            activebackground="#455a64",
             font=("sans-serif", 10),
-        )
-        self._step_btn.pack(side="left", padx=2)
+        ).pack(side="left", padx=2)
 
-        self._reset_btn = _mk_btn(
-            "⏮ Reset",
+        _btn(
+            btn_row,
+            "Reset",
             self._reset,
-            bg="#37474f",
-            fg=FG,
-            activebackground="#455a64",
             font=("sans-serif", 10),
-        )
-        self._reset_btn.pack(side="left", padx=2)
+        ).pack(side="left", padx=2)
 
-        # speed
-        tk.Label(frame, text="Speed:", **_AUI).grid(
-            row=1,
-            column=0,
-            sticky="w",
-            padx=(2, 4),
-            pady=(0, 6),
+        tk.Label(frame, text="Speed:").grid(
+            row=1, column=0, sticky="w", padx=(2, 4), pady=(0, 6)
         )
         self._speed_var = tk.DoubleVar(value=1.0)
         tk.Scale(
@@ -407,113 +332,79 @@ class SimulationGUI(tk.Tk):
             to=100.0,
             orient="horizontal",
             variable=self._speed_var,
-            bg=BG,
-            fg=FG,
-            troughcolor=BG2,
-            highlightthickness=0,
             resolution=0.1,
             command=self._on_speed_change,
             length=180,
         ).grid(row=1, column=1, sticky="ew", pady=(0, 6))
         self._speed_lbl = tk.Label(
             frame,
-            text="1.0×",
+            text="1.0x",
             width=5,
             font=("sans-serif", 10, "bold"),
-            bg=BG,
             fg=ACCENT2,
         )
         self._speed_lbl.grid(row=1, column=2, sticky="w", padx=(4, 0), pady=(0, 6))
 
     def _build_stats(self, parent: tk.Frame) -> None:
         frame = tk.LabelFrame(
-            parent,
-            text="Statistics",
-            font=("sans-serif", 10, "bold"),
-            bg=BG,
-            fg=FG,
+            parent, text="Statistics", font=("sans-serif", 10, "bold")
         )
         frame.grid(row=1, column=0, sticky="ew", pady=(0, 8), padx=2)
         frame.grid_columnconfigure(1, weight=1)
 
         rows = [
             ("Status", "st", ACCENT),
-            ("Wall Time", "st_wall", FG),
+            ("Wall Time", "st_wall", None),
             ("Training", "st_train", RUNNING_COLOR),
             ("Paused", "st_pause", PAUSE_COLOR),
             ("Checkpoint", "st_ckpt", CHECKPOINT_COLOR),
-            ("CO₂ Now", "st_co2", CO2_LINE),
-            ("Emissions", "st_em", "#ef9a9a"),
-            ("Energy", "st_en", "#fff59d"),
-            ("Pauses", "st_pz", FG),
+            ("CO2 Now", "st_co2", CO2_LINE),
+            ("Emissions", "st_em", "#c62828"),
+            ("Energy", "st_en", "#f57f17"),
+            ("Pauses", "st_pz", None),
         ]
         self._stat: dict[str, tk.Label] = {}
         for i, (label, key, color) in enumerate(rows):
-            tk.Label(
-                frame,
-                text=label + ":",
-                font=("sans-serif", 9),
-                bg=BG,
-                fg="#9e9e9e",
-                anchor="w",
-            ).grid(row=i, column=0, sticky="w", pady=1)
-            v = tk.Label(
-                frame,
-                text="—",
-                font=("sans-serif", 9, "bold"),
-                bg=BG,
-                fg=color,
-                anchor="e",
+            tk.Label(frame, text=label + ":", font=("sans-serif", 9), anchor="w").grid(
+                row=i, column=0, sticky="w", pady=1
             )
+            kw = {"font": ("sans-serif", 9, "bold"), "anchor": "e"}
+            if color:
+                kw["fg"] = color
+            v = tk.Label(frame, text="-", **kw)
             v.grid(row=i, column=1, sticky="e", pady=1, padx=(10, 0))
             self._stat[key] = v
 
     def _build_progress(self, parent: tk.Frame) -> None:
         frame = tk.LabelFrame(
-            parent,
-            text="Training Progress",
-            font=("sans-serif", 10, "bold"),
-            bg=BG,
-            fg=FG,
+            parent, text="Training Progress", font=("sans-serif", 10, "bold")
         )
         frame.grid(row=2, column=0, sticky="ew", pady=(0, 8), padx=2)
         frame.grid_columnconfigure(0, weight=1)
 
         self._prog_var = tk.DoubleVar(value=0.0)
-        ttk.Progressbar(
-            frame,
-            variable=self._prog_var,
-            maximum=100.0,
-        ).grid(row=0, column=0, sticky="ew", pady=(6, 4), padx=4)
+        ttk.Progressbar(frame, variable=self._prog_var, maximum=100.0).grid(
+            row=0, column=0, sticky="ew", pady=(6, 4), padx=4
+        )
 
         self._prog_lbl = tk.Label(
             frame,
             text="0.0%",
             font=("sans-serif", 12, "bold"),
-            bg=BG,
             fg=ACCENT,
         )
         self._prog_lbl.grid(row=1, column=0, pady=(0, 6))
 
     def _build_save(self, parent: tk.Frame) -> None:
-        frame = tk.LabelFrame(
-            parent,
-            text="Export",
-            font=("sans-serif", 10, "bold"),
-            bg=BG,
-            fg=FG,
-        )
+        frame = tk.LabelFrame(parent, text="Export", font=("sans-serif", 10, "bold"))
         frame.grid(row=3, column=0, sticky="ew", padx=2)
         frame.grid_columnconfigure(0, weight=1)
 
         self._save_btn = tk.Button(
             frame,
-            text="💾  Save Results as CSV",
+            text="Save Results as CSV",
             width=18,
             font=("sans-serif", 10),
-            bg="#37474f",
-            fg=FG,
-            activebackground="#455a64",
             relief="flat",
             cursor="hand2",
             state="disabled",
@@ -527,7 +418,7 @@ class SimulationGUI(tk.Tk):
 
     def _setup_scenario_selector(self) -> None:
         names = [
-            f"{s.description} ({s.region}, θ={s.thresholds[0]})" for s in self.scenarios
+            f"{s.description} ({s.region}, T={s.thresholds[0]})" for s in self.scenarios
         ]
         self._sc_menu["values"] = names
         if names:
@@ -549,26 +440,22 @@ class SimulationGUI(tk.Tk):
 
     def _idle_plot(self) -> None:
         """Show a welcome placeholder on the canvas."""
-        try:
-            self._ax.clear()
-            self._ax.set_facecolor(BG2)
-            self._ax.text(
-                0.5,
-                0.5,
-                "TheGreenEpoch \u2014 CO\u2082-Aware Training Simulator\n\n"
-                "Select a scenario and press Play to start",
-                transform=self._ax.transAxes,
-                fontsize=14,
-                color="#777",
-                ha="center",
-                va="center",
-            )
-            self._ax.set_xlim(0, 1)
-            self._ax.set_ylim(0, 1)
-            self._ax.axis("off")
-            self._canvas.draw()
-        except Exception as exc:
-            logger.warning("idle_plot failed: %s", exc)
+        self._ax.clear()
+        self._ax.text(
+            0.5,
+            0.5,
+            "TheGreenEpoch - CO2-Aware Training Simulator\n\n"
+            "Select a scenario and press Play to start",
+            transform=self._ax.transAxes,
+            fontsize=14,
+            color="#757575",
+            ha="center",
+            va="center",
+        )
+        self._ax.set_xlim(0, 1)
+        self._ax.set_ylim(0, 1)
+        self._ax.axis("off")
+        self._canvas.draw()
 
     def _start_simulation(self) -> bool:
         """Start a new simulation run. Returns True on success."""
@@ -581,51 +468,50 @@ class SimulationGUI(tk.Tk):
         profile = self.profiles.get(scenario.model)
         if profile is None:
             messagebox.showerror(
-                "Unknown Model", f"Model '{scenario.model}' not found in profiles."
+                "Unknown Model", f"Model '{scenario.model}' not found."
             )
             return False
 
         configs = scenario.expand()
         if not configs:
-            messagebox.showerror("No Config", "Scenario produced no simulation config.")
+            messagebox.showerror("No Config", "Scenario produced no config.")
             return False
         config = configs[0]
 
+        self._status_var.set("Loading grid data...")
+        self.config(cursor="watch")
+        self.update()
         try:
             self._gen = simulate_stepwise(profile, config, self.runner._provider)
         except ValueError as exc:
+            self.config(cursor="")
             messagebox.showerror("Data Error", str(exc))
             return False
 
-        # Show loading indicator immediately (before data load)
-        self._status_var.set("Loading grid data…")
-        self.config(cursor="watch")
-        self.update_idletasks()
-
         self._history.clear()
+        self._ts_hist.clear()
+        self._carb_hist.clear()
+        self._tick_count = 0
         self._finished = False
+        self._config = config
         self._setup_plot(config)
         self._save_btn.configure(state="disabled")
 
-        # Advance one step and show it immediately
         p = self._advance(1)
 
         self.config(cursor="")
         if p is not None:
             self._status_var.set(
-                f"Running {scenario.description} · {scenario.region} · "
-                f"θ_pause={config.theta_pause} · θ_resume={config.theta_resume}"
+                f"Running {scenario.description} - {scenario.region} - "
+                f"T_pause={config.theta_pause} T_resume={config.theta_resume}"
             )
-            self._update_display(p)
-            self.update_idletasks()
+            self._update_stats(p)
+            self._update_plot()
         return True
 
     def _setup_plot(self, config: Any) -> None:
         self._ax.clear()
-        self._ax.set_facecolor(BG2)
-        self._config = config
 
-        # Threshold lines (static)
         self._ax.axhline(
             config.theta_pause,
             color=THRESH_PAUSE,
@@ -641,21 +527,34 @@ class SimulationGUI(tk.Tk):
             alpha=0.8,
         )
 
-        # Dynamic artists — updated in-place (never clear/replot)
         (self._hist_line,) = self._ax.plot(
-            [], [], color=CO2_LINE, linewidth=1.2, alpha=0.85
+            [],
+            [],
+            color=CO2_LINE,
+            linewidth=1.2,
+            alpha=0.85,
         )
         self._pos_marker = self._ax.axvline(
-            0, color="white", linewidth=1.0, alpha=0.5, linestyle=":"
+            0,
+            color="#424242",
+            linewidth=1.0,
+            alpha=0.5,
+            linestyle=":",
         )
         self._pos_dot = self._ax.scatter(
-            [], [], color="white", s=30, zorder=6, edgecolors=BG, linewidth=0.5
+            [],
+            [],
+            color="#424242",
+            s=30,
+            zorder=6,
+            edgecolors="white",
+            linewidth=0.5,
         )
 
-        self._ax.set_xlabel("Time", color=FG, fontsize=9)
-        self._ax.set_ylabel("gCO₂eq/kWh", color=FG, fontsize=9)
-        self._ax.tick_params(colors=FG, labelsize=8)
-        self._ax.grid(True, alpha=0.1, color=FG)
+        self._ax.set_xlabel("Time", fontsize=9)
+        self._ax.set_ylabel("gCO2eq/kWh", fontsize=9)
+        self._ax.tick_params(labelsize=8)
+        self._ax.grid(True, alpha=0.3)
         self._fig.tight_layout()
         self._canvas.draw()
 
@@ -669,17 +568,14 @@ class SimulationGUI(tk.Tk):
             return
         self._playing = not self._playing
         self._play_btn.configure(
-            text="⏸ Pause" if self._playing else "▶ Play",
-            bg="#e53935" if self._playing else ACCENT,
+            text="Pause" if self._playing else "Play",
+            bg="#c62828" if self._playing else ACCENT,
         )
         if self._playing:
             self._animate()
 
     def _advance(self, n: int = 1) -> SimProgress | None:
-        """Advance simulation *n* steps without touching the GUI.
-
-        Returns the last ``SimProgress`` (or ``None`` if nothing ran).
-        """
+        """Advance simulation *n* steps without touching the GUI."""
         if self._gen is None or self._finished:
             return None
         last: SimProgress | None = None
@@ -687,8 +583,13 @@ class SimulationGUI(tk.Tk):
             try:
                 p = next(self._gen)
                 self._history.append(p)
+                self._ts_hist.append(p.timestamp)
+                self._carb_hist.append(p.carbon_intensity)
+                if self._carb_hist:
+                    self._carb_max = max(self._carb_max, p.carbon_intensity)
+                    self._carb_min = min(self._carb_min, p.carbon_intensity)
                 if len(self._history) > self.MAX_HISTORY:
-                    self._history = self._history[::2] + [self._history[-1]]
+                    self._decimate()
                 last = p
                 if p.done:
                     self._finish(p)
@@ -703,22 +604,30 @@ class SimulationGUI(tk.Tk):
                 break
         return last
 
+    def _decimate(self) -> None:
+        """Halve history (and cached arrays) to stay under MAX_HISTORY."""
+        self._history = self._history[::2] + [self._history[-1]]
+        self._ts_hist = self._ts_hist[::2] + [self._ts_hist[-1]]
+        self._carb_hist = self._carb_hist[::2] + [self._carb_hist[-1]]
+        self._carb_min = min(self._carb_hist)
+        self._carb_max = max(self._carb_hist)
+
     def _step_once(self) -> None:
-        """Single step for the "Step" button — advances & updates display."""
         if self._gen is None:
             self._start_simulation()
             return
         p = self._advance(1)
         if p is not None:
-            self._update_display(p)
+            self._update_stats(p)
+            self._update_plot()
 
     def _finish(self, last: SimProgress | None) -> None:
         self._finished = True
         self._playing = False
-        self._play_btn.configure(text="↻ Restart", bg=ACCENT)
+        self._play_btn.configure(text="Restart", bg=ACCENT)
         if last:
             self._status_var.set(
-                f"Done — {last.stop_reason}  "
+                f"Done - {last.stop_reason}  "
                 f"({last.total_wall_s / 3600:.1f}h wall, "
                 f"{last.tokens_processed}/{last.tokens_total} tokens)"
             )
@@ -728,14 +637,20 @@ class SimulationGUI(tk.Tk):
         self._playing = False
         self._finished = False
         self._gen = None
+        self._config = None
         self._history.clear()
-        self._play_btn.configure(text="▶ Play", bg=ACCENT)
+        self._ts_hist.clear()
+        self._carb_hist.clear()
+        self._carb_min = 0.0
+        self._carb_max = 0.0
+        self._tick_count = 0
+        self._play_btn.configure(text="Play", bg=ACCENT)
         self._prog_var.set(0.0)
         self._prog_lbl.configure(text="0.0%")
         self._save_btn.configure(state="disabled")
-        self._status_var.set("Ready  —  select a scenario and press ▶ Play")
+        self._status_var.set("Ready - select a scenario and press Play")
         for k in self._stat:
-            self._stat[k].configure(text="—")
+            self._stat[k].configure(text="-")
         self._idle_plot()
 
     def _animate(self) -> None:
@@ -744,7 +659,10 @@ class SimulationGUI(tk.Tk):
         n = max(1, self._steps_per_tick)
         p = self._advance(n)
         if p is not None:
-            self._update_display(p)
+            self._tick_count += 1
+            self._update_stats(p)
+            if self._tick_count % self.PLOT_INTERVAL == 0:
+                self._update_plot()
         if self._playing and not self._finished:
             self.after(self.REFRESH_MS, self._animate)
 
@@ -752,8 +670,8 @@ class SimulationGUI(tk.Tk):
     # Display
     # ------------------------------------------------------------------
 
-    def _update_display(self, p: SimProgress) -> None:
-        # stats (always fast)
+    def _update_stats(self, p: SimProgress) -> None:
+        """Update stats labels and progress bar (cheap, every tick)."""
         self._stat["st"].configure(text=p.state.name.title())
         self._stat["st_wall"].configure(text=f"{p.total_wall_s / 3600:.2f} h")
         self._stat["st_train"].configure(text=f"{p.training_s / 3600:.2f} h")
@@ -763,40 +681,48 @@ class SimulationGUI(tk.Tk):
         self._stat["st_em"].configure(text=f"{p.total_emissions_g / 1000:.1f} kg")
         self._stat["st_en"].configure(text=f"{p.total_energy_wh / 1000:.1f} kWh")
         self._stat["st_pz"].configure(text=str(p.num_pauses))
-
-        # progress
         self._prog_var.set(p.completion_pct)
         self._prog_lbl.configure(text=f"{p.completion_pct:.1f}%")
 
-        # plot — update artists in-place (NO clear/replot)
-        ts_hist = [x.timestamp for x in self._history]
-        carb_hist = [x.carbon_intensity for x in self._history]
-        if not ts_hist:
+    def _update_plot(self) -> None:
+        """Update matplotlib artists and redraw (cheaper with display decimation)."""
+        if not self._ts_hist:
             return
 
-        # History trace
-        self._hist_line.set_data(ts_hist, carb_hist)
+        # downsample for display — 10k pts looks identical to 2k on screen
+        n_total = len(self._ts_hist)
+        step = max(1, n_total // _MAX_DISPLAY_PTS)
+        if step > 1:
+            ts = self._ts_hist[::step]
+            cb = self._carb_hist[::step]
+        else:
+            ts = self._ts_hist
+            cb = self._carb_hist
 
-        # Position marker
-        self._pos_marker.set_xdata([ts_hist[-1], ts_hist[-1]])
-        self._pos_dot.set_offsets([[ts_hist[-1], carb_hist[-1]]])
+        self._hist_line.set_data(ts, cb)
 
-        # Time-based zoom window (stable under history decimation)
+        last_ts = self._ts_hist[-1]
+        last_cb = self._carb_hist[-1]
+        self._pos_marker.set_xdata([last_ts, last_ts])
+        self._pos_dot.set_offsets([[last_ts, last_cb]])
+
+        # zoom window
         n = self._zoom_var.get()
-        n_pts = len(ts_hist)
-        if n_pts <= 1:
+        if n_total <= 1:
             self._ax.set_xlim(
-                ts_hist[-1] - timedelta(hours=1), ts_hist[-1] + timedelta(hours=1)
+                last_ts - timedelta(hours=1),
+                last_ts + timedelta(hours=1),
             )
         else:
-            avg_delta = (ts_hist[-1] - ts_hist[0]) / (n_pts - 1)
-            window = avg_delta * n
-            self._ax.set_xlim(ts_hist[-1] - window, ts_hist[-1])
+            avg_delta = (last_ts - self._ts_hist[0]) / (n_total - 1)
+            self._ax.set_xlim(last_ts - avg_delta * n, last_ts)
 
-        vals = carb_hist + (
-            [self._config.theta_pause] if hasattr(self, "_config") else []
+        # y-range (uses incrementally-tracked extrema, no full-list scan)
+        theta = self._config.theta_pause
+        self._ax.set_ylim(
+            max(0, min(self._carb_min, theta) - 50),
+            max(self._carb_max, theta) + 50,
         )
-        self._ax.set_ylim(max(0, min(vals) - 50), max(vals) + 50)
 
         self._canvas.draw_idle()
 
@@ -814,7 +740,6 @@ class SimulationGUI(tk.Tk):
         )
         if not path:
             return
-
         try:
             with open(path, "w", newline="") as f:
                 w = csv.writer(f)
@@ -859,7 +784,7 @@ class SimulationGUI(tk.Tk):
                             "1" if p.done else "0",
                         ]
                     )
-            self._status_var.set(f"Saved → {path}")
+            self._status_var.set(f"Saved -> {path}")
         except OSError as exc:
             messagebox.showerror("Save Error", str(exc), parent=self)
 
@@ -869,14 +794,14 @@ class SimulationGUI(tk.Tk):
 
     def _on_speed_change(self, val: str) -> None:
         spd = float(val)
-        self._speed_lbl.configure(text=f"{spd:.1f}×")
+        self._speed_lbl.configure(text=f"{spd:.1f}x")
         self._steps_per_tick = max(1, int(spd * 2))
 
     def _on_zoom_change(self, val: str) -> None:
         n = int(val)
         self._zoom_lbl.configure(text=f"{n} pts")
-        if self._history:
-            self._update_display(self._history[-1])
+        if self._ts_hist:
+            self._update_plot()
 
     def _on_close(self) -> None:
         self._playing = False
@@ -896,7 +821,7 @@ def run_gui(data_dir: str | Path = Path("data")) -> None:
     profiles = load_training_profiles(data_dir)
     raw = load_scenarios(data_dir)
     if not raw:
-        logger.error("No scenarios loaded — cannot start GUI")
+        logger.error("No scenarios loaded - cannot start GUI")
         return
 
     available_zones = {"DE", "SE", "FR", "IT", "ES"}
@@ -922,7 +847,7 @@ def run_gui(data_dir: str | Path = Path("data")) -> None:
         )
 
     if not scenarios:
-        logger.error("No scenarios have available zone data — cannot start GUI")
+        logger.error("No scenarios with available zone data - cannot start GUI")
         return
 
     provider = GridDataProvider(data_dir)

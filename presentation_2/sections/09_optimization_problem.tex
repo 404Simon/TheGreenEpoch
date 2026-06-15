@@ -1,0 +1,46 @@
+\subsection{Optimization Problem}
+
+\begin{frame}[t]{Optimization Problem}{Key performance indicators}
+
+  \begin{itemize}
+    \item \textbf{Primary KPIs:}
+      \begin{itemize}
+        \item CO$_2$ savings relative to a baseline:
+          \[
+            \text{CO2\_savings\_pct}
+            = \frac{E_{\text{baseline}} -
+            E_{\text{policy}}}{E_{\text{baseline}}} \times 100
+          \]
+        \item Time overhead relative to baseline:
+          \[
+            \text{time\_overhead\_pct}
+            = \frac{T_{\text{policy}} -
+            T_{\text{baseline}}}{T_{\text{baseline}}} \times 100
+          \]
+      \end{itemize}
+
+      \vspace{0.2cm}
+    \item \textbf{Composite score for ranking policies:}
+      \[
+        \text{score} =
+        \frac{\text{CO2\_savings\_pct}}
+        {\max(\text{time\_overhead\_pct}, \,\epsilon)}
+        \quad\text{with}\quad \epsilon > 0
+      \]
+      \begin{itemize}
+        \item High CO$_2$ savings and small time overhead
+          $\Rightarrow$ high score.
+      \end{itemize}
+
+      \vspace{0.2cm}
+    \item \textbf{Practical constraint (optional):}
+      \[
+        \text{time\_overhead\_pct} \leq \text{overhead\_budget\_pct}
+      \]
+      \begin{itemize}
+        \item Only consider policies whose time overhead stays within
+          a given budget.
+      \end{itemize}
+  \end{itemize}
+
+\end{frame}

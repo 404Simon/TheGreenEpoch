@@ -1,0 +1,34 @@
+\begin{frame}[t]{Hysteresis}{Avoiding Rapid State Toggling}
+
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \vspace{0.5em}
+      \textbf{Problem:} Without hysteresis, minor CO\textsubscript{2}
+      fluctuations around the threshold cause rapid pause/resume
+      toggling (flutter).
+
+      \vspace{0.8em}
+      \textbf{Solution:} Two separate thresholds prevent rapid
+      toggling (the difference between them is the hysteresis):
+      \begin{itemize}
+        \item \textbf{Pause} when \(\mathrm{co\_2}(t) > \theta_{\text{pause}}\)
+        \item \textbf{Resume} when \(\mathrm{co\_2}(t) <
+          \theta_{\text{resume}}\)
+        \item \textbf{Hold state} in the hysteresis zone
+          \(\closedInterval{\theta_{\text{resume}}}{\theta_{\text{pause}}}\)
+      \end{itemize}
+
+      \vspace{0.5em}
+      \(\rightarrow\) Prevents unnecessary checkpointing overhead and
+      instability.
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \vspace{0.5em}
+      \begin{figure}
+        \centering
+        \includegraphics[width=0.7 \columnwidth]{../diagrams/hysteresis}
+      \end{figure}
+    \end{column}
+  \end{columns}
+
+\end{frame}

@@ -28,7 +28,7 @@ package Inputs_Constants {
 }
 
 package Policy_Controls {
-  class OptimizationPolicy {
+  class Policy {
     - theta_pause: gCO2eq_per_kWh
     - delta_hyst: gCO2eq_per_kWh
     - region: string
@@ -71,13 +71,13 @@ package "Execution" {
 ' Relationships
 Simulation --> TrainingRunProfile : uses
 Simulation --> GridData : consumes
-Simulation --> OptimizationPolicy : applies
+Simulation --> Policy : applies
 Simulation --> ScenarioParameters : configuredBy
 Simulation --> InternalState : updates
 Simulation --> Metrics : produces
 
-OptimizationPolicy *-- PauseResumeLogic : contains
-OptimizationPolicy *-- Checkpointing : uses
+Policy *-- PauseResumeLogic : contains
+Policy *-- Checkpointing : uses
 Checkpointing --> TrainingRunProfile : dependsOn
 PauseResumeLogic --> GridData : reads
 InternalState --> Checkpointing : triggers

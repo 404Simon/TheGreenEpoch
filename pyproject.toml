@@ -17,4 +17,5 @@ notebooks = [
     "scipy>=1.16.0",
     "seaborn>=0.13.2",
     "statsmodels>=0.14.6",
+    "ipykernel>=7.3.0",
 ]

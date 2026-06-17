@@ -51,7 +51,18 @@
 
   \[
     \mathit{elapsed\_wall\_time}(t_{k+1}) =
-    \mathit{elapsed\_wall\_time}(t_k) + \Delta t
+    \mathit{elapsed\_wall\_time}(t_k) + \Delta t +
+    \Delta t_{\text{checkpoint}}
+  \]
+
+  where
+  \[
+    \Delta t_{\text{checkpoint}} =
+    \begin{cases}
+      \tau_{\text{pause}} & \text{if a pause transition begins at step } k \\
+      \tau_{\text{resume}} & \text{if a resume transition begins at step } k \\
+      0 & \text{otherwise}
+    \end{cases}
   \]
 \end{frame}
 
@@ -80,7 +91,7 @@
       \[
         T_{\text{policy}}^{\star} =
         T_{\text{baseline}} + T_{\text{paused}} +
-        \mathit{pause\_count} \cdot \mathit{checkpoint\_overhead\_time}.
+        \mathit{pause\_count} \cdot  (\tau_{\text{pause}} + \tau_{\text{resume}}). % \mathit{checkpoint\_overhead\_time}.
       \]
     \item Compare $T_{\text{policy}}^{\star}$ to the simulated
       $\mathit{elapsed\_wall\_time}$ at completion.

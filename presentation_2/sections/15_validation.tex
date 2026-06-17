@@ -19,76 +19,76 @@
 % Detailed example: 1.3 Regional and Temporal Realism
 % ---------------------------------------------------------------------------
 
-\begin{frame}{Validation}{1.3 Regional and Temporal Realism}
-  \textbf{Goal:} Check that regional and temporal variation in grid
-  carbon intensity
-  leads to plausible differences in baseline emissions and savings.
-  \vspace{0.3cm}
+% \begin{frame}{Validation}{1.3 Regional and Temporal Realism}
+%   \textbf{Goal:} Check that regional and temporal variation in grid
+%   carbon intensity
+%   leads to plausible differences in baseline emissions and savings.
+%   \vspace{0.3cm}
 
-  \textbf{Key inputs}
-  \begin{itemize}
-    \item Carbon intensity time series $\mathit{co2\_intensity}(t)$
-      per region and year.
-    \item Region and year choices (e.g.\ $\mathit{regions\_set}$,
-      $\mathit{historical\_years}$).
-    \item Fixed training profile (model, GPU count, power, training duration).
-  \end{itemize}
-\end{frame}
+%   \textbf{Key inputs}
+%   \begin{itemize}
+%     \item Carbon intensity time series $\mathit{co2\_intensity}(t)$
+%       per region and year.
+%     \item Region and year choices (e.g.\ $\mathit{regions\_set}$,
+%       $\mathit{historical\_years}$).
+%     \item Fixed training profile (model, GPU count, power, training duration).
+%   \end{itemize}
+% \end{frame}
 
-\begin{frame}{Validation}{1.3 Regional and Temporal Realism}
-  \textbf{Expected behaviour}
-  \begin{itemize}
-    \item Define the average intensity for a region and year:
-      \[
-        \bar{c}_{\text{region,year}} =
-        \frac{1}{T} \int_0^T
-        \mathit{co2\_intensity}^{\text{region,year}}(t)\, dt.
-      \]
-    \item For fixed energy, baseline emissions should roughly follow
-      $\bar{c}_{\text{region,year}}$ (cleaner grids $\Rightarrow$
-      lower emissions).
-    \item Regions / periods with high temporal variability should offer
-      \emph{more} savings from pausing.
-  \end{itemize}
-\end{frame}
+% \begin{frame}{Validation}{1.3 Regional and Temporal Realism}
+%   \textbf{Expected behaviour}
+%   \begin{itemize}
+%     \item Define the average intensity for a region and year:
+%       \[
+%         \bar{c}_{\text{region,year}} =
+%         \frac{1}{T} \int_0^T
+%         \mathit{co2\_intensity}^{\text{region,year}}(t)\, dt.
+%       \]
+%     \item For fixed energy, baseline emissions should roughly follow
+%       $\bar{c}_{\text{region,year}}$ (cleaner grids $\Rightarrow$
+%       lower emissions).
+%     \item Regions / periods with high temporal variability should offer
+%       \emph{more} savings from pausing.
+%   \end{itemize}
+% \end{frame}
 
-\begin{frame}{Validation}{1.3 Regional and Temporal Realism}
-  \textbf{Validation procedure (1/2)}
-  \begin{enumerate}
-    \item For each region and year:
-      \begin{itemize}
-        \item Compute $\bar{c}_{\text{region,year}}$ from the raw time series.
-        \item Run a baseline simulation (no pausing) and obtain
-          $E_{\text{baseline}}$.
-      \end{itemize}
-    \item Check that the ordering of $E_{\text{baseline}}$ across regions/years
-      matches the ordering of $\bar{c}_{\text{region,year}}$
-      (allowing for small deviations).
-  \end{enumerate}
-\end{frame}
+% \begin{frame}{Validation}{1.3 Regional and Temporal Realism}
+%   \textbf{Validation procedure (1/2)}
+%   \begin{enumerate}
+%     \item For each region and year:
+%       \begin{itemize}
+%         \item Compute $\bar{c}_{\text{region,year}}$ from the raw time series.
+%         \item Run a baseline simulation (no pausing) and obtain
+%           $E_{\text{baseline}}$.
+%       \end{itemize}
+%     \item Check that the ordering of $E_{\text{baseline}}$ across regions/years
+%       matches the ordering of $\bar{c}_{\text{region,year}}$
+%       (allowing for small deviations).
+%   \end{enumerate}
+% \end{frame}
 
-\begin{frame}{Validation}{1.3 Regional and Temporal Realism}
-  \textbf{Validation procedure (2/2)}
-  \begin{enumerate}
-      \setcounter{enumi}{2}
-    \item Fix a carbon-aware pausing policy
-      (e.g.\ threshold, hysteresis, pause granularity).
-    \item Sweep over:
-      \begin{itemize}
-        \item Different regions.
-        \item Different start times within the year (seasonality).
-      \end{itemize}
-    \item Compare resulting
-      $\text{CO2\_savings\_pct}$ and $\text{time\_overhead\_pct}$:
-      \begin{itemize}
-        \item High-variance regions $\Rightarrow$ higher potential savings.
-        \item Low-variance, already-clean regions $\Rightarrow$
-          limited extra savings.
-      \end{itemize}
-  \end{enumerate}
+% \begin{frame}{Validation}{1.3 Regional and Temporal Realism}
+%   \textbf{Validation procedure (2/2)}
+%   \begin{enumerate}
+%       \setcounter{enumi}{2}
+%     \item Fix a carbon-aware pausing policy
+%       (e.g.\ threshold, hysteresis, pause granularity).
+%     \item Sweep over:
+%       \begin{itemize}
+%         \item Different regions.
+%         \item Different start times within the year (seasonality).
+%       \end{itemize}
+%     \item Compare resulting
+%       $\text{CO2\_savings\_pct}$ and $\text{time\_overhead\_pct}$:
+%       \begin{itemize}
+%         \item High-variance regions $\Rightarrow$ higher potential savings.
+%         \item Low-variance, already-clean regions $\Rightarrow$
+%           limited extra savings.
+%       \end{itemize}
+%   \end{enumerate}
 
-  \vspace{0.2cm}
-  This provides evidence that the simulation responds realistically
-  to regional and
-  temporal grid characteristics.
-\end{frame}
+%   \vspace{0.2cm}
+%   This provides evidence that the simulation responds realistically
+%   to regional and
+%   temporal grid characteristics.
+% \end{frame}

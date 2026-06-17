@@ -158,4 +158,5 @@ class SimulationResult:
             f"pauses={self.num_pauses} "
             f"emissions={self.total_emissions_kgco2:.0f}kg "
             f"{flags}"
+            f"score={self.score:.2f}"
         )

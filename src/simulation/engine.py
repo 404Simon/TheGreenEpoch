@@ -406,13 +406,24 @@ class SimulationRunner:
             )
         )
 
-        # Calculate baseline training emissions using actual training time and the emissions that would have been produced if training had continued uninterrupted at the same average carbon intensity. This provides a point of comparison to understand the impact of the pause/resume policy.
-        # calculate average carbon intensity during the time of training start and start+training time without pauses. Using timestamps and carbon arrays
-        start_time = np.datetime64(config.start_time)
-        end_time = start_time + np.timedelta64(int(training_s), 's')
-        avg_co2_during_baseline_training = np.mean(
-            carbon[(timestamps >= start_time) & (timestamps < end_time)]
-        )
+        # calculate baseline emissions for training the same profile without pauses
+        start_ts = np.datetime64(start_time)
+        end_ts = start_ts + np.timedelta64(int(training_s), 's')
+
+        if training_s <= 0:
+            avg_co2_during_baseline_training = mean_co2
+        else:
+            s_idx = int(np.searchsorted(timestamps, start_ts, side="left"))
+            e_idx = int(np.searchsorted(timestamps, end_ts, side="left"))
+            if e_idx <= s_idx:
+                avg_co2_during_baseline_training = mean_co2
+            else:
+                window = carbon[s_idx:e_idx]
+                if window.size == 0:
+                    avg_co2_during_baseline_training = mean_co2
+                else:
+                    avg_co2_during_baseline_training = float(np.nanmean(window))
+
         baseline_emissions_g = energy_wh(train_power_w, training_s) * avg_co2_during_baseline_training
         
 

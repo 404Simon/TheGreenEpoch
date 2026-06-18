@@ -1,8 +1,8 @@
 {
   "api_token": "TOKEN",
-  "zones": ["DE","SE","FR","IT","ES"],
-  "start_date": "2024-06-05",
-  "end_date": "2026-05-05",
+  "zones": ["DE","SE","CN","IT","US"],
+  "start_date": "2022-01-01",
+  "end_date": "2026-06-16",
   "temporal_granularity": "5_minutes",
   "_comment": "5_minutes, 15_minutes, hourly, daily",
   "disable_estimations": false,

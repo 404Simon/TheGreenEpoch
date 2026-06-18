@@ -6,7 +6,7 @@ import sys
 import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Dict, Iterable, List
+from typing import Dict, Iterable, List, Tuple
 
 import requests
 
@@ -105,7 +105,7 @@ def fetch_for_day(
     temporal_granularity: str,
     disable_estimations: bool,
     sleep_seconds: float,
-) -> List[Dict[str, str]]:
+) -> Tuple[List[Dict[str, str]], requests.Session]:
     request_datetime = iso_z(day_start)
     params = {
         "zone": zone,
@@ -116,48 +116,61 @@ def fetch_for_day(
     }
     headers = {"auth-token": token}
 
-    logger.info(
-        "Requesting carbon intensity: zone=%s day=%s datetime=%s granularity=%s",
-        zone,
-        day_start.strftime("%Y-%m-%d"),
-        request_datetime,
-        temporal_granularity,
-    )
-    logger.debug("Request URL=%s params=%s", API_URL, params)
-
-    response = session.get(API_URL, params=params, headers=headers, timeout=60)
-    logger.info(
-        "Received HTTP %s for zone=%s day=%s",
-        response.status_code,
-        zone,
-        day_start.strftime("%Y-%m-%d"),
-    )
-    logger.debug("Final request URL: %s", response.url)
-
-    try:
-        response.raise_for_status()
-    except requests.HTTPError:
-        logger.error(
-            "HTTP error for zone=%s day=%s. Response text: %s",
+    retry_count = 0
+    while True:
+        logger.info(
+            "Requesting carbon intensity: zone=%s day=%s datetime=%s granularity=%s",
             zone,
             day_start.strftime("%Y-%m-%d"),
-            response.text[:2000],
+            request_datetime,
+            temporal_granularity,
         )
-        raise
+        logger.debug("Request URL=%s params=%s", API_URL, params)
 
-    payload = response.json()
-    logger.debug(
-        "Parsed JSON payload for zone=%s day=%s with top-level keys: %s",
-        zone,
-        day_start.strftime("%Y-%m-%d"),
-        sorted(payload.keys()) if isinstance(payload, dict) else type(payload).__name__,
-    )
+        try:
+            response = session.get(API_URL, params=params, headers=headers, timeout=60)
+            logger.info(
+                "Received HTTP %s for zone=%s day=%s",
+                response.status_code,
+                zone,
+                day_start.strftime("%Y-%m-%d"),
+            )
+            logger.debug("Final request URL: %s", response.url)
+            response.raise_for_status()
+            payload = response.json()
 
-    if sleep_seconds > 0:
-        logger.debug("Sleeping %.3f seconds before next request", sleep_seconds)
-        time.sleep(sleep_seconds)
+            logger.debug(
+                "Parsed JSON payload for zone=%s day=%s with top-level keys: %s",
+                zone,
+                day_start.strftime("%Y-%m-%d"),
+                sorted(payload.keys()) if isinstance(payload, dict) else type(payload).__name__,
+            )
 
-    return extract_rows(payload, zone, day_start.strftime("%Y-%m-%d"))
+            if sleep_seconds > 0:
+                logger.debug("Sleeping %.3f seconds before next request", sleep_seconds)
+                time.sleep(sleep_seconds)
+
+            return extract_rows(payload, zone, day_start.strftime("%Y-%m-%d")), session
+
+        except (requests.RequestException, json.JSONDecodeError) as exc:
+            retry_count += 1
+            logger.warning(
+                "Request failed for zone=%s day=%s on attempt %d: %s",
+                zone,
+                day_start.strftime("%Y-%m-%d"),
+                retry_count,
+                exc,
+            )
+            logger.info("Resetting connection and retrying request for zone=%s day=%s", zone, day_start.strftime("%Y-%m-%d"))
+            try:
+                session.close()
+            except Exception:
+                pass
+            session = requests.Session()
+            delay = max(sleep_seconds, 1.0)
+            if retry_count > 1:
+                delay = min(delay * retry_count, 60.0)
+            time.sleep(delay)
 
 
 def write_csv(output_dir: Path, zone: str, rows: List[Dict[str, str]], year: int = None) -> Path:
@@ -235,8 +248,8 @@ def main() -> int:
             span_start = current_date.replace(hour=0, minute=0, second=0, microsecond=0)
             span_end_date = span_end + timedelta(days=1)
             
-            daily_rows = fetch_for_day(
-                session, token, zone, span_start, span_end_date, 
+            daily_rows, session = fetch_for_day(
+                session, token, zone, span_start, span_end_date,
                 temporal_granularity, config.get("disable_estimations", False), sleep_seconds
             )
             all_rows.extend(daily_rows)

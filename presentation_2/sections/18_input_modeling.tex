@@ -15,19 +15,12 @@
       \textbf{Data quality}
       \begin{itemize}
         \item Most values are measured, not estimated.
-        \item Estimated-value share is below 0.3\% for DE, ES, FR, SE.
-        \item IT has the highest estimated share at 2.20\%.
+        \item Estimated-value share is below 3\% for DE, ES, FR, SE.
+        \item For China all values are estimated.
         \item The dataset is usable for region-level input modeling.
       \end{itemize}
     \end{column}
   \end{columns}
-
-  \vspace{0.4cm}
-  \begin{block}{Main takeaway}
-    The data is dense enough for simulation input modeling, but the regions are
-    very different and should not share one global threshold.
-  \end{block}
-
 \end{frame}
 
 \begin{frame}[t]{Input Modeling}{Average grid intensity differs strongly}
@@ -38,11 +31,9 @@
 
   \vspace{0.1cm}
   \begin{itemize}
-    \item Mean intensities span from 21.30 to 347.60 gCO$_2$eq/kWh.
+    \item Mean intensities span from 23 to 519 gCO$_2$eq/kWh.
     \item DE is about 16.3x higher than SE on average.
-    \item FR and SE are already low-carbon baselines.
   \end{itemize}
-
 \end{frame}
 
 \begin{frame}[t]{Input Modeling}{Absolute and relative variability tell
@@ -58,10 +49,15 @@
   \begin{itemize}
     \item DE has the largest absolute swing, so pause/resume can avoid
       high-emission windows.
-    \item FR has low absolute intensity, but high relative variability.
     \item Region-specific thresholds are necessary because ``high carbon'' is
       not the same numeric value everywhere.
   \end{itemize}
+
+  \vspace{0.4cm}
+  \begin{block}{Main takeaway}
+    The data is dense enough for simulation input modeling, but the regions are
+    very different and should not share one global threshold.
+  \end{block}
 
 \end{frame}
 
@@ -85,7 +81,7 @@
 
   \vspace{0.1cm}
   \begin{itemize}
-    \item DE and IT fit Weibull best; ES, FR, and SE fit lognormal best.
+    \item SE fits Lognormal best, all others fit Weibull best.
     \item The standardized panel compares shape independent of absolute
       intensity.
   \end{itemize}

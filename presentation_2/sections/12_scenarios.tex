@@ -4,45 +4,22 @@
 
   \centering
   \resizebox{\textwidth}{!}{%
-    \begin{tabular}{l|c|c|c|c|c|c|c}
-      \toprule
-      Description & Model & Threshold & Hysteresis & Regions & Start
-      times & Historical & Overhead \\
-      \midrule
-      \makecell{Original Deepseek \\ training} & Deepseek & 350, 400,
-      450 & 300, 350, 400 & CN & \makecell{2025-01-01 2025-02-18
-      \\ 2025-06-01} & \makecell{2022, 2023 \\ 2024, 2025} & 200 \\
-      \hline
-      \makecell{Deepseek training in \\ Sweden} & Deepseek & 20, 25 &
-      15, 20 & SE & \makecell{2025-01-01 2025-02-18 \\ 2025-06-01} &
-      \makecell{2022, 2023 \\ 2024, 2025} & 200 \\
-      \hline
-      \makecell{Deepseek training in \\ Germany} & Deepseek & 300,
-      350 & 250, 300 & DE & \makecell{2025-01-01 2025-02-18
-      \\ 2025-06-01} & \makecell{2022, 2023 \\ 2024, 2025} & 200 \\
-      \hline
-      \makecell{Deepseek training with \\ multiple regions} &
-      Deepseek & 300, 350 & 250, 300 & DE, IT, US &
-      \makecell{2025-01-01 2025-06-01 \\ 2025-08-08} &
-      \makecell{2022, 2023 \\ 2024, 2025} & 150 \\
-      \hline
-      \makecell{Kimi training in \\ China} & Kimi & 350, 400, 450 &
-      300, 350, 400 & CN & \makecell{2025-01-01 2025-02-18
-      \\ 2025-06-01} & \makecell{2022, 2023 \\ 2024, 2025} & 200 \\
-      \hline
-      \makecell{Kimi training in \\ Sweden} & Kimi & 20, 25 & 15, 20
-      & SE & \makecell{2025-01-01 2025-02-18 \\ 2025-06-01} &
-      \makecell{2022, 2023 \\ 2024, 2025} & 200 \\
-      \hline
-      \makecell{Kimi training in \\ Germany} & Kimi & 300, 350 & 250,
-      300 & DE & \makecell{2025-01-01 2025-02-18 \\ 2025-06-01} &
-      \makecell{2022, 2023 \\ 2024, 2025} & 200 \\
-      \hline
-      \makecell{Kimi training with \\ multiple regions} & Kimi & 300,
-      350 & 250, 300 & DE, IT, US & \makecell{2025-01-01 2025-06-01
-      \\ 2025-08-08} & \makecell{2022, 2023 \\ 2024, 2025} & 150 \\
-      \bottomrule
-    \end{tabular}%
+    \pgfplotstabletypeset[
+      col sep=comma,
+      text indicator=",
+      string type,
+      columns={description,model,threshold,hysteresis,region,start_times_set,historical,overhead_budget_pct},
+      columns/description/.style={column name=Description},
+      columns/model/.style={column name=Model},
+      columns/threshold/.style={column name=Threshold},
+      columns/hysteresis/.style={column name=Hysteresis},
+      columns/region/.style={column name=Regions},
+      columns/start_times_set/.style={column name=Start times},
+      columns/historical/.style={column name=Historical},
+      columns/overhead_budget_pct/.style={column name=Overhead},
+      every head row/.style={before row=\toprule, after row=\midrule},
+      every last row/.style={after row=\bottomrule},
+    ]{../data/scenarios.csv}%
   }
 
 \end{frame}

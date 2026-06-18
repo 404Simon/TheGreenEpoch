@@ -158,11 +158,10 @@ class SimulationRunner:
 
         assert last is not None, "Generator yielded no progress"
 
+        tps = tokens_per_second(profile.gpu_count)
+        ideal_training_s = last.tokens_total / tps if tps > 0 else float("inf")
         overhead_s = last.paused_s + last.checkpoint_s
-        training_s = last.training_s
-        actual_overhead_pct = (
-            0.0 if training_s == 0 else 100.0 * overhead_s / training_s
-        )
+        actual_overhead_pct = 100.0 * overhead_s / ideal_training_s
 
         issues = list(last.issues)
         if last.nan_fallbacks > 0:
@@ -196,7 +195,7 @@ class SimulationRunner:
             overhead_budget_pct=config.overhead_budget_pct,
             actual_overhead_pct=actual_overhead_pct,
             within_overhead_budget=(
-                overhead_s / max(training_s, 1.0) <= config.overhead_budget_pct / 100.0
+                overhead_s / ideal_training_s <= config.overhead_budget_pct / 100.0
             ),
             timestamps=ts_timestamps,
             carbon_intensity_series=ts_carbon,
@@ -264,6 +263,7 @@ def simulate_stepwise(
 
     tokens_total = profile.dataset_tokens * config.epochs
     tokens_remaining = tokens_total
+    ideal_training_s = tokens_total / tps if tps > 0 else float("inf")
 
     total_wall_s: float = 0.0
     training_s: float = 0.0
@@ -303,15 +303,14 @@ def simulate_stepwise(
             issues.append(f"Iteration limit ({max_iterations}) reached")
             break
 
-        if training_s > 0:
-            overhead_s = paused_s + checkpoint_s
-            overhead_pct = 100.0 * overhead_s / training_s
-            if overhead_pct > config.overhead_budget_pct:
-                issues.append(
-                    f"Overhead {overhead_pct:.1f}% exceeds budget "
-                    f"{config.overhead_budget_pct:.0f}%"
-                )
-                break
+        overhead_s = paused_s + checkpoint_s
+        overhead_pct = 100.0 * overhead_s / ideal_training_s
+        if overhead_pct > config.overhead_budget_pct:
+            issues.append(
+                f"Overhead {overhead_pct:.1f}% exceeds budget "
+                f"{config.overhead_budget_pct:.0f}%"
+            )
+            break
 
         co2 = float(carbon[idx])
         if not isfinite(co2):
@@ -488,7 +487,7 @@ def simulate_stepwise(
         else (
             "budget_exceeded"
             if (
-                (paused_s + checkpoint_s) / max(training_s, 1.0)
+                (paused_s + checkpoint_s) / ideal_training_s
                 > config.overhead_budget_pct / 100.0
             )
             else "iteration_limit"

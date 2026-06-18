@@ -18,54 +18,10 @@ import logging
 import time
 from pathlib import Path
 
-from simulation import ScenarioParameters, SimulationRunner, load_scenarios
+from simulation import SimulationRunner, filter_scenarios, load_scenarios
 
-# ── data availability ───────────────────────────────────────────────
-AVAILABLE_ZONES = {"DE", "SE", "FR", "IT", "ES"}
-AVAILABLE_YEARS = {2024, 2025}
 DATA_DIR = Path("data")
 OUTPUT_DIR = Path("output")
-
-
-# ── helpers ─────────────────────────────────────────────────────────
-
-
-def filter_scenarios(
-    scenarios: list[ScenarioParameters],
-    limit: int | None = None,
-) -> list[ScenarioParameters]:
-    """Keep scenarios with available zone data and years."""
-    filtered: list[ScenarioParameters] = []
-    for sc in scenarios:
-        if sc.region not in AVAILABLE_ZONES:
-            logging.warning(
-                "Skipping '%s': zone '%s' has no CO₂ data", sc.description, sc.region
-            )
-            continue
-        years = sorted(set(sc.historical_years) & AVAILABLE_YEARS)
-        if not years:
-            years = [sorted(AVAILABLE_YEARS)[0]]
-            logging.warning(
-                "No requested years %s for '%s', using %s",
-                sc.historical_years,
-                sc.description,
-                years[0],
-            )
-        filtered.append(
-            ScenarioParameters(
-                description=sc.description,
-                model=sc.model,
-                thresholds=sc.thresholds,
-                hysteresis=sc.hysteresis,
-                region=sc.region,
-                start_times=sc.start_times[:1],  # single start time for pilot speed
-                historical_years=years,
-                overhead_budget_pct=sc.overhead_budget_pct,
-            )
-        )
-    if limit is not None:
-        filtered = filtered[:limit]
-    return filtered
 
 
 def save_results(results, path: Path) -> None:

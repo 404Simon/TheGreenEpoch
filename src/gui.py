@@ -26,6 +26,7 @@ from simulation import (
     ScenarioParameters,
     SimProgress,
     SimulationRunner,
+    filter_scenarios,
     load_scenarios,
     load_training_profiles,
     simulate_stepwise,
@@ -760,9 +761,11 @@ class SimulationGUI(tk.Tk):
         if self._show_noon.get():
             xmin_f, xmax_f = self._ax.get_xlim()
             try:
-                tmin = mdates.num2date(xmin_f).replace(
-                    hour=12, minute=0, second=0, microsecond=0
-                ).astimezone(timezone.utc)
+                tmin = (
+                    mdates.num2date(xmin_f)
+                    .replace(hour=12, minute=0, second=0, microsecond=0)
+                    .astimezone(timezone.utc)
+                )
                 tmax = mdates.num2date(xmax_f).astimezone(timezone.utc)
                 while tmin <= tmax:
                     line = self._ax.axvline(
@@ -880,27 +883,7 @@ def run_gui(data_dir: str | Path = Path("data")) -> None:
         logger.error("No scenarios loaded - cannot start GUI")
         return
 
-    available_zones = {"DE", "SE", "FR", "IT", "ES"}
-    available_years = {2024, 2025}
-    scenarios = []
-    for sc in raw:
-        if sc.region not in available_zones:
-            continue
-        years = sorted(set(sc.historical_years) & available_years)
-        if not years:
-            continue
-        scenarios.append(
-            ScenarioParameters(
-                description=sc.description,
-                model=sc.model,
-                thresholds=sc.thresholds,
-                hysteresis=sc.hysteresis,
-                region=sc.region,
-                start_times=sc.start_times[:1],
-                historical_years=years,
-                overhead_budget_pct=sc.overhead_budget_pct,
-            )
-        )
+    scenarios = filter_scenarios(raw)
 
     if not scenarios:
         logger.error("No scenarios with available zone data - cannot start GUI")

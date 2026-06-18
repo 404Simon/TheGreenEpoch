@@ -276,4 +276,47 @@ def load_scenarios(data_dir: str | Path) -> list[ScenarioParameters]:
     return scenarios
 
 
+# ---------------------------------------------------------------------------
+# Scenario filtering (shared between CLI and GUI)
+# ---------------------------------------------------------------------------
 
+AVAILABLE_ZONES: set[str] = {"DE", "SE", "CN", "IT", "US"}
+AVAILABLE_YEARS: set[int] = {2022, 2023, 2024, 2025, 2026}
+
+
+def filter_scenarios(
+    scenarios: list[ScenarioParameters],
+    limit: int | None = None,
+) -> list[ScenarioParameters]:
+    """Keep scenarios with available zone data and years."""
+    filtered: list[ScenarioParameters] = []
+    for sc in scenarios:
+        if sc.region not in AVAILABLE_ZONES:
+            logger.warning(
+                "Skipping '%s': zone '%s' has no CO₂ data", sc.description, sc.region
+            )
+            continue
+        years = sorted(set(sc.historical_years) & AVAILABLE_YEARS)
+        if not years:
+            years = [sorted(AVAILABLE_YEARS)[0]]
+            logger.warning(
+                "No requested years %s for '%s', using %s",
+                sc.historical_years,
+                sc.description,
+                years[0],
+            )
+        filtered.append(
+            ScenarioParameters(
+                description=sc.description,
+                model=sc.model,
+                thresholds=sc.thresholds,
+                hysteresis=sc.hysteresis,
+                region=sc.region,
+                start_times=sc.start_times[:1],
+                historical_years=years,
+                overhead_budget_pct=sc.overhead_budget_pct,
+            )
+        )
+    if limit is not None:
+        filtered = filtered[:limit]
+    return filtered

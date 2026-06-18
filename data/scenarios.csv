@@ -1,13 +1,9 @@
 description,model,threshold,hysteresis,region,start_times_set,historical,overhead_budget_pct
-Original Deepseek training,Deepseek,"350,400,450","300,350,400",CN,"01-01,02-18,06-01","2022,2023,2024,2025",200
-Deepseek training in Sweden,Deepseek,"20,25","15,20",SE,"01-01,02-18,06-01","2022,2023,2024,2025",200
-Deepseek training in Germany,Deepseek,"300,350","250,300",DE,"01-01,02-18,06-01","2022,2023,2024,2025",200
-Deepseek multi-region in DE,Deepseek,"300,350","250,300",DE,"01-01,06-01,08-08","2022,2023,2024,2025",150
-Deepseek multi-region in IT,Deepseek,"300,350","250,300",IT,"01-01,06-01,08-08","2022,2023,2024,2025",150
-Deepseek multi-region in US,Deepseek,"300,350","250,300",US,"01-01,06-01,08-08","2022,2023,2024,2025",150
+Original Deepseek training,Deepseek,"550,600","500,550",CN,"01-01,02-18,06-01","2022,2023,2024,2025",200
+Deepseek training in Sweden,Deepseek,"25,30","20,25",SE,"01-01,02-18,06-01","2022,2023,2024,2025",200
+Deepseek training in Germany,Deepseek,"350,400","300,350",DE,"01-01,02-18,06-01","2022,2023,2024,2025",200
+Deepseek training in US,Deepseek,"400,450","350,400",US,"01-01,06-01,08-08","2022,2023,2024,2025",200
 Kimi training in China,Kimi,"350,400,450","300,350,400",CN,"01-01,02-18,06-01","2022,2023,2024,2025",200
-Kimi training in Sweden,Kimi,"20,25","15,20",SE,"01-01,02-18,06-01","2022,2023,2024,2025",200
-Kimi training in Germany,Kimi,"300,350","250,300",DE,"01-01,02-18,06-01","2022,2023,2024,2025",200
-Kimi multi-region in DE,Kimi,"300,350","250,300",DE,"01-01,06-01,08-08","2022,2023,2024,2025",150
-Kimi multi-region in IT,Kimi,"300,350","250,300",IT,"01-01,06-01,08-08","2022,2023,2024,2025",150
-Kimi multi-region in US,Kimi,"300,350","250,300",US,"01-01,06-01,08-08","2022,2023,2024,2025",150
+Kimi training in Sweden,Kimi,"25,30","20,25",SE,"01-01,02-18,06-01","2022,2023,2024,2025",200
+Kimi training in Germany,Kimi,"350,400","300,350",DE,"01-01,02-18,06-01","2022,2023,2024,2025",200
+Kimi training in US,Kimi,"400,450","350,400",US,"01-01,06-01,08-08","2022,2023,2024,2025",200

@@ -10,8 +10,8 @@ const stateBgPlugin = {
     const xScale = chart.scales.x;
     ctx.save();
     bands.forEach(band => {
-      const x1 = xScale.getPixelForValue(band.startIdx);
-      const x2 = xScale.getPixelForValue(band.endIdx);
+      const x1 = xScale.getPixelForValue(band.xStart);
+      const x2 = xScale.getPixelForValue(band.xEnd);
       if (x1 === undefined || x2 === undefined) return;
       ctx.fillStyle = band.state === 'running'
         ? 'rgba(0, 201, 167, 0.07)'
@@ -46,23 +46,25 @@ function renderMeta(data) {
 
 function renderTimeline(data) {
   destroyTimeline();
+  hideSpinner();
   document.getElementById('dropZone').style.display = 'none';
   renderMeta(data);
   const n = data.carbon_intensity.length;
   if (n === 0) return;
 
-  const labels = data.timestamps.map(t => {
-    const d = new Date(t);
-    return d.toLocaleString(undefined, {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
+  const ms = data.timestamps.map(t => new Date(t).getTime());
+  let offset = 0;
+  const elapsedH = ms.map((t, i) => {
+    if (i > 0 && t < ms[i - 1]) offset += 365 * 86400000;
+    return (t + offset - ms[0]) / 3600000;
   });
-  const idx = data.carbon_intensity.map((_, i) => i);
 
   const stateBands = [];
   if (data.state && data.state.length) {
     let start = 0;
     for (let i = 1; i <= data.state.length; i++) {
       if (i === data.state.length || data.state[i] !== data.state[start]) {
-        stateBands.push({ startIdx: start, endIdx: i - 1, state: data.state[start] });
+        stateBands.push({ xStart: elapsedH[start], xEnd: elapsedH[i - 1], state: data.state[start] });
         start = i;
       }
     }
@@ -80,17 +82,20 @@ function renderTimeline(data) {
   const thetaResume = data.theta_resume;
 
   document.getElementById('timelineTitle').textContent =
-    '\u03B8\u209A=' + thetaPause + ' \u03B8\u1D63=' + thetaResume + ' \u2022 ' + n + ' steps';
+    data.region + ' \u03B8\u209A=' + thetaPause + ' \u03B8\u1D63=' + thetaResume;
 
   const canvas = document.getElementById('chartTimeline');
+  const fmtHHMM = h => { const m = Math.round(h * 60); return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); };
+
+  const xy = (y, i) => ({ x: elapsedH[i], y });
+
   timelineChart = new Chart(canvas, {
     type: 'line',
     data: {
-      labels: idx,
       datasets: [
         {
           label: 'Carbon Intensity',
-          data: data.carbon_intensity,
+          data: data.carbon_intensity.map(xy),
           borderColor: '#2e7dff',
           backgroundColor: 'rgba(46,125,255,0.1)',
           fill: true,
@@ -101,7 +106,7 @@ function renderTimeline(data) {
         },
         {
           label: '\u03B8_pause',
-          data: idx.map(() => thetaPause),
+          data: [{ x: elapsedH[0], y: thetaPause }, { x: elapsedH[elapsedH.length - 1], y: thetaPause }],
           borderColor: '#ff5e7a',
           borderDash: [4, 4],
           pointRadius: 0,
@@ -111,7 +116,7 @@ function renderTimeline(data) {
         },
         {
           label: '\u03B8_resume',
-          data: idx.map(() => thetaResume),
+          data: [{ x: elapsedH[0], y: thetaResume }, { x: elapsedH[elapsedH.length - 1], y: thetaResume }],
           borderColor: '#00c9a7',
           borderDash: [4, 4],
           pointRadius: 0,
@@ -121,7 +126,7 @@ function renderTimeline(data) {
         },
         {
           label: 'Cumulative Emissions',
-          data: data.emissions_kg,
+          data: data.emissions_kg.map(xy),
           borderColor: '#ff9f43',
           pointRadius: 0,
           borderWidth: 1.5,
@@ -134,7 +139,7 @@ function renderTimeline(data) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      interaction: { mode: 'index', intersect: false },
+      interaction: { mode: 'nearest', axis: 'x', intersect: false },
       plugins: {
         legend: {
           position: 'top',
@@ -142,7 +147,7 @@ function renderTimeline(data) {
         },
         tooltip: {
           callbacks: {
-            title: ctx => labels[ctx[0].dataIndex] || '',
+            title: ctx => { const x = ctx[0].parsed.x; if (x == null) return ''; const m = Math.round(x * 60); return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); },
             afterBody: ctx => {
               const i = ctx[0].dataIndex;
               const s = data.state && data.state[i] ? data.state[i] : '?';
@@ -154,8 +159,11 @@ function renderTimeline(data) {
       scales: {
         x: {
           type: 'linear',
-          title: { display: true, text: 'Step' },
-          ticks: { maxTicksLimit: 20 },
+          title: { display: true, text: 'Elapsed Time' },
+          ticks: {
+            maxTicksLimit: 15,
+            callback: v => fmtHHMM(v),
+          },
         },
         y: {
           type: 'linear',
@@ -177,6 +185,33 @@ function renderTimeline(data) {
   });
 }
 
+function showSpinner(label) {
+  document.getElementById('spinner').style.display = 'flex';
+  document.querySelector('#spinner .spinner-label').textContent = label || 'Loading...';
+}
+function hideSpinner() {
+  document.getElementById('spinner').style.display = 'none';
+}
+
+function downsample(arr, maxPoints) {
+  if (arr.length <= maxPoints) return arr;
+  const step = arr.length / maxPoints;
+  return Array.from({length: maxPoints}, (_, i) => arr[Math.floor(i * step)]);
+}
+
+function downsampleData(data, maxPoints) {
+  if (!data.carbon_intensity || data.carbon_intensity.length <= maxPoints) return data;
+  const indices = Array.from({length: maxPoints}, (_, i) => Math.floor(i * data.carbon_intensity.length / maxPoints));
+  return {
+    ...data,
+    carbon_intensity: indices.map(i => data.carbon_intensity[i]),
+    state: indices.map(i => data.state[i]),
+    emissions_kg: indices.map(i => data.emissions_kg[i]),
+    tokens_remaining: indices.map(i => data.tokens_remaining[i]),
+    timestamps: indices.map(i => data.timestamps[i]),
+  };
+}
+
 function esc(s) {
   const d = document.createElement('div');
   d.textContent = s;
@@ -189,17 +224,25 @@ function loadData(data) {
     document.getElementById('timelineTitle').textContent = 'Invalid or empty timeseries file';
     return;
   }
+  const n = data.carbon_intensity.length;
+  const MAX = 3200;
+  if (n > MAX) {
+    data = downsampleData(data, MAX);
+  }
   renderTimeline(data);
 }
 
 // ── File drop (local file:// usage, or fallback) ─────────────────
 function loadFile(file) {
+  showSpinner('Parsing ' + file.name + '...');
   const reader = new FileReader();
   reader.onload = e => {
     document.getElementById('fileLabel').textContent = file.name;
+    hideSpinner();
     try {
       loadData(JSON.parse(e.target.result));
     } catch(err) {
+      hideSpinner();
       alert('Error parsing JSON: ' + err.message);
     }
   };
@@ -224,12 +267,15 @@ const params = new URLSearchParams(window.location.search);
 const id = params.get('id');
 
 if (window.location.protocol.startsWith('http') && id != null) {
+  showSpinner('Loading timeseries for run ' + id + '...');
   fetch('timeseries/' + id + '.json').then(r => {
     if (!r.ok) throw new Error('Not found');
     return r.json();
   }).then(data => {
+    hideSpinner();
     loadData(data);
   }).catch(() => {
+    hideSpinner();
     document.getElementById('dropZone').style.display = 'flex';
     document.getElementById('timelineTitle').textContent = 'No timeseries data for id=' + id + ' — drop a .json file';
   });

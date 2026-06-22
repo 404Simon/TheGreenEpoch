@@ -67,9 +67,15 @@ def save_results(results, path: Path) -> None:
             w.writerow(d)
 
 
-def save_timeseries(results, ts_dir: Path) -> None:
+def save_timeseries(results, ts_dir: Path, max_points: int = 3200) -> None:
     ts_dir.mkdir(parents=True, exist_ok=True)
     for i, r in enumerate(results):
+        n = len(r.timestamps)
+        if n > max_points:
+            step = n / max_points
+            idx = [int(i * step) for i in range(max_points)]
+        else:
+            idx = list(range(n))
         data = {
             "scenario_description": r.scenario_description,
             "model": r.model,
@@ -87,11 +93,11 @@ def save_timeseries(results, ts_dir: Path) -> None:
             "score": r.score,
             "completed": r.completed,
             "stop_reason": r.stop_reason,
-            "timestamps": [t.strftime("%Y-%m-%dT%H:%M:%SZ") for t in r.timestamps],
-            "carbon_intensity": r.carbon_intensity_series,
-            "state": r.state_series,
-            "emissions_kg": [e / 1000.0 for e in r.emissions_series],
-            "tokens_remaining": r.tokens_remaining_series,
+            "timestamps": [r.timestamps[i].strftime("%Y-%m-%dT%H:%M:%SZ") for i in idx],
+            "carbon_intensity": [r.carbon_intensity_series[i] for i in idx],
+            "state": [r.state_series[i] for i in idx],
+            "emissions_kg": [r.emissions_series[i] / 1000.0 for i in idx],
+            "tokens_remaining": [r.tokens_remaining_series[i] for i in idx],
         }
         (ts_dir / f"{i}.json").write_text(json.dumps(data, separators=(",", ":")))
 

@@ -18,6 +18,10 @@
     <input type="file" id="fileInput" accept=".json">
     <label for="fileInput"><span class="icon">&#128194;</span> <span id="fileLabel">Drop timeseries .json here</span></label>
   </div>
+  <div class="spinner" id="spinner" style="display:none">
+    <div class="spinner-ring"></div>
+    <div class="spinner-label">Loading timeseries...</div>
+  </div>
   <div class="cards" id="metaCards" style="margin-bottom:16px"></div>
   <div class="chart-card full-chart" style="margin-bottom:30px">
     <canvas id="chartTimeline" style="max-height:600px;height:60vh"></canvas>

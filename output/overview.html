@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TheGreenEpoch Results Viewer</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.5.2/papaparse.min.js"></script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="header">
+  <h1><span>&#127758;</span> TheGreenEpoch Results Viewer</h1>
+  <div class="upload-zone" id="dropZone">
+    <input type="file" id="fileInput" accept=".csv">
+    <label for="fileInput"><span class="icon">&#128194;</span> <span id="fileLabel">Choose CSV or drop here</span></label>
+  </div>
+</div>
+
+<div class="container" id="app">
+  <div class="empty-state" id="emptyState">
+    <div class="big-icon">&#128202;</div>
+    <p>Load a <code>pilot_results.csv</code> to explore the simulation output.</p>
+  </div>
+
+  <div id="content" style="display:none">
+    <div class="cards" id="summaryCards"></div>
+    <div class="charts">
+      <div class="chart-card"><h3>CO&#8322; Savings by Run</h3><canvas id="chartSavings"></canvas></div>
+      <div class="chart-card"><h3>Score by Run</h3><canvas id="chartScore"></canvas></div>
+      <div class="chart-card full-chart"><h3>CO&#8322; Savings vs Overhead</h3><canvas id="chartScatter"></canvas></div>
+    </div>
+    <div class="table-card" id="tableCard">
+      <div class="table-header">
+        <h3>All Runs</h3>
+        <span class="count" id="rowCount"></span>
+      </div>
+      <div class="table-wrap">
+        <table><thead id="tableHead"></thead><tbody id="tableBody"></tbody></table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="overview.js"></script>
+</body>
+</html>

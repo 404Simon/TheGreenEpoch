@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import json
 import logging
 import time
 from pathlib import Path
@@ -26,6 +27,7 @@ OUTPUT_DIR = Path("output")
 
 def save_results(results, path: Path) -> None:
     fields = [
+        "timeseries_id",
         "scenario_description",
         "model",
         "region",
@@ -54,13 +56,30 @@ def save_results(results, path: Path) -> None:
     with path.open("w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore")
         w.writeheader()
-        for r in results:
+        for i, r in enumerate(results):
+            ts_id = str(i)
             d = vars(r).copy()
+            d["timeseries_id"] = ts_id
             d["historical_years"] = str(r.historical_years)
             d["start_time"] = r.start_time.strftime("%Y-%m-%dT%H:%M:%SZ")
             d["co2_savings_pct"] = r.co2_savings_pct
             d["score"] = r.score
             w.writerow(d)
+
+
+def save_timeseries(results, ts_dir: Path) -> None:
+    ts_dir.mkdir(parents=True, exist_ok=True)
+    for i, r in enumerate(results):
+        data = {
+            "theta_pause": r.threshold,
+            "theta_resume": r.hysteresis_margin,
+            "timestamps": [t.strftime("%Y-%m-%dT%H:%M:%SZ") for t in r.timestamps],
+            "carbon_intensity": r.carbon_intensity_series,
+            "state": r.state_series,
+            "emissions_kg": [e / 1000.0 for e in r.emissions_series],
+            "tokens_remaining": r.tokens_remaining_series,
+        }
+        (ts_dir / f"{i}.json").write_text(json.dumps(data, separators=(",", ":")))
 
 
 # ── main ────────────────────────────────────────────────────────────
@@ -115,7 +134,7 @@ def main() -> None:
     print(f"  → {expanded} individual simulation(s)")
 
     t0 = time.time()
-    results = runner.run_scenarios(scenarios, record_time_series=False)
+    results = runner.run_scenarios(scenarios, record_time_series=True)
     elapsed = time.time() - t0
 
     # Summary
@@ -158,6 +177,10 @@ def main() -> None:
     csv_path = OUTPUT_DIR / "results.csv"
     save_results(results, csv_path)
     print(f"\n  Results saved → {csv_path}")
+
+    ts_dir = OUTPUT_DIR / "timeseries"
+    save_timeseries(results, ts_dir)
+    print(f"  Time series saved → {ts_dir}/")
     print(f"  {'=' * 68}")
 
 

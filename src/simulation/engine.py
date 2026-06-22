@@ -152,6 +152,8 @@ class SimulationRunner:
         ts_timestamps: list[datetime] = []
         ts_carbon: list[float] = []
         ts_state: list[str] = []
+        ts_emissions: list[float] = []
+        ts_tokens_remaining: list[int] = []
 
         last = None
         for progress in gen:
@@ -160,6 +162,8 @@ class SimulationRunner:
                 ts_timestamps.append(progress.timestamp)
                 ts_carbon.append(progress.carbon_intensity)
                 ts_state.append(progress.state.name.lower())
+                ts_emissions.append(progress.total_emissions_g)
+                ts_tokens_remaining.append(progress.tokens_remaining)
 
         assert last is not None, "Generator yielded no progress"
 
@@ -247,6 +251,8 @@ class SimulationRunner:
             timestamps=ts_timestamps,
             carbon_intensity_series=ts_carbon,
             state_series=ts_state,
+            emissions_series=ts_emissions,
+            tokens_remaining_series=ts_tokens_remaining,
             issues=issues,
             stop_reason=last.stop_reason,
             baseline_emissions_kgco2=baseline_emissions_kgco2,

@@ -106,6 +106,8 @@ class SimulationResult:
     timestamps: list[datetime] = field(default_factory=list)
     carbon_intensity_series: list[float] = field(default_factory=list)
     state_series: list[str] = field(default_factory=list)
+    emissions_series: list[float] = field(default_factory=list)
+    tokens_remaining_series: list[int] = field(default_factory=list)
 
     # -- baseline & KPIs ------------------------------------------------
     baseline_emissions_kgco2: float = 0.0

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Run Timeline — TheGreenEpoch</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="timeline-body">
+
+<div class="timeline-header">
+  <a class="timeline-back" href="overview.html">&larr; Back to overview</a>
+  <h1 id="timelineTitle">Run Timeline</h1>
+</div>
+
+<div class="timeline-container">
+  <div class="upload-zone" id="dropZone" style="display:none;margin-bottom:20px;justify-content:center">
+    <input type="file" id="fileInput" accept=".json">
+    <label for="fileInput"><span class="icon">&#128194;</span> <span id="fileLabel">Drop timeseries .json here</span></label>
+  </div>
+  <div class="chart-card full-chart" style="margin-bottom:30px">
+    <canvas id="chartTimeline" style="max-height:600px;height:60vh"></canvas>
+  </div>
+</div>
+
+<script src="scenario.js"></script>
+</body>
+</html>

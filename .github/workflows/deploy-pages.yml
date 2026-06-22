@@ -22,7 +22,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Prepare static files
-        run: cp output/viewer.html output/index.html
+        run: cp output/overview.html output/index.html
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

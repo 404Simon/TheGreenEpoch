@@ -71,8 +71,22 @@ def save_timeseries(results, ts_dir: Path) -> None:
     ts_dir.mkdir(parents=True, exist_ok=True)
     for i, r in enumerate(results):
         data = {
+            "scenario_description": r.scenario_description,
+            "model": r.model,
+            "region": r.region,
+            "historical_years": r.historical_years,
+            "start_time": r.start_time.strftime("%Y-%m-%dT%H:%M:%SZ"),
             "theta_pause": r.threshold,
             "theta_resume": r.hysteresis_margin,
+            "total_wall_time_h": r.total_wall_time_h,
+            "training_time_h": r.training_time_h,
+            "paused_time_h": r.paused_time_h,
+            "num_pauses": r.num_pauses,
+            "actual_overhead_pct": r.actual_overhead_pct,
+            "co2_savings_pct": r.co2_savings_pct,
+            "score": r.score,
+            "completed": r.completed,
+            "stop_reason": r.stop_reason,
             "timestamps": [t.strftime("%Y-%m-%dT%H:%M:%SZ") for t in r.timestamps],
             "carbon_intensity": r.carbon_intensity_series,
             "state": r.state_series,

@@ -26,9 +26,28 @@ function destroyTimeline() {
   if (timelineChart) { try { timelineChart.destroy(); } catch(e) {} timelineChart = null; }
 }
 
+function renderMeta(data) {
+  const fmt = v => { if (v == null || !isFinite(v)) return '-'; const r = Number(v).toFixed(2); return r === '-0.00' ? '0.00' : r; };
+  const meta = data;
+  document.getElementById('metaCards').innerHTML = `
+    <div class="card"><div class="label">Scenario</div><div class="value" style="font-size:18px">${esc(meta.scenario_description || '')}</div></div>
+    <div class="card"><div class="label">Region</div><div class="value">${esc(meta.region || '')}</div></div>
+    <div class="card"><div class="label">Model</div><div class="value">${esc(meta.model || '')}</div></div>
+    <div class="card"><div class="label">Years</div><div class="value">${meta.historical_years ? meta.historical_years.join(', ') : '-'}</div></div>
+    <div class="card"><div class="label">Start</div><div class="value" style="font-size:22px">${meta.start_time ? new Date(meta.start_time).toLocaleDateString(undefined, {month:'short', day:'numeric'}) : '-'}</div></div>
+    <div class="card"><div class="label">CO\u2082 Savings</div><div class="value ${meta.co2_savings_pct > 0.01 ? 'pos' : meta.co2_savings_pct < -0.01 ? 'neg' : 'zero'}" style="font-size:22px">${fmt(meta.co2_savings_pct)}%</div></div>
+    <div class="card"><div class="label">Score</div><div class="value">${meta.score != null && isFinite(meta.score) ? Number(meta.score).toFixed(4) : '-'}</div></div>
+    <div class="card"><div class="label">Pauses</div><div class="value">${meta.num_pauses != null ? meta.num_pauses : '-'}</div></div>
+    <div class="card"><div class="label">Wall Time</div><div class="value">${fmt(meta.total_wall_time_h)}h</div></div>
+    <div class="card"><div class="label">Overhead</div><div class="value">${fmt(meta.actual_overhead_pct)}%</div></div>
+    <div class="card"><div class="label">Status</div><div class="value">${meta.completed ? '<span style="font-size:20px;font-weight:700;color:var(--accent2)">\u2713 Done</span>' : '<span style="font-size:14px;font-weight:600;color:var(--red)">' + esc(meta.stop_reason || 'Incomplete') + '</span>'}</div></div>
+  `;
+}
+
 function renderTimeline(data) {
   destroyTimeline();
   document.getElementById('dropZone').style.display = 'none';
+  renderMeta(data);
   const n = data.carbon_intensity.length;
   if (n === 0) return;
 
@@ -156,6 +175,12 @@ function renderTimeline(data) {
     },
     plugins: [stateBgPlugin],
   });
+}
+
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
 }
 
 // ── Load from JSON string (shared by fetch + file drop) ──────────

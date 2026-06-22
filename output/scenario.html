@@ -10,7 +10,6 @@
 <body class="timeline-body">
 
 <div class="timeline-header">
-  <a class="timeline-back" href="overview.html">&larr; Back to overview</a>
   <h1 id="timelineTitle">Run Timeline</h1>
 </div>
 
@@ -19,6 +18,7 @@
     <input type="file" id="fileInput" accept=".json">
     <label for="fileInput"><span class="icon">&#128194;</span> <span id="fileLabel">Drop timeseries .json here</span></label>
   </div>
+  <div class="cards" id="metaCards" style="margin-bottom:16px"></div>
   <div class="chart-card full-chart" style="margin-bottom:30px">
     <canvas id="chartTimeline" style="max-height:600px;height:60vh"></canvas>
   </div>

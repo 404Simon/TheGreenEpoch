@@ -75,24 +75,26 @@ class GridDataProvider:
             raise ValueError(f"No grid data available for zone={zone} years={years}")
         return loaded
 
-    @staticmethod
-    def _to_canonical_year_index(timestamps: np.ndarray, target_year: int) -> pd.Index:
-        ts = pd.to_datetime(timestamps)
-        year_diff = target_year - ts.year[0] if len(ts) else 0
-        if year_diff != 0:
-            ts = ts + pd.DateOffset(years=year_diff)
-        return pd.Index(ts, dtype="datetime64[ns]")
-
     def _data_frame_for_year(self, gd: GridData, canonical_year: int) -> pd.DataFrame:
         ts = pd.to_datetime(gd.timestamps)
         year_diff = canonical_year - gd.year
         if year_diff != 0:
             ts = ts + pd.DateOffset(years=year_diff)
 
-        return pd.DataFrame(
+        df = pd.DataFrame(
             {f"carbon_{gd.year}": gd.carbon_intensity},
             index=pd.Index(ts, dtype="datetime64[ns]"),
         )
+
+        # When a leap-year (e.g. 2024-02-29) shifts to a non-leap canonical
+        # year, Feb 29 snaps to Feb 28, colliding with the original Feb 28
+        # entries.  Group-by-index and average so that no index duplicates
+        # reach the inner join in timeline() - duplicates would otherwise
+        # produce a Cartesian product, double-counting leap-year data.
+        if df.index.duplicated().any():
+            df = df.groupby(df.index).mean()
+
+        return df
 
     def timeline(self, zone: str, years: list[int]) -> tuple[np.ndarray, np.ndarray]:
         """Return (timestamps, carbon_intensity) averaged over *years*."""
@@ -131,7 +133,16 @@ class GridDataProvider:
         timestamps = grid_data[0].timestamps
         if len(timestamps) < 2:
             raise ValueError(f"Insufficient timestamps to infer granularity for {zone}")
-        diff_ns = int(timestamps[1].astype("int64") - timestamps[0].astype("int64"))
+
+        # Validate data spacing: compare first 10 intervals for consistency
+        diffs_ns = timestamps[1:11].astype("int64") - timestamps[:10].astype("int64")
+        if not (diffs_ns == diffs_ns[0]).all():
+            logger.warning(
+                "Variable data spacing in %s %s – first 10 intervals differ",
+                zone,
+                years[0],
+            )
+        diff_ns = int(diffs_ns[0])
         return timedelta(microseconds=diff_ns / 1000)
 
     def year_average(self, zone: str, years: list[int]) -> float:

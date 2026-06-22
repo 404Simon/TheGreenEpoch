@@ -437,14 +437,15 @@ function renderCharts(data) {
     }
   });
 
-  // 3. Scatter: Savings vs Overhead
+  // 3. Scatter: Savings vs Overhead (completed runs only)
+  const done = data.filter(r => r.completed);
   charts.scatter = new Chart(document.getElementById('chartScatter'), {
     type: 'scatter',
     data: {
       datasets: [{
         label: 'Run',
-        data: data.map(r => ({ x: r.actual_overhead_pct, y: r.co2_savings_pct })),
-        backgroundColor: data.map(r => colorForSave(r.co2_savings_pct)),
+        data: done.map(r => ({ x: r.actual_overhead_pct, y: r.co2_savings_pct })),
+        backgroundColor: done.map(r => colorForSave(r.co2_savings_pct)),
         pointRadius: 7,
         pointHoverRadius: 10,
       }]
@@ -456,7 +457,7 @@ function renderCharts(data) {
         tooltip: {
           callbacks: {
             label: ctx => {
-              const r = data[ctx.dataIndex];
+              const r = done[ctx.dataIndex];
               return [
                 `${r.scenario_description}  (θ=${r.threshold}, ${r.region})`,
                 `  Savings: ${r.co2_savings_pct.toFixed(2)}%`,

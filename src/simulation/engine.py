@@ -8,8 +8,8 @@ tracks energy consumption, emissions, and training progress.
 from __future__ import annotations
 
 import logging
+import math
 from datetime import datetime, timedelta, timezone
-from math import isfinite
 from pathlib import Path
 from typing import TYPE_CHECKING, Generator
 
@@ -56,6 +56,11 @@ class SimulationRunner:
     ) -> None:
         self._profiles = profiles
         self._provider = provider
+        # Cache baseline (no-pause) simulation results keyed by
+        # (profile_name, region, years_tuple, start_time, epochs).
+        # Multiple configs within the same scenario share the same
+        # baseline, so we avoid re-running it for each threshold combo.
+        self._baseline_cache: dict[tuple, tuple[float, float]] = {}
 
     # ------------------------------------------------------------------
     # Public API
@@ -176,25 +181,42 @@ class SimulationRunner:
             baseline_emissions_kgco2 = last.total_emissions_g / 1000.0
             baseline_time_h = last.total_wall_s / 3600.0
         else:
-            baseline_config = SimulationConfig(
-                scenario_description=config.scenario_description,
-                region=config.region,
-                historical_years=config.historical_years,
-                start_time=config.start_time,
-                theta_pause=float("inf"),
-                theta_resume=0.0,
-                overhead_budget_pct=config.overhead_budget_pct,
-                epochs=config.epochs,
+            # Reuse cached baseline when multiple configs share the same
+            # training profile, region, and years - avoids redundant runs.
+            cache_key = (
+                profile.name,
+                config.region,
+                tuple(config.historical_years),
+                config.start_time,
+                config.epochs,
             )
-            baseline_gen = simulate_stepwise(
-                profile, baseline_config, self._provider
-            )
-            baseline_last = None
-            for bp in baseline_gen:
-                baseline_last = bp
-            assert baseline_last is not None
-            baseline_emissions_kgco2 = baseline_last.total_emissions_g / 1000.0
-            baseline_time_h = baseline_last.total_wall_s / 3600.0
+            cached = self._baseline_cache.get(cache_key)
+            if cached is not None:
+                baseline_emissions_kgco2, baseline_time_h = cached
+            else:
+                baseline_config = SimulationConfig(
+                    scenario_description=config.scenario_description,
+                    region=config.region,
+                    historical_years=config.historical_years,
+                    start_time=config.start_time,
+                    theta_pause=float("inf"),
+                    theta_resume=0.0,
+                    overhead_budget_pct=config.overhead_budget_pct,
+                    epochs=config.epochs,
+                )
+                baseline_gen = simulate_stepwise(
+                    profile, baseline_config, self._provider
+                )
+                baseline_last = None
+                for bp in baseline_gen:
+                    baseline_last = bp
+                assert baseline_last is not None
+                baseline_emissions_kgco2 = baseline_last.total_emissions_g / 1000.0
+                baseline_time_h = baseline_last.total_wall_s / 3600.0
+                self._baseline_cache[cache_key] = (
+                    baseline_emissions_kgco2,
+                    baseline_time_h,
+                )
 
         return SimulationResult(
             scenario_description=config.scenario_description,
@@ -246,7 +268,7 @@ def simulate_stepwise(
 
     The last yielded object carries ``done=True`` and the final
     accumulator values.  Both ``SimulationRunner.run_one`` (batch) and
-    the interactive GUI consume this same function — there is exactly
+    the interactive GUI consume this same function - there is exactly
     **one** simulation loop.
     """
     start_time = config.start_time
@@ -259,10 +281,15 @@ def simulate_stepwise(
     tps = tokens_per_second(profile.gpu_count)
     train_power_w = profile.gpu_count * profile.gpu_power_train * profile.pue
     pause_power_w = profile.gpu_count * profile.gpu_power_pause * profile.pue
+    # Checkpoint power - currently assumed equal to training power.
+    # During distributed checkpointing, GPUs are busy with I/O + NCCL,
+    # so power draw is non-trivial but may differ from FLOPs-bound training.
+    # TODO: measure and model checkpoint-specific GPU power draw.
+    ckpt_power_w = train_power_w
 
     year_avg = float(provider.year_average(config.region, config.historical_years))
-    mean_co2 = year_avg if isfinite(year_avg) else float(np.nanmean(carbon))
-    if not isfinite(mean_co2):
+    mean_co2 = year_avg if math.isfinite(year_avg) else float(np.nanmean(carbon))
+    if not math.isfinite(mean_co2):
         mean_co2 = 0.0
 
     granularity = provider.granularity(config.region, config.historical_years)
@@ -276,7 +303,10 @@ def simulate_stepwise(
 
     start_idx = _find_start_index(timestamps, start_time)
     base_year = timestamps[0].astype("datetime64[Y]").astype(int) + 1970
-    wall_clock = start_time.replace(year=int(base_year))
+    try:
+        wall_clock = start_time.replace(year=int(base_year))
+    except ValueError:
+        wall_clock = start_time.replace(year=int(base_year), day=28)
     idx = start_idx
     n_points = len(timestamps)
 
@@ -310,7 +340,7 @@ def simulate_stepwise(
 
     # resolve initial state
     init_co2 = float(carbon[start_idx])
-    if not isfinite(init_co2):
+    if not math.isfinite(init_co2):
         init_co2 = mean_co2
         nan_fallbacks += 1
 
@@ -324,34 +354,31 @@ def simulate_stepwise(
             state = SimState.PAUSED
             num_pauses += 1
 
-    while tokens_remaining > 0:
+    # Track whether the overhead budget forced termination.
+    # Unlike the catch-all stop_reason below, this flag is set proactively
+    # when a pending transition would push overhead past the budget,
+    # before the overhead is actually incurred.
+    _budget_exceeded = False
+
+    while tokens_remaining > 0 and not _budget_exceeded:
         iterations += 1
         if iterations > max_iterations:
             issues.append(f"Iteration limit ({max_iterations}) reached")
             break
 
-        overhead_s = paused_s + checkpoint_s
-        overhead_pct = 100.0 * overhead_s / ideal_training_s
-        if overhead_pct > config.overhead_budget_pct:
-            issues.append(
-                f"Overhead {overhead_pct:.1f}% exceeds budget "
-                f"{config.overhead_budget_pct:.0f}%"
-            )
-            break
-
         co2 = float(carbon[idx])
-        if not isfinite(co2):
+        if not math.isfinite(co2):
             co2 = mean_co2
             nan_fallbacks += 1
 
         dt_s = step_s
         cur_time = wall_clock
 
-        # checkpoint transition
+        # ---- checkpoint transition (writing or loading) ----
         if transition_timer_s > 0:
             spent_s = min(dt_s, transition_timer_s)
             transition_timer_s -= spent_s
-            e_wh = energy_wh(train_power_w, spent_s)
+            e_wh = energy_wh(ckpt_power_w, spent_s)
             em_g = emissions_g(e_wh, co2)
             checkpoint_s += spent_s
             checkpoint_energy_wh += e_wh
@@ -389,16 +416,31 @@ def simulate_stepwise(
                 continue
             cur_time = wall_clock
 
-        # policy evaluation
+        # ---- policy evaluation ----
         action = policy.evaluate(co2, state == SimState.PAUSED)
 
         if action == PolicyAction.PAUSE and state == SimState.RUNNING:
+            ckpt_s = profile.checkpoint_pause_time
+            # Refuse to start a pause if the pending checkpoint would
+            # push the overhead past the budget. The stop_reason logic
+            # below checks _budget_exceeded before the ratio threshold
+            # so the user sees a clear "budget_exceeded" signal even
+            # though the actual overhead is still below the threshold.
+            if (
+                paused_s + checkpoint_s + ckpt_s
+            ) / ideal_training_s > config.overhead_budget_pct / 100.0:
+                issues.append(
+                    f"Overhead would exceed budget - blocking new pause "
+                    f"({(paused_s + checkpoint_s) / ideal_training_s * 100:.1f}% + "
+                    f"{ckpt_s / ideal_training_s * 100:.1f}% checkpoint)"
+                )
+                _budget_exceeded = True
+                break
             num_pauses += 1
-            overhead_s = profile.checkpoint_pause_time
-            if overhead_s <= 0:
+            if ckpt_s <= 0:
                 state = SimState.PAUSED
             else:
-                transition_timer_s = overhead_s
+                transition_timer_s = ckpt_s
                 target_after_transition = SimState.PAUSED
                 yield _build_progress(
                     cur_time,
@@ -423,11 +465,22 @@ def simulate_stepwise(
                 continue
 
         if action == PolicyAction.RESUME and state == SimState.PAUSED:
-            overhead_s = profile.checkpoint_resume_time
-            if overhead_s <= 0:
+            ckpt_s = profile.checkpoint_resume_time
+            # Same projected-overhead check as above for resume transitions.
+            if (
+                paused_s + checkpoint_s + ckpt_s
+            ) / ideal_training_s > config.overhead_budget_pct / 100.0:
+                issues.append(
+                    f"Overhead would exceed budget - blocking resume "
+                    f"({(paused_s + checkpoint_s) / ideal_training_s * 100:.1f}% + "
+                    f"{ckpt_s / ideal_training_s * 100:.1f}% checkpoint)"
+                )
+                _budget_exceeded = True
+                break
+            if ckpt_s <= 0:
                 state = SimState.RUNNING
             else:
-                transition_timer_s = overhead_s
+                transition_timer_s = ckpt_s
                 target_after_transition = SimState.RUNNING
                 yield _build_progress(
                     cur_time,
@@ -451,8 +504,10 @@ def simulate_stepwise(
                 )
                 continue
 
-        # spend dt_s in current state
+        # ---- spend remaining dt_s in current state ----
         if state == SimState.RUNNING:
+            # int() truncates at most 1 token per step - negligible
+            # (<1e-8 relative error) against the total token budget.
             max_t = int(tps * dt_s)
             tokens_step = min(max_t, tokens_remaining)
             effective_s = dt_s if tokens_step >= max_t else (tokens_step / tps)
@@ -484,6 +539,22 @@ def simulate_stepwise(
             total_wall_s += dt_s
             wall_clock += timedelta(seconds=dt_s)
 
+        # Hard overhead budget check after accumulators are updated.
+        # This catches cases where the policy evaluation itself (e.g.
+        # deciding to stay paused) added overhead exceeding the budget.
+        if (
+            paused_s + checkpoint_s
+        ) / ideal_training_s > config.overhead_budget_pct / 100.0:
+            issues.append(
+                f"Overhead {(paused_s + checkpoint_s) / ideal_training_s * 100:.1f}% "
+                f"exceeds budget {config.overhead_budget_pct:.0f}%"
+            )
+            break
+
+        # Advance through grid data. For runs exceeding one year of data
+        # the index wraps modulo n_points, effectively repeating the
+        # averaged yearly CO2 pattern. This is a modeling assumption:
+        # inter-annual trends are not captured.
         idx = (idx + 1) % n_points
 
         yield _build_progress(
@@ -514,7 +585,8 @@ def simulate_stepwise(
         else (
             "budget_exceeded"
             if (
-                (paused_s + checkpoint_s) / ideal_training_s
+                _budget_exceeded
+                or (paused_s + checkpoint_s) / ideal_training_s
                 > config.overhead_budget_pct / 100.0
             )
             else "iteration_limit"
@@ -595,7 +667,12 @@ def _build_progress(
 
 def _find_start_index(timestamps: np.ndarray, start_time: datetime) -> int:
     base_year = timestamps[0].astype("datetime64[Y]").astype(int) + 1970
-    target_dt = start_time.replace(year=int(base_year))
+    try:
+        target_dt = start_time.replace(year=int(base_year))
+    except ValueError:
+        # start_time may be Feb 29 in a non-leap base year;
+        # clamp to Feb 28 as the nearest valid date.
+        target_dt = start_time.replace(year=int(base_year), day=28)
     if target_dt.tzinfo is None:
         target_utc = target_dt
     else:

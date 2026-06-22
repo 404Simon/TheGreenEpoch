@@ -91,12 +91,12 @@ def main() -> None:
 
     logging.basicConfig(
         level=logging.INFO,
-        format="%(asctime)s [%(levelname)-8s] %(message)s",
+        format="%(asctime)s [%(levelname)-4s] %(message)s",
         datefmt="%H:%M:%S",
     )
 
     print("=" * 72)
-    print("  TheGreenEpoch — Pilot Simulation Run")
+    print("  TheGreenEpoch Pilot Simulation Run")
     print("=" * 72)
 
     runner = SimulationRunner.from_data_dir(DATA_DIR)

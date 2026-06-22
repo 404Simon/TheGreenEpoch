@@ -312,7 +312,7 @@ def filter_scenarios(
                 thresholds=sc.thresholds,
                 hysteresis=sc.hysteresis,
                 region=sc.region,
-                start_times=sc.start_times[:1],
+                start_times=sc.start_times,
                 historical_years=years,
                 overhead_budget_pct=sc.overhead_budget_pct,
             )

@@ -618,6 +618,16 @@ if (csvUrl) {
     try { render(parseCSV(text)); } catch(e) { console.error(e); }
   }).catch(() => {});
 }
+
+// Auto-load results.csv when served from a web server (e.g. GitHub Pages)
+if (!csvUrl && window.location.protocol.startsWith('http')) {
+  fetch('results.csv').then(r => {
+    if (r.ok) return r.text();
+    throw new Error('Not found');
+  }).then(text => {
+    try { render(parseCSV(text)); } catch(e) { console.error(e); }
+  }).catch(() => {});
+}
 </script>
 </body>
 </html>

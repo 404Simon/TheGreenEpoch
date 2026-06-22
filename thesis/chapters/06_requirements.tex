@@ -9,16 +9,16 @@ LLM training can involve thousands of GPUs running over the period of a couple o
 
 The simulation goal is to quantify the trade-off between reduced CO$_2$eq emissions and increased wall-clock training duration, compared to uninterrupted baseline training.
 
-\section{Definition of Optimization Problem}
+\section{Scoring of Policies}
 
 \subsection{Target Function}
 
-The optimization target is to maximize CO$_2$eq reduction with minimal time overhead relative to baseline training.
+The policies are scored based on a composite metric that captures the trade-off between CO$_2$ savings and time overhead relative to baseline training.
 
 Primary key performance indicators (KPIs):
 
 \begin{align*}
-  \text{CO2\_savings\_pct} &= \frac{E_{\text{baseline}} - E_{\text{policy}}}{E_{\text{baseline}}} \times 100, \\
+  \text{CO2\_savings\_pct} &= \frac{CO2_{\text{baseline}} - CO2_{\text{policy}}}{CO2_{\text{baseline}}} \times 100, \\
   \text{time\_overhead\_pct} &= \frac{T_{\text{policy}} - T_{\text{baseline}}}{T_{\text{baseline}}} \times 100.
 \end{align*}
 
@@ -28,17 +28,17 @@ Composite score used for ranking policies:
   \text{score} = \frac{\text{CO2\_savings\_pct}}{\max(\text{time\_overhead\_pct}, \, \epsilon)} \quad \text{with } \epsilon > 0.
 \]
 
-Optional constraint for practical recommendations:
+Optional constraint for practical recommendations that only consider policies whose time overhead stays within a given budget:
 
 \[
   \text{time\_overhead\_pct} \leq \text{overhead\_budget\_pct}.
 \]
 
-\subsection{Optimization Variables}
+\subsection{Policy Variables}
 
 \begin{itemize}
   \item $\theta_{\text{pause}}$ (gCO$_2$eq/kWh): Pause threshold (training pauses if grid intensity is above threshold).
-  \item $\delta_{\text{hyst}}$ (gCO$_2$eq/kWh): Hysteresis margin for resume threshold ($\theta_{\text{resume}} = \theta_{\text{pause}} - \delta_{\text{hyst}}$).
+  \item $\theta_{\text{hyst}}$ (gCO$_2$eq/kWh): Resume threshold (training resumes if grid intensity is below threshold (Hysteresis)).
   \item $t_{\text{start}}$ (datetime): Start time of training run.
   \item $\mathit{region}$ (categorical): Grid region used for carbon-intensity time series.
   \item $\mathit{pause\_granularity}$ (categorical): Allowed pause points (e.g., checkpoint, epoch).
@@ -63,7 +63,7 @@ Optional constraint for practical recommendations:
 
 \begin{itemize}
   \item $\mathit{threshold\_set}$ (list(gCO$_2$eq/kWh)): Candidate pause thresholds.
-  \item $\mathit{hysteresis\_set}$ (list(gCO$_2$eq/kWh)): Candidate hysteresis margins.
+  \item $\mathit{hysteresis\_set}$ (list(gCO$_2$eq/kWh)): Candidate resume thresholds.
   \item $\mathit{regions\_set}$ (list(region)): Regions included in study.
   \item $\mathit{start\_times\_set}$ (list(datetime)): Candidate start dates/times.
   \item $\mathit{historical\_years}$ (list(year)): Historical periods used for replay.

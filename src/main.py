@@ -39,6 +39,10 @@ def save_results(results, path: Path) -> None:
         "checkpoint_overhead_h",
         "total_energy_kwh",
         "total_emissions_kgco2",
+        "baseline_emissions_kgco2",
+        "baseline_time_h",
+        "co2_savings_pct",
+        "score",
         "tokens_processed",
         "tokens_total",
         "completed",
@@ -54,6 +58,8 @@ def save_results(results, path: Path) -> None:
             d = vars(r).copy()
             d["historical_years"] = str(r.historical_years)
             d["start_time"] = r.start_time.strftime("%Y-%m-%dT%H:%M:%SZ")
+            d["co2_savings_pct"] = r.co2_savings_pct
+            d["score"] = r.score
             w.writerow(d)
 
 
@@ -129,25 +135,27 @@ def main() -> None:
     )
 
     # Detail table
-    print(f"\n  {'─' * 68}")
+    print(f"\n  {'─' * 82}")
     print(
         f"  {'REGION':<8} {'THR':>4} {'RES':>4} {'PAUSES':>7} "
-        f"{'OVERH':>6} {'EMIS(kg)':>9} {'WALL(h)':>8}  DETAIL"
+        f"{'OVERH':>6} {'CO2%':>7} {'SCORE':>7} "
+        f"{'WALL(h)':>8}  DETAIL"
     )
-    print(f"  {'─' * 68}")
+    print(f"  {'─' * 82}")
     for r in results:
         status = "OK" if r.ok else "FAIL"
         print(
             f"  {r.region:<8} {r.threshold:>4.0f} {r.hysteresis_margin:>4.0f} "
             f"{r.num_pauses:>7} {r.actual_overhead_pct:>5.1f}% "
-            f"{r.total_emissions_kgco2:>9,.0f} {r.total_wall_time_h:>8.1f}  "
+            f"{r.co2_savings_pct:>6.1f}% {r.score:>7.1f} "
+            f"{r.total_wall_time_h:>8.1f}  "
             f"{status}  {r.scenario_description[:38]:38s}"
         )
         for issue in r.issues[:2]:
-            print(f"  {'':<70} ⚠ {issue}")
+            print(f"  {'':<84} ⚠ {issue}")
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    csv_path = OUTPUT_DIR / "pilot_results.csv"
+    csv_path = OUTPUT_DIR / "results.csv"
     save_results(results, csv_path)
     print(f"\n  Results saved → {csv_path}")
     print(f"  {'=' * 68}")

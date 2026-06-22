@@ -107,6 +107,27 @@ class SimulationResult:
     carbon_intensity_series: list[float] = field(default_factory=list)
     state_series: list[str] = field(default_factory=list)
 
+    # -- baseline & KPIs ------------------------------------------------
+    baseline_emissions_kgco2: float = 0.0
+    baseline_time_h: float = 0.0
+
+    @property
+    def co2_savings_pct(self) -> float:
+        """(E_baseline - E_policy) / E_baseline * 100"""
+        if self.baseline_emissions_kgco2 > 0:
+            return (
+                (self.baseline_emissions_kgco2 - self.total_emissions_kgco2)
+                / self.baseline_emissions_kgco2
+                * 100
+            )
+        return 0.0
+
+    @property
+    def score(self) -> float:
+        """CO2_savings_pct / max(time_overhead_pct, epsilon)"""
+        epsilon = 0.001
+        return self.co2_savings_pct / max(self.actual_overhead_pct, epsilon)
+
     # -- diagnostics ------------------------------------------------------
     issues: list[str] = field(default_factory=list)
     stop_reason: str = ""

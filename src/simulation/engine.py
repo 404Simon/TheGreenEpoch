@@ -171,6 +171,31 @@ class SimulationRunner:
                 f"fell back to year-mean"
             )
 
+        # ---- baseline (no-pause) simulation for KPI computation ----
+        if config.theta_pause == float("inf"):
+            baseline_emissions_kgco2 = last.total_emissions_g / 1000.0
+            baseline_time_h = last.total_wall_s / 3600.0
+        else:
+            baseline_config = SimulationConfig(
+                scenario_description=config.scenario_description,
+                region=config.region,
+                historical_years=config.historical_years,
+                start_time=config.start_time,
+                theta_pause=float("inf"),
+                theta_resume=0.0,
+                overhead_budget_pct=config.overhead_budget_pct,
+                epochs=config.epochs,
+            )
+            baseline_gen = simulate_stepwise(
+                profile, baseline_config, self._provider
+            )
+            baseline_last = None
+            for bp in baseline_gen:
+                baseline_last = bp
+            assert baseline_last is not None
+            baseline_emissions_kgco2 = baseline_last.total_emissions_g / 1000.0
+            baseline_time_h = baseline_last.total_wall_s / 3600.0
+
         return SimulationResult(
             scenario_description=config.scenario_description,
             model=profile.name,
@@ -202,6 +227,8 @@ class SimulationRunner:
             state_series=ts_state,
             issues=issues,
             stop_reason=last.stop_reason,
+            baseline_emissions_kgco2=baseline_emissions_kgco2,
+            baseline_time_h=baseline_time_h,
         )
 
 

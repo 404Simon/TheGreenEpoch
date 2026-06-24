@@ -1,0 +1,14 @@
+{
+  "Deepseek": {
+    "name": "Deepseek",
+    "modelParams": 671000000000,
+    "datasetTokens": 14800000000000,
+    "gpuCount": 2048
+  },
+  "Kimi": {
+    "name": "Kimi",
+    "modelParams": 1040000000000,
+    "datasetTokens": 15500000000000,
+    "gpuCount": 256
+  }
+}

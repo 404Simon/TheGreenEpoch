@@ -1,0 +1,7 @@
+{
+  "gpu_power_train": 700.0,
+  "gpu_power_pause": 60.0,
+  "pue": 1.27,
+  "checkpoint_pause_time": 148.8,
+  "checkpoint_resume_time": 0.0
+}

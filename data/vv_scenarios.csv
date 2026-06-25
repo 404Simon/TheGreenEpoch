@@ -1,0 +1,26 @@
+description,model,threshold,hysteresis,region,start_times_set,historical,overhead_budget_pct
+Verification baseline - no pause,Deepseek,"1000","900",CN,"01-01","2024",200
+Verification baseline - no pause DE,Deepseek,"1000","900",DE,"01-01","2024",200
+Verification baseline - no pause SE,Deepseek,"1000","900",SE,"01-01","2024",200
+Verification baseline - no pause US,Deepseek,"1000","900",US,"01-01","2024",200
+Verification pause with known pattern,Deepseek,"400","350",CN,"01-01","2024",200
+Verification policy control - loose,Deepseek,"500","450",DE,"01-01","2024",200
+Verification policy control - medium,Deepseek,"350","300",DE,"01-01","2024",200
+Verification policy control - aggressive,Deepseek,"250","200",DE,"01-01","2024",200
+Validation regional realism Germany,Deepseek,"350","300",DE,"01-01","2024",200
+Validation regional realism Sweden,Deepseek,"25","20",SE,"01-01","2024",200
+Validation temporal realism summer,Deepseek,"350","300",DE,"06-01","2024",200
+Validation temporal realism winter,Deepseek,"350","300",DE,"01-01","2024",200
+Validation trade-off frontier p1,Deepseek,"500","450",DE,"01-01","2024",200
+Validation trade-off frontier p2,Deepseek,"400","350",DE,"01-01","2024",200
+Validation trade-off frontier p3,Deepseek,"300","250",DE,"01-01","2024",200
+Validation trade-off frontier p4,Deepseek,"200","150",DE,"01-01","2024",200
+Validation threshold sweep 250,Deepseek,"250","200",DE,"01-01","2024",200
+Validation threshold sweep 300,Deepseek,"300","250",DE,"01-01","2024",200
+Validation threshold sweep 350,Deepseek,"350","300",DE,"01-01","2024",200
+Validation threshold sweep 400,Deepseek,"400","350",DE,"01-01","2024",200
+Validation cross-model baseline Deep,Deepseek,"1000","900",US,"01-01","2024",200
+Validation cross-model baseline Kimi,Kimi,"1000","900",US,"01-01","2024",200
+Validation cross-model policy Deep,Deepseek,"400","350",US,"01-01","2024",200
+Validation cross-model policy Kimi,Kimi,"400","350",US,"01-01","2024",200
+Deepseek training in US,Deepseek,"400,450","350,400",US,"01-01,06-01,08-08","2022,2023,2024,2025",200

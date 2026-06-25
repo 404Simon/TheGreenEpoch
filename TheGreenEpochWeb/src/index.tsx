@@ -1,14 +1,17 @@
-import { render } from 'solid-js/web';
-import 'solid-devtools';
+import { render } from "solid-js/web";
+import "solid-devtools";
+import "./index.css";
+import { AppProvider } from "./data/store";
+import { App } from "./App";
 
-import { TodoList } from './todo-list';
+const root = document.getElementById("root");
+if (!root) throw new Error("Root element not found");
 
-const root = document.getElementById('root');
-
-if (import.meta.env.DEV && !(root instanceof HTMLElement)) {
-  throw new Error(
-    'Root element not found. Did you forget to add it to your index.html? Or maybe the id attribute got misspelled?',
-  );
-}
-
-render(() => <TodoList />, root!);
+render(
+  () => (
+    <AppProvider>
+      <App />
+    </AppProvider>
+  ),
+  root,
+);

@@ -3,7 +3,7 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
-    paths: ['output/**']
+    paths: ['TheGreenEpochWeb/**']
   workflow_dispatch:
 
 permissions:
@@ -18,16 +18,27 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: TheGreenEpochWeb
     steps:
       - uses: actions/checkout@v7
 
-      - name: Prepare static files
-        run: cp output/overview.html output/index.html
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build
+        run: pnpm build
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v5
         with:
-          path: output/
+          path: TheGreenEpochWeb/dist/
 
       - name: Deploy to GitHub Pages
         id: deployment

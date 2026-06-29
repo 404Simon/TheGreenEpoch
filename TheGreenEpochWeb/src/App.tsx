@@ -5,6 +5,7 @@ import { ScenariosPage } from "./pages/ScenariosPage";
 import { LiveSimPage } from "./pages/LiveSimPage";
 import { ResultsPage } from "./pages/ResultsPage";
 import { RunsPage } from "./pages/RunsPage";
+import { OptimizePage } from "./pages/OptimizePage";
 
 const THEME_KEY = "thegreenepoch-theme";
 
@@ -65,6 +66,14 @@ function Layout(props: { children?: JSX.Element }) {
             >
               Runs
             </A>
+            <A
+              href="/optimize"
+              class="px-3 py-1.5 rounded-lg no-underline transition-colors"
+              activeClass="bg-accent-subtle text-accent font-medium"
+              inactiveClass="text-fg-subtle hover:text-fg-body hover:bg-white/5"
+            >
+              Optimize
+            </A>
             <button
               onClick={toggleTheme}
               class="ml-2 p-1.5 rounded-lg text-fg-subtle hover:text-fg-body hover:bg-white/5 transition-colors"
@@ -121,6 +130,7 @@ export function App() {
         <Route path="/simulate/:id" component={LiveSimPage} />
         <Route path="/results/:id" component={ResultsPage} />
         <Route path="/runs" component={RunsPage} />
+        <Route path="/optimize" component={OptimizePage} />
       </Router>
     </Show>
   );

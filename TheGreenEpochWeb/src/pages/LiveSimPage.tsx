@@ -3,9 +3,12 @@ import { useParams, useSearchParams, A } from "@solidjs/router";
 import { useApp } from "../data/store";
 import { CO2Chart } from "../components/CO2Chart";
 import { StatsPanel } from "../components/StatsPanel";
-import { tokensPerSecond, energyWh, emissionsG, simulateStepwise } from "../data/simulation";
+import { energyWh, emissionsG } from "../domain/physics";
+import { tokensPerSecond, simulateStepwise } from "../data/simulation";
+import { buildSimResult } from "../domain/result";
+import { neverPausePolicy } from "../domain/policy";
 import { loadCO2Timeline } from "../data/loadData";
-import type { SimResult, FullProfile, SimConfig, CO2Timeline } from "../types";
+import type { SimResult, FullProfile, SimConfig, CO2Timeline } from "../domain/types";
 
 export function LiveSimPage() {
   const params = useParams();
@@ -344,66 +347,30 @@ function saveResult(
   app: ReturnType<typeof useApp>,
 ): SimResult | null {
   try {
-    const cfg: SimConfig = {
-      scenarioDescription: sc.description, region: sc.region,
-      historicalYears: sc.historicalYears, startTime: sc.startTimes[si],
-      thetaPause: sc.thresholds[ti], thetaResume: sc.hysteresis[ti],
+    const simConfig: SimConfig = {
+      startTime: sc.startTimes[si],
+      historicalYears: sc.historicalYears,
       overheadBudgetPct: sc.overheadBudgetPct,
     };
-    const baseCfg: SimConfig = { ...cfg, thetaPause: Infinity, thetaResume: 0 };
+    const thetaPause = sc.thresholds[ti];
+    const thetaResume = sc.hysteresis[ti];
+    const basePolicy = neverPausePolicy();
     let baseLast: any = null;
-    for (const p of simulateStepwise(full, baseCfg, tl)) {
+    for (const p of simulateStepwise(full, basePolicy, tl, simConfig)) {
       baseLast = p;
     }
 
-    const tps = tokensPerSecond(full.gpuCount) || 1;
-    const idealS = lastP.tokensTotal / tps;
-    const overheadS = lastP.pausedS + lastP.checkpointS;
-    const actualOverheadPct = 100 * overheadS / (idealS || 1);
-    const baselineEm = baseLast ? baseLast.totalEmissionsG / 1000 : 0;
-    const totalEm = lastP.totalEmissionsG / 1000;
-    const co2SavingsPct = baselineEm > 0 ? (baselineEm - totalEm) / baselineEm * 100 : 0;
-    const score = co2SavingsPct / Math.max(actualOverheadPct, 0.001);
-    const tokensProcessed = lastP.tokensTotal - lastP.tokensRemaining;
-    const totalWallTimeH = lastP.totalWallS / 3600;
-    const pausedTimeH = lastP.pausedS / 3600;
-    const checkpointOverheadH = lastP.checkpointS / 3600;
-    const idleTimeH = pausedTimeH + checkpointOverheadH;
-
-    const result: SimResult = {
+    const result = buildSimResult(full, simConfig, lastP, baseLast, thetaPause, thetaResume, {
       id: `result-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-      scenarioDescription: cfg.scenarioDescription, model: full.name,
-      region: cfg.region, historicalYears: cfg.historicalYears,
-      startTime: cfg.startTime, threshold: cfg.thetaPause,
-      hysteresisMargin: cfg.thetaResume,
-      totalWallTimeH,
-      trainingTimeH: lastP.trainingS / 3600,
-      pausedTimeH,
-      checkpointOverheadH,
-      totalEnergyKwh: lastP.totalEnergyWh / 1000,
-      trainingEnergyKwh: lastP.trainingEnergyWh / 1000,
-      pausedEnergyKwh: lastP.pausedEnergyWh / 1000,
-      checkpointEnergyKwh: lastP.checkpointEnergyWh / 1000,
-      totalEmissionsKgco2: totalEm,
-      tokensProcessed,
-      tokensTotal: lastP.tokensTotal,
-      completed: lastP.tokensRemaining <= 0,
-      numPauses: lastP.numPauses,
-      overheadBudgetPct: cfg.overheadBudgetPct,
-      actualOverheadPct: Math.round(actualOverheadPct * 100) / 100,
-      withinOverheadBudget: overheadS / idealS <= cfg.overheadBudgetPct / 100,
-      timestamps: allLabels, carbonIntensitySeries: allCo2, stateSeries: [],
+      scenarioDescription: sc.description,
+      model: full.name,
+      region: sc.region,
+      timestamps: allLabels,
+      carbonIntensitySeries: allCo2,
+      stateSeries: [],
       emissionsSeries: allEmissions,
       tokensRemainingSeries: allTokensRemaining,
-      issues: lastP.issues, stopReason: lastP.stopReason,
-      baselineEmissionsKgco2: baselineEm,
-      baselineTimeH: baseLast ? baseLast.totalWallS / 3600 : 0,
-      co2SavingsPct: Math.round(co2SavingsPct * 100) / 100,
-      score: Math.round(score * 100) / 100,
-      idleTimeH,
-      completionPct: lastP.tokensTotal > 0 ? 100.0 * tokensProcessed / lastP.tokensTotal : 0,
-      ok: lastP.tokensRemaining <= 0 && overheadS / idealS <= cfg.overheadBudgetPct / 100 && !(lastP.issues && lastP.issues.length > 0),
-    };
+    });
     app.addResult(result);
     return result;
   } catch (e) {

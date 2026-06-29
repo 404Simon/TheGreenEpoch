@@ -1,11 +1,11 @@
 import { createSignal, createMemo, createEffect, For, Show, onCleanup } from "solid-js";
 import { useApp } from "../data/store";
-import { adaptiveSweep, type SweepPoint, type AdaptiveOptions } from "../data/optimize";
+import { runOptimizationInWorker } from "../engine/worker";
+import type { SweepPoint, FullProfile } from "../domain/types";
 import {
   Chart, ScatterController, PointElement,
   LinearScale, Tooltip,
 } from "chart.js";
-import type { FullProfile } from "../types";
 
 Chart.register(ScatterController, PointElement, LinearScale, Tooltip);
 
@@ -193,30 +193,33 @@ export function OptimizePage() {
         timeline = await loadCO2Timeline(scenario.region);
       }
 
-      const opts: AdaptiveOptions = {
-        thetaPauseMax: tpMax(),
-        overheadBudgetPct: budget(),
-        resolution: resolution(),
-        maxIterations: 6,
-        minStep: 3,
-        shrinkFactor: 0.45,
-      };
-
-      adaptiveSweep(fullProfile, timeline, scenario, opts, 0, (iter, iterPts, best) => {
-        setPoints(prev => {
-          const existing = new Set(prev.map(p => `${p.thetaPause},${p.thetaResume}`));
-          const merged = [...prev];
-          for (const pt of iterPts) {
-            const key = `${pt.thetaPause},${pt.thetaResume}`;
-            if (!existing.has(key)) {
-              existing.add(key);
-              merged.push(pt);
+      await runOptimizationInWorker(
+        fullProfile, timeline, scenario,
+        {
+          thetaPauseMax: tpMax(),
+          overheadBudgetPct: budget(),
+          resolution: resolution(),
+          maxIterations: 6,
+          minStep: 3,
+          shrinkFactor: 0.45,
+        },
+        0,
+        (iter, iterPts, best) => {
+          setPoints(prev => {
+            const existing = new Set(prev.map(p => `${p.thetaPause},${p.thetaResume}`));
+            const merged = [...prev];
+            for (const pt of iterPts) {
+              const key = `${pt.thetaPause},${pt.thetaResume}`;
+              if (!existing.has(key)) {
+                existing.add(key);
+                merged.push(pt);
+              }
             }
-          }
-          return merged;
-        });
-        setIterMsg(`Iteration ${iter + 1}: ${iterPts.length} points, best score = ${best ? best.score.toFixed(4) : "none"}`);
-      });
+            return merged;
+          });
+          setIterMsg(`Iteration ${iter + 1}: ${iterPts.length} points, best score = ${best ? best.score.toFixed(4) : "none"}`);
+        },
+      );
     } catch (e) {
       setError(String(e));
     }
@@ -225,14 +228,14 @@ export function OptimizePage() {
   };
 
   createEffect(() => {
-    if (running() || filteredData().length === 0) {
+    const data = filteredData();
+    if (data.length === 0) {
       if (scatterChart) { scatterChart.destroy(); scatterChart = undefined; }
       return;
     }
     if (!scatterCanvas) return;
     if (scatterChart) { scatterChart.destroy(); scatterChart = undefined; }
 
-    const data = filteredData();
     const opt = optimal();
     const maxIter = Math.max(...data.map(r => r.iteration), 0);
 
@@ -300,7 +303,7 @@ export function OptimizePage() {
         <h1 class="text-2xl font-semibold tracking-tight text-fg-primary">Adaptive Optimization</h1>
       </div>
 
-      <div class="rounded-xl bg-surface-2 border border-border-default/60 p-6 mb-6">
+      <div class="rounded-xl bg-surface-2 border p-6 mb-6 transition-[border-color,box-shadow] duration-700" classList={{ "animate-breathe": running(), "border-border-default/60": !running() }}>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
           <div>
             <label class="block text-xs font-medium text-fg-muted mb-1">Scenario</label>
@@ -354,8 +357,16 @@ export function OptimizePage() {
           >
             {running() ? "Running..." : "Run optimization"}
           </button>
-          <Show when={iterMsg()}>
-            <span class="text-xs text-fg-muted">{iterMsg()}</span>
+          <Show when={running()}>
+            <div class="flex items-center gap-2 text-xs text-fg-subtle">
+              <span class="relative flex h-2 w-2">
+                <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-75" />
+                <span class="relative inline-flex h-2 w-2 rounded-full bg-accent" />
+              </span>
+              <Show when={iterMsg()} fallback={<span>Initializing...</span>}>
+                <span>{iterMsg()}</span>
+              </Show>
+            </div>
           </Show>
         </div>
       </div>

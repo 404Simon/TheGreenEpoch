@@ -1,14 +1,17 @@
 import { describe, it, expect } from "vitest";
-import { tokensPerSecond, energyWh, emissionsG, findStartIndex, simulateStepwise, buildResult } from "./simulation";
-import type { FullProfile, SimConfig, CO2Timeline } from "../types";
-import { SimState } from "../types";
+import { tokensPerSecond, energyWh, emissionsG } from "../domain/physics";
+import { findStartIndex, simulateStepwise } from "../domain/simulation";
+import { buildSimResult } from "../domain/result";
+import { hysteresisPolicy, neverPausePolicy } from "../domain/policy";
+import type { FullProfile, CO2Timeline, SimConfig } from "../domain/types";
+import { SimState } from "../domain/types";
 
 const HOUR = 3600;
 
 const testProfile: FullProfile = {
   name: "TestModel",
   modelParams: 1e9,
-  datasetTokens: 100_000_000, // 100M tokens -> ~216 steps at 1 GPU
+  datasetTokens: 100_000_000,
   gpuCount: 1,
   gpuPowerTrain: 700,
   gpuPowerPause: 60,
@@ -30,6 +33,15 @@ const testTimeline: CO2Timeline = {
   ],
   carbonIntensity: [100, 200, 300, 400, 500, 600],
 };
+
+function makeConfig(overrides?: Partial<SimConfig>): SimConfig {
+  return {
+    startTime: "01-01",
+    historicalYears: [2022],
+    overheadBudgetPct: 200,
+    ...overrides,
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Physics
@@ -76,7 +88,6 @@ describe("findStartIndex", () => {
   });
 
   it("returns last index when start time is beyond all timestamps", () => {
-    // "12-31" would be way past Jan 1 -> should return last index
     const idx = findStartIndex(tss, "12-31");
     expect(idx).toBe(tss.length - 1);
   });
@@ -88,55 +99,30 @@ describe("findStartIndex", () => {
 
 describe("simulateStepwise", () => {
   it("yields multiple progress items until training completes", () => {
-    const config: SimConfig = {
-      scenarioDescription: "test",
-      region: "DE",
-      historicalYears: [2022],
-      startTime: "01-01",
-      thetaPause: 9999, // effectively infinity
-      thetaResume: 0,
-      overheadBudgetPct: 200,
-    };
-    const results = [...simulateStepwise(testProfile, config, testTimeline)];
+    const policy = neverPausePolicy();
+    const results = [...simulateStepwise(testProfile, policy, testTimeline, makeConfig())];
     expect(results.length).toBeGreaterThan(1);
     const last = results[results.length - 1];
     expect(last.done).toBe(true);
     expect(last.tokensRemaining).toBe(0);
   });
 
-  it("never triggers a policy pause when theta_pause is huge (baseline)", () => {
-    const config: SimConfig = {
-      scenarioDescription: "baseline",
-      region: "DE",
-      historicalYears: [2022],
-      startTime: "01-01",
-      thetaPause: 1e9, // very high threshold
-      thetaResume: 0,
-      overheadBudgetPct: 200,
-    };
-    const results = [...simulateStepwise(testProfile, config, testTimeline)];
+  it("never triggers a policy pause when using never-pause", () => {
+    const policy = neverPausePolicy();
+    const results = [...simulateStepwise(testProfile, policy, testTimeline, makeConfig())];
     const last = results[results.length - 1];
     expect(last.numPauses).toBe(0);
     expect(last.state).toBe(SimState.RUNNING);
   });
 
   it("pauses when CO2 exceeds threshold", () => {
-    const config: SimConfig = {
-      scenarioDescription: "pause-test",
-      region: "DE",
-      historicalYears: [2022],
-      startTime: "01-01",
-      thetaPause: 150, // exceeds first CO2=100, but second CO2=200
-      thetaResume: 50,
-      overheadBudgetPct: 200,
-    };
-    const results = [...simulateStepwise(testProfile, config, testTimeline)];
+    const policy = hysteresisPolicy(150, 50);
+    const results = [...simulateStepwise(testProfile, policy, testTimeline, makeConfig())];
     const last = results[results.length - 1];
     expect(last.numPauses).toBeGreaterThan(0);
   });
 
   it("resumes when CO2 drops below theta_resume", () => {
-    // Timeline: starts high, then drops low
     const tl: CO2Timeline = {
       zone: "DE",
       years: [2022],
@@ -149,20 +135,11 @@ describe("simulateStepwise", () => {
       ],
       carbonIntensity: [400, 400, 400, 30, 30],
     };
-    const config: SimConfig = {
-      scenarioDescription: "resume-test",
-      region: "DE",
-      historicalYears: [2022],
-      startTime: "01-01",
-      thetaPause: 300, // CO2=400 > 300 -> pause
-      thetaResume: 50, // CO2=30 < 50 -> resume
-      overheadBudgetPct: 200,
-    };
-    const results = [...simulateStepwise(testProfile, config, tl)];
+    const policy = hysteresisPolicy(300, 50);
+    const results = [...simulateStepwise(testProfile, policy, tl, makeConfig())];
     const states = results.map((r) => r.state);
     expect(states).toContain(SimState.PAUSED);
     expect(states).toContain(SimState.RUNNING);
-    // At some point it should resume: find a RUNNING after a PAUSED
     let sawPaused = false;
     let sawRunningAfterPaused = false;
     for (const s of states) {
@@ -173,32 +150,16 @@ describe("simulateStepwise", () => {
   });
 
   it("stops when overhead budget is exceeded", () => {
-    const config: SimConfig = {
-      scenarioDescription: "budget-test",
-      region: "DE",
-      historicalYears: [2022],
-      startTime: "01-01",
-      thetaPause: 50,    // very low -> almost always pauses
-      thetaResume: 10,
-      overheadBudgetPct: 5, // very tight budget
-    };
-    const results = [...simulateStepwise(testProfile, config, testTimeline)];
+    const policy = hysteresisPolicy(50, 10);
+    const results = [...simulateStepwise(testProfile, policy, testTimeline, makeConfig({ overheadBudgetPct: 5 }))];
     const last = results[results.length - 1];
     expect(last.stopReason).toBe("budget_exceeded");
     expect(last.tokensRemaining).toBeGreaterThan(0);
   });
 
-  it("completes training when theta_pause is above all CO2 values", () => {
-    const config: SimConfig = {
-      scenarioDescription: "complete-test",
-      region: "DE",
-      historicalYears: [2022],
-      startTime: "01-01",
-      thetaPause: 9999,
-      thetaResume: 0,
-      overheadBudgetPct: 200,
-    };
-    const results = [...simulateStepwise(testProfile, config, testTimeline)];
+  it("completes training with never-pause policy", () => {
+    const policy = neverPausePolicy();
+    const results = [...simulateStepwise(testProfile, policy, testTimeline, makeConfig())];
     const last = results[results.length - 1];
     expect(last.done).toBe(true);
     expect(last.tokensRemaining).toBe(0);
@@ -207,46 +168,42 @@ describe("simulateStepwise", () => {
 });
 
 // ---------------------------------------------------------------------------
-// buildResult
+// buildSimResult
 // ---------------------------------------------------------------------------
 
-describe("buildResult", () => {
+describe("buildSimResult", () => {
   it("computes zero savings for baseline-vs-baseline", () => {
-    const config: SimConfig = {
-      scenarioDescription: "test",
-      region: "DE",
-      historicalYears: [2022],
-      startTime: "01-01",
-      thetaPause: 1e9,
-      thetaResume: 0,
-      overheadBudgetPct: 200,
-    };
-    const prog = [...simulateStepwise(testProfile, config, testTimeline)];
+    const policy = neverPausePolicy();
+    const config = makeConfig();
+    const prog = [...simulateStepwise(testProfile, policy, testTimeline, config)];
     const last = prog[prog.length - 1];
 
-    const result = buildResult(testProfile, config, last, last);
+    const result = buildSimResult(testProfile, config, last, last, 1e9, 0, {
+      id: "test",
+      scenarioDescription: "test",
+      model: "TestModel",
+      region: "DE",
+      timestamps: [],
+      carbonIntensitySeries: [],
+      stateSeries: [],
+      emissionsSeries: [],
+      tokensRemainingSeries: [],
+    });
     expect(result.baselineEmissionsKgco2).toBeCloseTo(result.totalEmissionsKgco2, 3);
     expect(result.withinOverheadBudget).toBe(true);
   });
 });
 
 // ---------------------------------------------------------------------------
-// Determinism - same inputs ⇒ same outputs
+// Determinism
 // ---------------------------------------------------------------------------
 
 describe("determinism", () => {
   it("produces identical results on repeated runs", () => {
-    const config: SimConfig = {
-      scenarioDescription: "det-test",
-      region: "DE",
-      historicalYears: [2022],
-      startTime: "01-01",
-      thetaPause: 200,
-      thetaResume: 100,
-      overheadBudgetPct: 200,
-    };
-    const run1 = [...simulateStepwise(testProfile, config, testTimeline)];
-    const run2 = [...simulateStepwise(testProfile, config, testTimeline)];
+    const policy = hysteresisPolicy(200, 100);
+    const config = makeConfig();
+    const run1 = [...simulateStepwise(testProfile, policy, testTimeline, config)];
+    const run2 = [...simulateStepwise(testProfile, policy, testTimeline, config)];
     expect(run1.length).toBe(run2.length);
     for (let i = 0; i < run1.length; i++) {
       expect(run1[i].totalEmissionsG).toBe(run2[i].totalEmissionsG);
@@ -257,7 +214,7 @@ describe("determinism", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Real-data regression test (matches Python output)
+// Real-data regression test
 // ---------------------------------------------------------------------------
 
 describe("regression vs Python", () => {
@@ -281,32 +238,15 @@ describe("regression vs Python", () => {
   };
 
   it("baseline never pauses", () => {
-    const cfg: SimConfig = {
-      scenarioDescription: "regression",
-      region: "DE",
-      historicalYears: [2022],
-      startTime: "01-01",
-      thetaPause: Infinity,
-      thetaResume: 0,
-      overheadBudgetPct: 200,
-    };
-    const results = [...simulateStepwise(deepseek, cfg, deTimeline)];
+    const policy = neverPausePolicy();
+    const results = [...simulateStepwise(deepseek, policy, deTimeline, makeConfig())];
     const last = results[results.length - 1];
     expect(last.numPauses).toBe(0);
   });
 
   it("pauses when CO2 exceeds deepseek threshold", () => {
-    // DE carbonIntensity=215, theta_pause=200 -> should pause
-    const cfg: SimConfig = {
-      scenarioDescription: "regression",
-      region: "DE",
-      historicalYears: [2022],
-      startTime: "01-01",
-      thetaPause: 200,
-      thetaResume: 100,
-      overheadBudgetPct: 200,
-    };
-    const results = [...simulateStepwise(deepseek, cfg, deTimeline)];
+    const policy = hysteresisPolicy(200, 100);
+    const results = [...simulateStepwise(deepseek, policy, deTimeline, makeConfig())];
     const last = results[results.length - 1];
     expect(last.numPauses).toBeGreaterThan(0);
   });

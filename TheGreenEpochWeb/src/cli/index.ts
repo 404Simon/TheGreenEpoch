@@ -1,19 +1,11 @@
-/**
- * CLI entry point - runs the simulation engine from Node.js.
- *
- * Usage:
- *   npx tsx src/cli/index.ts
- *   npx tsx src/cli/index.ts --limit 2
- *
- * Shares the exact same simulation engine (simulation.ts) with the web app.
- * Only the data-loading layer differs (fs instead of fetch).
- */
-
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import type { Constants, TrainingProfile, Scenario, CO2Timeline, FullProfile } from "../types";
-import { simulateStepwise, buildResult, tokensPerSecond } from "../data/simulation.js";
+import type { Constants, TrainingProfile, Scenario, CO2Timeline, FullProfile, SimConfig } from "../domain/types";
+import { simulateStepwise } from "../domain/simulation";
+import { neverPausePolicy, hysteresisPolicy } from "../domain/policy";
+import { buildSimResult } from "../domain/result";
+import { tokensPerSecond } from "../domain/physics";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = resolve(__dirname, "../../public/data");
@@ -75,6 +67,8 @@ interface CliResult {
   issues: string;
 }
 
+function r6(n: number) { return Math.round(n * 1_000_000) / 1_000_000; }
+
 async function main() {
   const args = process.argv.slice(2);
   const limitIdx = args.indexOf("--limit");
@@ -102,72 +96,71 @@ async function main() {
 
     for (const startTime of sc.startTimes) {
       for (let ti = 0; ti < sc.thresholds.length; ti++) {
-        const config = {
-          scenarioDescription: sc.description,
-          region: sc.region,
-          historicalYears: sc.historicalYears,
+        const simConfig: SimConfig = {
           startTime,
-          thetaPause: sc.thresholds[ti],
-          thetaResume: sc.hysteresis[ti],
+          historicalYears: sc.historicalYears,
           overheadBudgetPct: sc.overheadBudgetPct,
         };
+        const thetaPause = sc.thresholds[ti];
+        const thetaResume = sc.hysteresis[ti];
+        const policy = hysteresisPolicy(thetaPause, thetaResume);
+        const baselinePolicy = neverPausePolicy();
 
-        const baselineConfig = { ...config, thetaPause: Infinity, thetaResume: 0 };
+        const progress: Parameters<typeof simulateStepwise>[3][] = [];
+        for (const p of simulateStepwise(full, baselinePolicy, tl, simConfig)) progress.push(p);
+        const lastBaseline = progress[progress.length - 1];
 
-        const progress: Parameters<typeof buildResult>[2][] = [];
-        for (const p of simulateStepwise(full, config, tl)) progress.push(p);
-        const last = progress[progress.length - 1];
+        const simProgress: Parameters<typeof simulateStepwise>[3][] = [];
+        for (const p of simulateStepwise(full, policy, tl, simConfig)) simProgress.push(p);
+        const last = simProgress[simProgress.length - 1];
 
-        const baselineProgress: Parameters<typeof buildResult>[2][] = [];
-        for (const p of simulateStepwise(full, baselineConfig, tl)) baselineProgress.push(p);
-        const lastBaseline = baselineProgress[baselineProgress.length - 1];
+        const result = buildSimResult(full, simConfig, last, lastBaseline, thetaPause, thetaResume, {
+          id: `cli-${Date.now()}`,
+          scenarioDescription: sc.description,
+          model: profile.name,
+          region: sc.region,
+          timestamps: [],
+          carbonIntensitySeries: [],
+          stateSeries: [],
+          emissionsSeries: [],
+          tokensRemainingSeries: [],
+        });
 
-        const meta = buildResult(full, config, last, lastBaseline);
+        if (result.ok) ok++; else fail++;
 
-        const idealS = last.tokensTotal / (tokensPerSecond(profile.gpuCount) || 1);
-        const actualOverheadPct = 100 * (last.pausedS + last.checkpointS) / (idealS || 1);
-        const co2SavingsPct = meta.baselineEmissionsKgco2 > 0
-          ? (meta.baselineEmissionsKgco2 - meta.totalEmissionsKgco2) / meta.baselineEmissionsKgco2 * 100
-          : 0;
-        const score = co2SavingsPct / Math.max(actualOverheadPct, 0.001);
-
-        const isOk = last.done && meta.withinOverheadBudget && last.issues.length === 0;
-        if (isOk) ok++; else fail++;
-
-        function r6(n: number) { return Math.round(n * 1_000_000) / 1_000_000; }
         results.push({
           scenario: sc.description,
           model: profile.name,
           region: sc.region,
           historicalYears: sc.historicalYears.join(";"),
           startTime,
-          thetaPause: config.thetaPause,
-          thetaResume: config.thetaResume,
-          overheadBudgetPct: config.overheadBudgetPct,
-          totalWallTimeH: r6(last.totalWallS / 3600),
-          trainingTimeH: r6(last.trainingS / 3600),
-          pausedTimeH: r6(last.pausedS / 3600),
-          checkpointOverheadH: r6(last.checkpointS / 3600),
-          totalEnergyKwh: r6(last.totalEnergyWh / 1000),
-          trainingEnergyKwh: r6(last.trainingEnergyWh / 1000),
-          pausedEnergyKwh: r6(last.pausedEnergyWh / 1000),
-          checkpointEnergyKwh: r6(last.checkpointEnergyWh / 1000),
-          totalEmissionsKgco2: r6(last.totalEmissionsG / 1000),
-          tokensProcessed: last.tokensTotal - last.tokensRemaining,
-          tokensTotal: last.tokensTotal,
-          completed: last.done && last.tokensRemaining <= 0,
-          numPauses: last.numPauses,
-          actualOverheadPct: r6(actualOverheadPct),
-          withinOverheadBudget: meta.withinOverheadBudget,
-          baselineEmissionsKgco2: r6(meta.baselineEmissionsKgco2),
-          baselineTimeH: r6(meta.baselineTimeH),
-          co2SavingsPct: r6(co2SavingsPct),
-          score: r6(score),
-          idleTimeH: r6((last.pausedS + last.checkpointS) / 3600),
-          completionPct: last.tokensTotal > 0 ? r6(100 * (last.tokensTotal - last.tokensRemaining) / last.tokensTotal) : 0,
-          ok: isOk,
-          stopReason: last.stopReason,
-          issues: last.issues.join("; "),
+          thetaPause,
+          thetaResume,
+          overheadBudgetPct: sc.overheadBudgetPct,
+          totalWallTimeH: r6(result.totalWallTimeH),
+          trainingTimeH: r6(result.trainingTimeH),
+          pausedTimeH: r6(result.pausedTimeH),
+          checkpointOverheadH: r6(result.checkpointOverheadH),
+          totalEnergyKwh: r6(result.totalEnergyKwh),
+          trainingEnergyKwh: r6(result.trainingEnergyKwh),
+          pausedEnergyKwh: r6(result.pausedEnergyKwh),
+          checkpointEnergyKwh: r6(result.checkpointEnergyKwh),
+          totalEmissionsKgco2: r6(result.totalEmissionsKgco2),
+          tokensProcessed: result.tokensProcessed,
+          tokensTotal: result.tokensTotal,
+          completed: result.completed,
+          numPauses: result.numPauses,
+          actualOverheadPct: r6(result.actualOverheadPct),
+          withinOverheadBudget: result.withinOverheadBudget,
+          baselineEmissionsKgco2: r6(result.baselineEmissionsKgco2),
+          baselineTimeH: r6(result.baselineTimeH),
+          co2SavingsPct: r6(result.co2SavingsPct),
+          score: r6(result.score),
+          idleTimeH: r6(result.idleTimeH),
+          completionPct: r6(result.completionPct),
+          ok: result.ok,
+          stopReason: result.stopReason,
+          issues: result.issues.join("; "),
         });
 
         if (!skipLive) {
@@ -177,7 +170,6 @@ async function main() {
     }
   }
 
-  // Summary
   console.log(`\n\n  ─────────────────────────────────────────────`);
   console.log(`  Results: ${results.length} runs · ✓ ${ok} · ✗ ${fail}`);
   console.log(`  ─────────────────────────────────────────────`);

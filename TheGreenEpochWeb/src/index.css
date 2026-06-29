@@ -98,6 +98,21 @@ body::after {
   opacity: 0.015;
 }
 
+@keyframes breathe {
+  0%, 100% {
+    border-color: var(--border-default);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 0%, transparent);
+  }
+  50% {
+    border-color: var(--accent);
+    box-shadow: 0 0 24px -4px color-mix(in srgb, var(--accent) 25%, transparent);
+  }
+}
+
+.animate-breathe {
+  animation: breathe 2.5s ease-in-out infinite;
+}
+
 ::-webkit-scrollbar {
   width: 8px;
 }

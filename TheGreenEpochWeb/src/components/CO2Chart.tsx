@@ -92,7 +92,7 @@ export function CO2Chart(props: Props) {
 
     chart = new Chart(ctx, {
       type: "line",
-      data: { labels: [], datasets: [{ data: [], borderColor: "rgb(52, 211, 153)", backgroundColor: "rgba(52, 211, 153, 0.06)", borderWidth: 1.5, pointRadius: 0, fill: true, tension: 0.1 }] },
+      data: { labels: [], datasets: [{ data: [], borderColor: "#34d399", backgroundColor: "rgba(52, 211, 153, 0.05)", borderWidth: 1.5, pointRadius: 0, fill: true, tension: 0.1 }] },
       options: {
         responsive: true, maintainAspectRatio: false, animation: false,
         plugins: {
@@ -100,8 +100,8 @@ export function CO2Chart(props: Props) {
           tooltip: { mode: "index", intersect: false },
         },
         scales: {
-          x: { type: "category", display: true, ticks: { color: "rgba(156, 163, 175, 0.8)", maxTicksLimit: 8, font: { size: 10 } }, grid: { color: "rgba(75, 85, 99, 0.2)" } },
-          y: { type: "linear", display: true, title: { display: true, text: "gCO₂eq / kWh", color: "rgba(156, 163, 175, 0.8)" }, ticks: { color: "rgba(156, 163, 175, 0.8)", font: { size: 10 } }, grid: { color: "rgba(75, 85, 99, 0.2)" } },
+          x: { type: "category", display: true, ticks: { color: "rgba(156, 163, 175, 0.6)", maxTicksLimit: 8, font: { size: 10 } }, grid: { color: "rgba(75, 85, 99, 0.15)" } },
+          y: { type: "linear", display: true, title: { display: true, text: "gCO₂eq / kWh", color: "rgba(156, 163, 175, 0.6)" }, ticks: { color: "rgba(156, 163, 175, 0.6)", font: { size: 10 } }, grid: { color: "rgba(75, 85, 99, 0.15)" } },
         },
       },
     });

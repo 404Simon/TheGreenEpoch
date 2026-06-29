@@ -47,7 +47,7 @@ function Layout(props: { children?: JSX.Element }) {
       </a>
 
       <header class="border-b border-border-default/60 bg-surface-2/80 backdrop-blur-md sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+          <div class="w-full mx-auto px-4 sm:px-8 h-14 flex items-center justify-between">
           <A href="/" class="text-lg font-semibold tracking-tight text-accent hover:text-accent/80 no-underline transition-colors">
             <span class="mr-1.5">⚡</span>TheGreenEpoch
           </A>
@@ -91,7 +91,7 @@ function Layout(props: { children?: JSX.Element }) {
         </div>
       </header>
 
-      <main id="main-content" class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+      <main id="main-content" class="w-full mx-auto px-4 sm:px-8 py-8">
         {props.children}
       </main>
     </div>

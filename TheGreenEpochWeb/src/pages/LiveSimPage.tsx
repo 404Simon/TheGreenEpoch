@@ -110,7 +110,7 @@ export function LiveSimPage() {
 
   const sc = scenario();
   if (!sc) {
-    return <div class="text-gray-500 text-center py-12">Scenario not found</div>;
+    return <div class="text-fg-muted text-center py-12">Scenario not found</div>;
   }
 
   const threshold = sc.thresholds[thresholdIdx()];
@@ -134,57 +134,53 @@ export function LiveSimPage() {
 
   return (
     <div>
-      <div class="flex items-center justify-between mb-4">
+      <div class="flex items-start justify-between gap-4 mb-6">
         <div>
-          <h1 class="text-xl font-bold text-white">{sc.description}</h1>
-          <p class="text-sm text-gray-400 mt-0.5">
-            {sc.region} · θ_pause={threshold} · θ_resume={hysteresis} · Start {sc.startTimes[startIdx()]}
+          <h1 class="text-xl font-semibold tracking-tight text-fg-primary">{sc.description}</h1>
+          <p class="text-sm text-fg-muted mt-0.5">
+            {sc.region} &middot; &#952;pause={threshold} &middot; &#952;resume={hysteresis} &middot; start {sc.startTimes[startIdx()]}
           </p>
         </div>
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2.5 shrink-0">
           <select
             value={speed()}
             onChange={(e) => setSpeed(Number(e.currentTarget.value))}
-            class="px-2 py-1.5 rounded bg-gray-800 border border-gray-700 text-white text-sm"
+            class="px-2.5 py-1.5 rounded-lg bg-surface-2 border border-border-default text-fg-primary text-sm focus:border-accent transition-colors"
           >
-            <option value={10}>10×</option>
-            <option value={100}>100×</option>
-            <option value={500}>500×</option>
-            <option value={1000}>1K×</option>
+            <option value={10}>10&times;</option>
+            <option value={100}>100&times;</option>
+            <option value={500}>500&times;</option>
+            <option value={1000}>1K&times;</option>
           </select>
 
-          <label class="flex items-center gap-1.5 text-xs text-gray-400 cursor-pointer select-none">
-            <input type="checkbox" checked={scrollMode()} onChange={(e) => setScrollMode(e.currentTarget.checked)} class="accent-emerald-500" />
+          <label class="flex items-center gap-1.5 text-xs text-fg-muted cursor-pointer select-none">
+            <input type="checkbox" checked={scrollMode()} onChange={(e) => setScrollMode(e.currentTarget.checked)} class="accent-accent" />
             Scroll
           </label>
 
           <Show when={scrollMode()}>
             <input type="range" min={50} max={2000} value={windowSize()} onInput={(e) => setWindowSize(Number(e.currentTarget.value))}
-              class="w-20 h-1 accent-emerald-500 cursor-pointer" title={`Window: ${windowSize()} pts`} />
-            <span class="text-xs text-gray-500 w-8">{windowSize()}</span>
+              class="w-20 h-1 accent-accent cursor-pointer" title={`Window: ${windowSize()} pts`} />
+            <span class="text-xs text-fg-muted w-8 tabular-nums">{windowSize()}</span>
           </Show>
 
           <button
             onClick={runSim}
             disabled={running()}
-            class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-sm font-medium transition-colors"
+            class="px-4 py-2 rounded-lg bg-accent text-fg-primary text-sm font-medium hover:bg-accent/90 active:scale-[0.97] disabled:opacity-40 disabled:active:scale-100 transition-all"
           >
-            {running() ? "Running…" : finished() ? "Re-run" : "▶ Play"}
+            {running() ? "Running..." : finished() ? "Re-run" : "Play"}
           </button>
         </div>
       </div>
 
       <Show when={error()}>
-        <div class="mb-4 rounded-lg border border-red-800 bg-red-950/30 px-4 py-2 text-sm text-red-400">{error()}</div>
+        <div class="mb-4 rounded-lg border border-alert-red/20 bg-alert-red-bg px-4 py-2.5 text-sm text-alert-red">{error()}</div>
       </Show>
 
-      <div class="text-xs text-gray-500 mb-1 text-right">
-        {running() ? `Chart: ${labels().length} pts` : ""}
-        {running() && stepper ? ` next=${stepper.getDebug().nextChartWallS.toFixed(0)}s total=${stepper.getDebug().totalWallS.toFixed(0)}s` : ""}
-      </div>
-      <div class="grid gap-4 lg:grid-cols-3">
+      <div class="grid gap-5 lg:grid-cols-3">
         <div class="lg:col-span-2">
-          <div class="rounded-xl border border-gray-800 bg-gray-900/60 p-3">
+          <div class="rounded-xl bg-surface-2 border border-border-default/60 p-3">
             <div class="h-72">
               <CO2Chart
                 labels={labels()}
@@ -199,25 +195,28 @@ export function LiveSimPage() {
         </div>
 
         <div>
-          <div class="rounded-xl border border-gray-800 bg-gray-900/60 p-4">
-            <h2 class="text-sm font-semibold text-gray-300 uppercase tracking-wide mb-3">Live Stats</h2>
-            <div class="grid grid-cols-1 gap-2">
+          <div class="rounded-xl bg-surface-2 border border-border-default/60 p-5">
+            <h2 class="text-xs font-semibold text-fg-subtle tracking-wide mb-3">Live stats</h2>
+            <div class="grid grid-cols-1 gap-1.5">
               <For each={stats()}>
                 {(row) => (
-                  <div class={`flex justify-between rounded px-2 py-1.5 text-sm ${row.highlight ? "bg-emerald-950/30 border border-emerald-800/30" : ""
-                    }`}>
-                    <span class="text-gray-400">{row.label}</span>
-                    <span class="text-white font-medium">
-                      {row.value}{row.unit && <span class="text-gray-500 font-normal ml-1">{row.unit}</span>}
+                  <div class={`flex justify-between rounded-lg px-3 py-2 text-sm ${
+                    row.highlight
+                      ? "bg-accent-subtle border border-accent/20"
+                      : "bg-surface/40"
+                  }`}>
+                    <span class="text-fg-muted">{row.label}</span>
+                    <span class="text-fg-primary font-medium tabular-nums">
+                      {row.value}{row.unit && <span class="text-fg-muted font-normal ml-1">{row.unit}</span>}
                     </span>
                   </div>
                 )}
               </For>
             </div>
             <Show when={(() => { const p = progress(); return p && Array.isArray(p.issues) && p.issues.length > 0; })()}>
-              <div class="mt-3 space-y-1">
+              <div class="mt-4 space-y-1 pt-3 border-t border-border-default/50">
                 <For each={progress()!.issues}>{(issue) => (
-                  <div class="text-xs text-amber-400">⚠ {issue}</div>
+                  <div class="text-xs text-alert-amber/80">{issue}</div>
                 )}</For>
               </div>
             </Show>
@@ -228,7 +227,7 @@ export function LiveSimPage() {
       <Show when={finished() && simResult()}>
         {(r) => {
           const result = r();
-          const statusColor = result.ok ? "bg-emerald-600" : result.completed ? "bg-amber-600" : "bg-red-600";
+          const statusColor = result.ok ? "bg-accent" : result.completed ? "bg-alert-amber" : "bg-alert-red";
           const statusText = result.ok ? "OK" : result.completed ? "Completed" : result.stopReason;
 
           const kpiRows = [
@@ -277,56 +276,56 @@ export function LiveSimPage() {
           ];
 
           return (
-            <div class="mt-6 space-y-4">
+            <div class="mt-8 space-y-5">
               <div class="flex items-center justify-between">
-                <h2 class="text-lg font-bold text-white">Simulation Results</h2>
-                <span class={`px-3 py-1 rounded-full text-xs font-bold text-white ${statusColor}`}>
+                <h2 class="text-lg font-semibold tracking-tight text-fg-primary">Simulation results</h2>
+                <span class={`px-3 py-1 rounded-md text-xs font-semibold text-white ${statusColor}`}>
                   {statusText}
                 </span>
               </div>
 
-              <div class="grid gap-4 lg:grid-cols-2">
-                <div class="rounded-xl border border-gray-800 bg-gray-900/60 p-4">
-                  <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wide mb-3">KPIs</h3>
+              <div class="grid gap-5 lg:grid-cols-2">
+                <div class="rounded-xl bg-surface-2 border border-border-default/60 p-5">
+                  <h3 class="text-xs font-semibold text-fg-subtle tracking-wide mb-3">KPIs</h3>
                   <StatsPanel rows={kpiRows} />
                 </div>
-                <div class="rounded-xl border border-gray-800 bg-gray-900/60 p-4">
-                  <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wide mb-3">Inputs</h3>
+                <div class="rounded-xl bg-surface-2 border border-border-default/60 p-5">
+                  <h3 class="text-xs font-semibold text-fg-subtle tracking-wide mb-3">Inputs</h3>
                   <div class="space-y-1.5">
                     <For each={inputsRows}>{(row) => (
                       <div class="flex justify-between text-sm">
-                        <span class="text-gray-400">{row.label}</span>
-                        <span class="text-gray-200">{row.value}</span>
+                        <span class="text-fg-muted">{row.label}</span>
+                        <span class="text-fg-body tabular-nums">{row.value}</span>
                       </div>
                     )}</For>
                   </div>
                 </div>
               </div>
 
-              <div class="grid gap-4 lg:grid-cols-3">
-                <div class="rounded-xl border border-gray-800 bg-gray-900/60 p-4">
-                  <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wide mb-3">Time</h3>
+              <div class="grid gap-5 lg:grid-cols-3">
+                <div class="rounded-xl bg-surface-2 border border-border-default/60 p-5">
+                  <h3 class="text-xs font-semibold text-fg-subtle tracking-wide mb-3">Time</h3>
                   <StatsPanel rows={timeRows} />
                 </div>
-                <div class="rounded-xl border border-gray-800 bg-gray-900/60 p-4">
-                  <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wide mb-3">Energy & Emissions</h3>
+                <div class="rounded-xl bg-surface-2 border border-border-default/60 p-5">
+                  <h3 class="text-xs font-semibold text-fg-subtle tracking-wide mb-3">Energy &amp; emissions</h3>
                   <StatsPanel rows={energyRows} />
                 </div>
-                <div class="rounded-xl border border-gray-800 bg-gray-900/60 p-4">
-                  <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wide mb-3">Progress</h3>
+                <div class="rounded-xl bg-surface-2 border border-border-default/60 p-5">
+                  <h3 class="text-xs font-semibold text-fg-subtle tracking-wide mb-3">Progress</h3>
                   <StatsPanel rows={progressRows} />
                 </div>
               </div>
 
               <Show when={result.issues.length > 0}>
-                <div class="rounded-xl border border-red-800 bg-red-950/30 p-4">
-                  <h3 class="text-xs font-semibold text-red-400 uppercase tracking-wide mb-2">Issues</h3>
+                <div class="rounded-xl border border-alert-red/20 bg-alert-red-bg p-5">
+                  <h3 class="text-xs font-semibold text-alert-red tracking-wide mb-2">Issues</h3>
                   <div class="space-y-1">
                     <For each={result.issues}>{(issue) => (
-                      <div class="text-xs text-red-300">⚠ {issue}</div>
+                      <div class="text-xs text-alert-red/80">{issue}</div>
                     )}</For>
                     <Show when={result.stopReason}>
-                      <div class="text-xs text-red-400 mt-1">Stop reason: {result.stopReason}</div>
+                      <div class="text-xs text-alert-red/60 mt-1">Stop reason: {result.stopReason}</div>
                     </Show>
                   </div>
                 </div>

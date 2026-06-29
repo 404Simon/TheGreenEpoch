@@ -1,4 +1,4 @@
-import { type JSX } from "solid-js";
+import { type JSX, For } from "solid-js";
 
 interface StatRow {
   label: string;
@@ -14,20 +14,20 @@ interface Props {
 
 export function StatsPanel(props: Props) {
   return (
-    <div class={`grid grid-cols-2 gap-3 ${props.class || ""}`}>
+    <div class={`grid grid-cols-2 gap-2.5 ${props.class || ""}`}>
       <For each={props.rows}>
         {(row) => (
           <div
-            class={`rounded-lg border px-3 py-2 ${
+            class={`rounded-lg px-3 py-2.5 ${
               row.highlight
-                ? "border-emerald-700/50 bg-emerald-950/30"
-                : "border-gray-800 bg-gray-900/50"
+                ? "bg-accent-subtle border border-accent/20"
+                : "bg-surface/60 border border-border-default/40"
             }`}
           >
-            <div class="text-xs text-gray-500 uppercase tracking-wide">{row.label}</div>
-            <div class="text-sm font-semibold mt-0.5">
+            <div class="text-xs text-fg-muted">{row.label}</div>
+            <div class="text-sm font-medium mt-0.5 text-fg-primary tabular-nums">
               {row.value}
-              {row.unit && <span class="text-gray-500 font-normal ml-1">{row.unit}</span>}
+              {row.unit && <span class="text-fg-muted font-normal ml-1">{row.unit}</span>}
             </div>
           </div>
         )}

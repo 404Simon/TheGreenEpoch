@@ -118,7 +118,7 @@ describe("ScenarioForm", () => {
   it("renders form with default values when no initial scenario", () => {
     const { container } = renderForm();
     expect(container.querySelector("form")).toBeTruthy();
-    expect(container.textContent).toContain("New Scenario");
+    expect(container.textContent).toContain("New scenario");
   });
 
   it("calls onSave with form data on submit", () => {

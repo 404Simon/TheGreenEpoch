@@ -69,7 +69,7 @@ function Layout(props: { children?: JSX.Element }) {
                   : "text-fg-subtle hover:text-fg-body hover:bg-white/5"
                 }`}
             >
-              Run all
+              Runs
             </A>
             <button
               onClick={toggleTheme}

@@ -176,13 +176,9 @@ async function main() {
   console.log(`  ${"REGION".padEnd(8)} ${"THR".padStart(4)} ${"CO₂↓".padStart(7)} ${"SCORE".padStart(7)} ${"OVERH".padStart(6)} ${"PAUSES".padStart(7)}`);
   console.log(`  ${"──".repeat(20)}`);
 
-  for (const r of results.slice(0, 20)) {
+  for (const r of results) {
     const status = r.ok ? "✓" : "✗";
     console.log(`  ${r.region.padEnd(8)} ${String(r.thetaPause).padStart(4)} ${(r.co2SavingsPct + "%").padStart(7)} ${String(r.score).padStart(7)} ${(r.actualOverheadPct + "%").padStart(6)} ${String(r.numPauses).padStart(7)}  ${status} ${r.scenario.slice(0, 36).padEnd(36)}`);
-  }
-
-  if (results.length > 20) {
-    console.log(`  … and ${results.length - 20} more`);
   }
 
   if (csvPath) {

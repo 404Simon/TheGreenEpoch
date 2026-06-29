@@ -170,7 +170,7 @@ export function RunsPage() {
   });
 
   const stats = createMemo(() => {
-    const data = results();
+    const data = filteredData();
     const n = data.length;
     if (n === 0) return null;
     const avgSave = data.reduce((s, r) => s + r.co2SavingsPct, 0) / n;

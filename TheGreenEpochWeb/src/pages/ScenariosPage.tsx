@@ -1,21 +1,20 @@
 import { For, createSignal, Show } from "solid-js";
-import { A, useNavigate } from "@solidjs/router";
+import { A } from "@solidjs/router";
 import { useApp } from "../data/store";
 import { ScenarioForm } from "../components/ScenarioForm";
+import { RunOptionsModal } from "../components/RunOptionsModal";
 import type { Scenario } from "../types";
 
 export function ScenariosPage() {
   const app = useApp();
-  const navigate = useNavigate();
   const [showForm, setShowForm] = createSignal(false);
   const [editingId, setEditingId] = createSignal<string | null>(null);
+  const [playingScenario, setPlayingScenario] = createSignal<Scenario | null>(null);
 
   const scenarios = () => app.allScenarios();
 
   const handlePlay = (sc: Scenario) => {
-    const ti = 0;
-    const si = 0;
-    navigate(`/simulate/${encodeURIComponent(sc.id)}?threshold=${ti}&start=${si}`);
+    setPlayingScenario(sc);
   };
 
   const handleEdit = (sc: Scenario) => {
@@ -141,6 +140,12 @@ export function ScenariosPage() {
           }}
         </For>
       </div>
+
+      <Show when={playingScenario()}>
+        {(sc) => (
+          <RunOptionsModal scenario={sc()} onClose={() => setPlayingScenario(null)} />
+        )}
+      </Show>
     </div>
   );
 }

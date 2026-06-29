@@ -20,6 +20,7 @@ export function ScenarioForm(props: Props) {
   const [thresholdsStr, setThresholdsStr] = createSignal(props.initial?.thresholds.join(", ") || "550, 600");
   const [hysteresisStr, setHysteresisStr] = createSignal(props.initial?.hysteresis.join(", ") || "500, 550");
   const [startTimesStr, setStartTimesStr] = createSignal(props.initial?.startTimes.join(", ") || "01-01, 02-18, 06-01");
+  const [historicalYearsStr, setHistoricalYearsStr] = createSignal(props.initial?.historicalYears.join(", ") || "2022, 2023, 2024, 2025");
   const [overheadBudget, setOverheadBudget] = createSignal(props.initial?.overheadBudgetPct ?? 200);
 
   const profiles = () => Object.keys(app.state.profiles || {});
@@ -29,6 +30,8 @@ export function ScenarioForm(props: Props) {
     const thresholds = thresholdsStr().split(",").map((s) => parseFloat(s.trim())).filter(isFinite);
     const hysteresis = hysteresisStr().split(",").map((s) => parseFloat(s.trim())).filter(isFinite);
     const startTimes = startTimesStr().split(",").map((s) => s.trim()).filter(Boolean);
+
+    const historicalYears = historicalYearsStr().split(",").map((s) => parseInt(s.trim(), 10)).filter(isFinite);
 
     if (!description().trim() || thresholds.length === 0 || startTimes.length === 0) return;
 
@@ -40,7 +43,7 @@ export function ScenarioForm(props: Props) {
       hysteresis: hysteresis.length === thresholds.length ? hysteresis : thresholds.map(() => hysteresis[0] || 0),
       region: region(),
       startTimes,
-      historicalYears: [2022, 2023, 2024, 2025],
+      historicalYears,
       overheadBudgetPct: overheadBudget(),
     });
   };
@@ -105,6 +108,15 @@ export function ScenarioForm(props: Props) {
             onInput={(e) => setHysteresisStr(e.currentTarget.value)}
             class="w-full px-3 py-2 rounded-lg bg-surface border border-border-default text-fg-primary text-sm focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-all"
             placeholder="500, 550"
+          />
+        </div>
+        <div class="sm:col-span-2">
+          <label class="block text-xs text-fg-muted mb-1.5">Historical years (comma-separated)</label>
+          <input
+            value={historicalYearsStr()}
+            onInput={(e) => setHistoricalYearsStr(e.currentTarget.value)}
+            class="w-full px-3 py-2 rounded-lg bg-surface border border-border-default text-fg-primary text-sm focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-all"
+            placeholder="2022, 2023, 2024, 2025"
           />
         </div>
         <div class="sm:col-span-2">

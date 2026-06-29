@@ -279,7 +279,7 @@ export function LiveSimPage() {
             <div class="mt-8 space-y-5">
               <div class="flex items-center justify-between">
                 <h2 class="text-lg font-semibold tracking-tight text-fg-primary">Simulation results</h2>
-                <span class={`px-3 py-1 rounded-md text-xs font-semibold text-white ${statusColor}`}>
+                <span class={`px-2 py-0.5 rounded text-xs font-semibold text-white ${statusColor}`}>
                   {statusText}
                 </span>
               </div>

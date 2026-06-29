@@ -7,6 +7,7 @@ import devtools from 'solid-devtools/vite';
 import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
+  base: process.env.GITHUB_ACTIONS ? '/TheGreenEpoch/' : '/',
   plugins: [tailwindcss(), devtools(), solidPlugin()],
   server: {
     port: 3000,

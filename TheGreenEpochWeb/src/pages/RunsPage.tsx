@@ -94,7 +94,7 @@ function uniqVals(data: SimResult[], key: string, fmt: string, dec?: number) {
     .map(e => e[0]);
 }
 
-export function RunAllPage() {
+export function RunsPage() {
   const app = useApp();
 
   const [running, setRunning] = createSignal(false);

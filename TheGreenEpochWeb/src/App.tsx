@@ -1,10 +1,10 @@
 import { onMount, createSignal, Show, type JSX } from "solid-js";
-import { Router, Route, A, useLocation } from "@solidjs/router";
+import { Router, Route, A } from "@solidjs/router";
 import { AppProvider, useApp } from "./data/store";
 import { ScenariosPage } from "./pages/ScenariosPage";
 import { LiveSimPage } from "./pages/LiveSimPage";
 import { ResultsPage } from "./pages/ResultsPage";
-import { RunAllPage } from "./pages/RunAllPage";
+import { RunsPage } from "./pages/RunsPage";
 
 const THEME_KEY = "thegreenepoch-theme";
 
@@ -21,10 +21,6 @@ function applyTheme(theme: "light" | "dark") {
 }
 
 function Layout(props: { children?: JSX.Element }) {
-  const location = useLocation();
-  const isActive = (path: string, end?: boolean) =>
-    end ? location.pathname === path : location.pathname.startsWith(path);
-
   const [theme, setTheme] = createSignal(getInitialTheme());
 
   onMount(() => {
@@ -55,19 +51,17 @@ function Layout(props: { children?: JSX.Element }) {
             <A
               href="/"
               end
-              class={`px-3 py-1.5 rounded-lg no-underline transition-colors ${isActive("/", true)
-                  ? "bg-accent-subtle text-accent font-medium"
-                  : "text-fg-subtle hover:text-fg-body hover:bg-white/5"
-                }`}
+              class="px-3 py-1.5 rounded-lg no-underline transition-colors"
+              activeClass="bg-accent-subtle text-accent font-medium"
+              inactiveClass="text-fg-subtle hover:text-fg-body hover:bg-white/5"
             >
               Scenarios
             </A>
             <A
-              href="/run-all"
-              class={`px-3 py-1.5 rounded-lg no-underline transition-colors ${isActive("/run-all")
-                  ? "bg-accent-subtle text-accent font-medium"
-                  : "text-fg-subtle hover:text-fg-body hover:bg-white/5"
-                }`}
+              href="/runs"
+              class="px-3 py-1.5 rounded-lg no-underline transition-colors"
+              activeClass="bg-accent-subtle text-accent font-medium"
+              inactiveClass="text-fg-subtle hover:text-fg-body hover:bg-white/5"
             >
               Runs
             </A>
@@ -126,7 +120,7 @@ export function App() {
         <Route path="/" component={ScenariosPage} />
         <Route path="/simulate/:id" component={LiveSimPage} />
         <Route path="/results/:id" component={ResultsPage} />
-        <Route path="/run-all" component={RunAllPage} />
+        <Route path="/runs" component={RunsPage} />
       </Router>
     </Show>
   );

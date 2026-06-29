@@ -52,7 +52,7 @@ export function ScenariosPage() {
             <span class="mr-1">+</span>Add scenario
           </button>
           <A
-            href="/run-all"
+            href="/runs"
             class="px-4 py-2 rounded-lg border border-accent/40 text-accent text-sm font-medium hover:bg-accent-subtle active:scale-[0.97] transition-all"
           >
             Run all

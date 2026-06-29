@@ -1,6 +1,6 @@
 import type { Constants, TrainingProfile, Scenario, CO2Timeline } from "../types";
 
-const BASE = "/data";
+const BASE = `${import.meta.env.BASE_URL}data`;
 
 export async function loadConstants(): Promise<Constants> {
   const r = await fetch(`${BASE}/constants.json`);

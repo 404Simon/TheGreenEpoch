@@ -1,4 +1,4 @@
-export { runSimulation, runOptimization, runBaseline, evaluatePoint } from "./runner";
-export type { AdaptiveOptions as RunnerAdaptiveOptions, RunOptions } from "./runner";
+export { runSimulation } from "./runner";
+export type { RunOptions } from "./runner";
 export { runOptimizationInWorker } from "./worker";
 export type { AdaptiveOptions as WorkerAdaptiveOptions } from "./worker";

@@ -37,10 +37,4 @@ export function saveUserScenarios(scenarios: Scenario[]): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(scenarios));
 }
 
-export function loadAllData() {
-  return Promise.all([
-    loadConstants(),
-    loadProfiles(),
-    loadScenarios(),
-  ] as const);
-}
+

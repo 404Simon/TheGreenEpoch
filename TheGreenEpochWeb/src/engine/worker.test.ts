@@ -1,12 +1,5 @@
 import { describe, it, expect } from "vitest";
-import type { FullProfile, CO2Timeline, Scenario, SweepPoint } from "../domain/types";
-
-/**
- * The Structured Clone algorithm is what postMessage uses internally.
- * If the data can't be structured-cloned, the worker will throw
- * DataCloneError.  This test verifies that all data types we send
- * to the worker are cloneable at the type level.
- */
+import type { FullProfile, CO2Timeline, Scenario, SweepPoint, Constants, TrainingProfile, SimResult } from "../domain/types";
 
 function structuredCloneSafe<T>(data: T): T {
   return structuredClone(data);
@@ -167,6 +160,106 @@ describe("worker message data is structured-clone safe", () => {
     };
     const cloned = structuredCloneSafe(tl);
     expect(cloned.timestamps).toHaveLength(2);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// "run all" worker message cloneability
+// ---------------------------------------------------------------------------
+
+describe("runall worker message data is structured-clone safe", () => {
+  function sampleConstants(): Constants {
+    return {
+      gpu_power_train: 700,
+      gpu_power_pause: 60,
+      pue: 1.27,
+      checkpoint_pause_time: 148.8,
+      checkpoint_resume_time: 0,
+    };
+  }
+
+  function sampleProfiles(): Record<string, TrainingProfile> {
+    return {
+      Deepseek: {
+        name: "Deepseek",
+        modelParams: 671e9,
+        datasetTokens: 14.8e12,
+        gpuCount: 2048,
+      },
+    };
+  }
+
+  function sampleSimResult(): SimResult {
+    return {
+      id: "r1",
+      scenarioDescription: "test",
+      model: "Deepseek",
+      region: "DE",
+      historicalYears: [2022],
+      startTime: "01-01",
+      threshold: 200,
+      hysteresisMargin: 150,
+      totalWallTimeH: 100,
+      trainingTimeH: 80,
+      pausedTimeH: 20,
+      checkpointOverheadH: 0,
+      totalEnergyKwh: 5000,
+      trainingEnergyKwh: 4000,
+      pausedEnergyKwh: 1000,
+      checkpointEnergyKwh: 0,
+      totalEmissionsKgco2: 1000,
+      tokensProcessed: 1e12,
+      tokensTotal: 1e12,
+      completed: true,
+      numPauses: 10,
+      overheadBudgetPct: 200,
+      actualOverheadPct: 5,
+      withinOverheadBudget: true,
+      timestamps: [],
+      carbonIntensitySeries: [],
+      stateSeries: [],
+      emissionsSeries: [],
+      tokensRemainingSeries: [],
+      issues: [],
+      stopReason: "completed",
+      baselineEmissionsKgco2: 2000,
+      baselineTimeH: 120,
+      co2SavingsPct: 50,
+      score: 10,
+      idleTimeH: 0,
+      completionPct: 100,
+      ok: true,
+    };
+  }
+
+  it("clones the runall start message", () => {
+    const constants = sampleConstants();
+    const profiles = sampleProfiles();
+    const co2Cache: Record<string, CO2Timeline> = {
+      DE: sampleTimeline(),
+    };
+    const scenarios = [sampleScenario()];
+    const payload = { type: "start" as const, constants, profiles, co2Cache, scenarios };
+    const cloned = structuredCloneSafe(payload);
+    expect(cloned.type).toBe("start");
+    expect(cloned.constants.gpu_power_train).toBe(700);
+    expect(cloned.profiles.Deepseek.gpuCount).toBe(2048);
+    expect(cloned.scenarios[0].thresholds).toEqual([200, 300]);
+  });
+
+  it("clones the runall result message", () => {
+    const result = sampleSimResult();
+    const msg = { type: "result" as const, result, done: 5, total: 10 };
+    const cloned = structuredCloneSafe(msg);
+    expect(cloned.result.id).toBe("r1");
+    expect(cloned.done).toBe(5);
+    expect(cloned.total).toBe(10);
+  });
+
+  it("clones the runall done message", () => {
+    const msg = { type: "done" as const };
+    const cloned = structuredCloneSafe(msg);
+    expect(cloned.type).toBe("done");
   });
 });
 

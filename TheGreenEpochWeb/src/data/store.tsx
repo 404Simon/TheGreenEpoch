@@ -1,9 +1,8 @@
 import { createContext, useContext, type JSX } from "solid-js";
 import { createStore } from "solid-js/store";
-import type { Constants, TrainingProfile, Scenario, CO2Timeline, SimResult, FullProfile } from "../domain/types";
-import { hysteresisPolicy } from "../domain/policy";
+import type { Constants, TrainingProfile, Scenario, CO2Timeline, SimResult } from "../domain/types";
 import { loadCO2Timeline, loadConstants, loadProfiles, loadScenarios, loadUserScenarios, saveUserScenarios } from "./loadData";
-import { runSimulation } from "../engine/runner";
+import { runAllInWorker } from "../engine/runall";
 
 interface AppState {
   ready: boolean;
@@ -33,7 +32,6 @@ interface AppStore {
   addScenario: (s: Scenario) => void;
   updateScenario: (id: string, s: Scenario) => void;
   deleteScenario: (id: string) => void;
-  runSimulation: (scenario: Scenario, thresholdIdx: number, startTimeIdx: number, onProgress?: (p: import("../domain/types").SimProgress) => void) => Promise<SimResult>;
   runAllScenarios: (onProgress?: (done: number, total: number) => void) => Promise<SimResult[]>;
   allScenarios: () => Scenario[];
   addResult: (r: SimResult) => void;
@@ -88,65 +86,33 @@ export function AppProvider(props: { children: JSX.Element }) {
       return [...builtin, ...user];
     },
 
-    async runSimulation(scenario: Scenario, thresholdIdx: number, startTimeIdx: number, onProgress?: (p: import("../domain/types").SimProgress) => void): Promise<SimResult> {
-      const constants = state.constants!;
-      const profiles = state.profiles!;
-      const profile = profiles[scenario.model];
-      if (!profile) throw new Error(`Unknown model: ${scenario.model}`);
-
-      const fullProfile: FullProfile = {
-        ...profile,
-        gpuPowerTrain: constants.gpu_power_train,
-        gpuPowerPause: constants.gpu_power_pause,
-        pue: constants.pue,
-        checkpointPauseTime: constants.checkpoint_pause_time,
-        checkpointResumeTime: constants.checkpoint_resume_time,
-      };
-
-      let timeline = state.co2Cache[scenario.region];
-      if (!timeline) {
-        timeline = await loadCO2Timeline(scenario.region);
-        setState("co2Cache", scenario.region, timeline);
-      }
-
-      const threshold = scenario.thresholds[thresholdIdx];
-      const hysteresis = scenario.hysteresis[thresholdIdx];
-      const startTime = scenario.startTimes[startTimeIdx];
-      const policy = hysteresisPolicy(threshold, hysteresis);
-
-      const result = runSimulation(fullProfile, policy, timeline, {
-        startTime,
-        historicalYears: scenario.historicalYears,
-        overheadBudgetPct: scenario.overheadBudgetPct,
-        scenarioDescription: scenario.description,
-        model: scenario.model,
-        region: scenario.region,
-      }, threshold, hysteresis, { onProgress });
-
-      setState("results", [...state.results, result]);
-      return result;
-    },
-
     async runAllScenarios(onProgress?: (done: number, total: number) => void) {
       const scenarios = store.allScenarios();
-      const totalRuns = scenarios.reduce((s, sc) => s + sc.thresholds.length * sc.startTimes.length, 0);
-      let done = 0;
-      const results: SimResult[] = [];
+      const constants = state.constants!;
+      const profiles = state.profiles!;
 
-      for (const scenario of scenarios) {
-        for (let ti = 0; ti < scenario.thresholds.length; ti++) {
-          for (let si = 0; si < scenario.startTimes.length; si++) {
-            try {
-              const r = await store.runSimulation(scenario, ti, si);
-              results.push(r);
-            } catch (e) {
-              console.error("Run failed:", scenario.description, e);
-            }
-            done++;
-            if (onProgress) onProgress(done, totalRuns);
-          }
+      const neededRegions = new Set(scenarios.map((s) => s.region));
+      for (const region of neededRegions) {
+        if (!state.co2Cache[region]) {
+          const tl = await loadCO2Timeline(region);
+          setState("co2Cache", region, tl);
         }
       }
+
+      const results: SimResult[] = [];
+      await runAllInWorker(
+        constants,
+        profiles,
+        state.co2Cache,
+        scenarios,
+        (result, done, total) => {
+          if (result) {
+            results.push(result);
+            setState("results", [...state.results, result]);
+          }
+          onProgress?.(done, total);
+        },
+      );
 
       return results;
     },

@@ -109,10 +109,15 @@ export interface SimResult {
   timestamps: string[];
   carbonIntensitySeries: number[];
   stateSeries: string[];
+  emissionsSeries: number[];
+  tokensRemainingSeries: number[];
   issues: string[];
   stopReason: string;
   baselineEmissionsKgco2: number;
   baselineTimeH: number;
   co2SavingsPct: number;
   score: number;
+  idleTimeH: number;
+  completionPct: number;
+  ok: boolean;
 }

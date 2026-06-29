@@ -2,7 +2,8 @@ import { createSignal, createMemo, Show, For, onCleanup } from "solid-js";
 import { useParams, useSearchParams, A } from "@solidjs/router";
 import { useApp } from "../data/store";
 import { CO2Chart } from "../components/CO2Chart";
-import { tokensPerSecond, energyWh, emissionsG } from "../data/simulation";
+import { StatsPanel } from "../components/StatsPanel";
+import { tokensPerSecond, energyWh, emissionsG, simulateStepwise } from "../data/simulation";
 import { loadCO2Timeline } from "../data/loadData";
 import type { SimResult, FullProfile, SimConfig, CO2Timeline } from "../types";
 
@@ -27,8 +28,11 @@ export function LiveSimPage() {
   const [labels, setLabels] = createSignal<string[]>([]);
   const [co2Points, setCo2Points] = createSignal<number[]>([]);
   const [stateSeries, setStateSeries] = createSignal<string[]>([]);
+  const [emissionsSeries, setEmissionsSeries] = createSignal<number[]>([]);
+  const [tokensRemainingSeries, setTokensRemainingSeries] = createSignal<number[]>([]);
   const [scrollMode, setScrollMode] = createSignal(true);
   const [windowSize, setWindowSize] = createSignal(300);
+  const [simResult, setSimResult] = createSignal<SimResult | null>(null);
 
   let cancelFlag = false;
   let stepper: SimStepper | null = null;
@@ -41,8 +45,11 @@ export function LiveSimPage() {
       setRunning(true);
       setFinished(false);
       setError(null);
+      setSimResult(null);
       setLabels([]);
       setCo2Points([]);
+      setEmissionsSeries([]);
+      setTokensRemainingSeries([]);
 
       const pr = app.state.profiles;
       if (!pr) { setError("Data not loaded"); setRunning(false); return; }
@@ -64,24 +71,29 @@ export function LiveSimPage() {
       stepper = new SimStepper(full, sc, thresholdIdx(), startIdx(), tl, () => speed());
 
       stepper.run(
-        (p: any, chartLabels: string[], chartCo2: number[], chartStates: string[]) => {
+        (p: any, chartLabels: string[], chartCo2: number[], chartStates: string[], chartEmissions: number[], chartTokensRemaining: number[]) => {
           if (cancelFlag) return;
           setProgress(p);
           if (chartLabels.length > 0) {
             setLabels(chartLabels.slice());
             setCo2Points(chartCo2.slice());
             setStateSeries(chartStates.slice());
+            setEmissionsSeries(chartEmissions.slice());
+            setTokensRemainingSeries(chartTokensRemaining.slice());
           }
         },
-        (lastP: any, allLabels: string[], allCo2: number[], allStates: string[]) => {
+        (lastP: any, allLabels: string[], allCo2: number[], allStates: string[], allEmissions: number[], allTokensRemaining: number[]) => {
           stepper = null;
           setProgress(lastP);
           setLabels(allLabels.slice());
           setCo2Points(allCo2.slice());
           setStateSeries(allStates.slice());
+          setEmissionsSeries(allEmissions.slice());
+          setTokensRemainingSeries(allTokensRemaining.slice());
           setRunning(false);
           setFinished(true);
-          setTimeout(() => saveResult(lastP, allLabels, allCo2, full, sc, thresholdIdx(), startIdx(), tl, app), 50);
+          const result = saveResult(lastP, allLabels, allCo2, allEmissions, allTokensRemaining, full, sc, thresholdIdx(), startIdx(), tl, app);
+          if (result) setSimResult(result);
         },
         () => cancelFlag,
       );
@@ -213,22 +225,125 @@ export function LiveSimPage() {
         </div>
       </div>
 
-      <Show when={finished()}>
-        <div class="mt-4 flex justify-center">
-          <A href="/" class="px-6 py-3 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-medium transition-colors">
-            View Results →
-          </A>
-        </div>
+      <Show when={finished() && simResult()}>
+        {(r) => {
+          const result = r();
+          const statusColor = result.ok ? "bg-emerald-600" : result.completed ? "bg-amber-600" : "bg-red-600";
+          const statusText = result.ok ? "OK" : result.completed ? "Completed" : result.stopReason;
+
+          const kpiRows = [
+            { label: "CO₂ Savings", value: `${result.co2SavingsPct.toFixed(1)}%`, highlight: result.co2SavingsPct > 0 },
+            { label: "Score", value: `${result.score.toFixed(1)}`, highlight: result.score > 1 },
+            { label: "Status", value: statusText, highlight: !result.ok },
+            { label: "Within Budget", value: result.withinOverheadBudget ? "Yes" : "No", highlight: !result.withinOverheadBudget },
+            { label: "Completion", value: `${result.completionPct.toFixed(1)}%` },
+            { label: "Baseline Emissions", value: `${result.baselineEmissionsKgco2.toFixed(1)}`, unit: "kg CO₂" },
+            { label: "Baseline Time", value: `${result.baselineTimeH.toFixed(1)}`, unit: "h" },
+          ];
+
+          const timeRows = [
+            { label: "Wall Time", value: `${result.totalWallTimeH.toFixed(2)}`, unit: "h" },
+            { label: "Training Time", value: `${result.trainingTimeH.toFixed(2)}`, unit: "h" },
+            { label: "Paused Time", value: `${result.pausedTimeH.toFixed(2)}`, unit: "h", highlight: result.pausedTimeH > 0 },
+            { label: "Checkpoint Overhead", value: `${result.checkpointOverheadH.toFixed(2)}`, unit: "h" },
+            { label: "Idle Time", value: `${result.idleTimeH.toFixed(2)}`, unit: "h", highlight: result.idleTimeH > 0 },
+          ];
+
+          const energyRows = [
+            { label: "Total Energy", value: `${result.totalEnergyKwh.toFixed(1)}`, unit: "kWh" },
+            { label: "Training Energy", value: `${result.trainingEnergyKwh.toFixed(1)}`, unit: "kWh" },
+            { label: "Paused Energy", value: `${result.pausedEnergyKwh.toFixed(1)}`, unit: "kWh", highlight: result.pausedEnergyKwh > 0 },
+            { label: "Checkpoint Energy", value: `${result.checkpointEnergyKwh.toFixed(1)}`, unit: "kWh" },
+            { label: "Total Emissions", value: `${result.totalEmissionsKgco2.toFixed(1)}`, unit: "kg CO₂" },
+          ];
+
+          const progressRows = [
+            { label: "Tokens Processed", value: `${result.tokensProcessed.toLocaleString()}` },
+            { label: "Tokens Total", value: `${result.tokensTotal.toLocaleString()}` },
+            { label: "Completion", value: `${result.completionPct.toFixed(1)}%` },
+            { label: "Num Pauses", value: `${result.numPauses}` },
+            { label: "Overhead", value: `${result.actualOverheadPct.toFixed(1)}%` },
+            { label: "Overhead Budget", value: `${result.overheadBudgetPct}%` },
+          ];
+
+          const inputsRows = [
+            { label: "Model", value: result.model },
+            { label: "Region", value: result.region },
+            { label: "Years", value: result.historicalYears.join(", ") },
+            { label: "Start Time", value: result.startTime },
+            { label: "θ_pause", value: `${result.threshold} gCO₂/kWh` },
+            { label: "θ_resume", value: `${result.hysteresisMargin} gCO₂/kWh` },
+            { label: "Overhead Budget", value: `${result.overheadBudgetPct}%` },
+          ];
+
+          return (
+            <div class="mt-6 space-y-4">
+              <div class="flex items-center justify-between">
+                <h2 class="text-lg font-bold text-white">Simulation Results</h2>
+                <span class={`px-3 py-1 rounded-full text-xs font-bold text-white ${statusColor}`}>
+                  {statusText}
+                </span>
+              </div>
+
+              <div class="grid gap-4 lg:grid-cols-2">
+                <div class="rounded-xl border border-gray-800 bg-gray-900/60 p-4">
+                  <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wide mb-3">KPIs</h3>
+                  <StatsPanel rows={kpiRows} />
+                </div>
+                <div class="rounded-xl border border-gray-800 bg-gray-900/60 p-4">
+                  <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wide mb-3">Inputs</h3>
+                  <div class="space-y-1.5">
+                    <For each={inputsRows}>{(row) => (
+                      <div class="flex justify-between text-sm">
+                        <span class="text-gray-400">{row.label}</span>
+                        <span class="text-gray-200">{row.value}</span>
+                      </div>
+                    )}</For>
+                  </div>
+                </div>
+              </div>
+
+              <div class="grid gap-4 lg:grid-cols-3">
+                <div class="rounded-xl border border-gray-800 bg-gray-900/60 p-4">
+                  <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wide mb-3">Time</h3>
+                  <StatsPanel rows={timeRows} />
+                </div>
+                <div class="rounded-xl border border-gray-800 bg-gray-900/60 p-4">
+                  <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wide mb-3">Energy & Emissions</h3>
+                  <StatsPanel rows={energyRows} />
+                </div>
+                <div class="rounded-xl border border-gray-800 bg-gray-900/60 p-4">
+                  <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wide mb-3">Progress</h3>
+                  <StatsPanel rows={progressRows} />
+                </div>
+              </div>
+
+              <Show when={result.issues.length > 0}>
+                <div class="rounded-xl border border-red-800 bg-red-950/30 p-4">
+                  <h3 class="text-xs font-semibold text-red-400 uppercase tracking-wide mb-2">Issues</h3>
+                  <div class="space-y-1">
+                    <For each={result.issues}>{(issue) => (
+                      <div class="text-xs text-red-300">⚠ {issue}</div>
+                    )}</For>
+                    <Show when={result.stopReason}>
+                      <div class="text-xs text-red-400 mt-1">Stop reason: {result.stopReason}</div>
+                    </Show>
+                  </div>
+                </div>
+              </Show>
+            </div>
+          );
+        }}
       </Show>
     </div>
   );
 }
 
 function saveResult(
-  lastP: any, allLabels: string[], allCo2: number[], full: FullProfile,
-  sc: any, ti: number, si: number, tl: CO2Timeline,
+  lastP: any, allLabels: string[], allCo2: number[], allEmissions: number[], allTokensRemaining: number[],
+  full: FullProfile, sc: any, ti: number, si: number, tl: CO2Timeline,
   app: ReturnType<typeof useApp>,
-) {
+): SimResult | null {
   try {
     const cfg: SimConfig = {
       scenarioDescription: sc.description, region: sc.region,
@@ -236,14 +351,11 @@ function saveResult(
       thetaPause: sc.thresholds[ti], thetaResume: sc.hysteresis[ti],
       overheadBudgetPct: sc.overheadBudgetPct,
     };
-    const baseCfg = { ...cfg, thetaPause: Infinity, thetaResume: 0 };
-    const baseSim = new SimStepper(full, sc, ti, si, tl, () => 100000);
+    const baseCfg: SimConfig = { ...cfg, thetaPause: Infinity, thetaResume: 0 };
     let baseLast: any = null;
-    baseSim.run(
-      (p: any) => { baseLast = p; },
-      (last: any) => { baseLast = last; },
-      () => false,
-    );
+    for (const p of simulateStepwise(full, baseCfg, tl)) {
+      baseLast = p;
+    }
 
     const tps = tokensPerSecond(full.gpuCount) || 1;
     const idealS = lastP.tokensTotal / tps;
@@ -253,6 +365,11 @@ function saveResult(
     const totalEm = lastP.totalEmissionsG / 1000;
     const co2SavingsPct = baselineEm > 0 ? (baselineEm - totalEm) / baselineEm * 100 : 0;
     const score = co2SavingsPct / Math.max(actualOverheadPct, 0.001);
+    const tokensProcessed = lastP.tokensTotal - lastP.tokensRemaining;
+    const totalWallTimeH = lastP.totalWallS / 3600;
+    const pausedTimeH = lastP.pausedS / 3600;
+    const checkpointOverheadH = lastP.checkpointS / 3600;
+    const idleTimeH = pausedTimeH + checkpointOverheadH;
 
     const result: SimResult = {
       id: `result-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
@@ -260,16 +377,16 @@ function saveResult(
       region: cfg.region, historicalYears: cfg.historicalYears,
       startTime: cfg.startTime, threshold: cfg.thetaPause,
       hysteresisMargin: cfg.thetaResume,
-      totalWallTimeH: lastP.totalWallS / 3600,
+      totalWallTimeH,
       trainingTimeH: lastP.trainingS / 3600,
-      pausedTimeH: lastP.pausedS / 3600,
-      checkpointOverheadH: lastP.checkpointS / 3600,
+      pausedTimeH,
+      checkpointOverheadH,
       totalEnergyKwh: lastP.totalEnergyWh / 1000,
       trainingEnergyKwh: lastP.trainingEnergyWh / 1000,
       pausedEnergyKwh: lastP.pausedEnergyWh / 1000,
       checkpointEnergyKwh: lastP.checkpointEnergyWh / 1000,
       totalEmissionsKgco2: totalEm,
-      tokensProcessed: lastP.tokensTotal - lastP.tokensRemaining,
+      tokensProcessed,
       tokensTotal: lastP.tokensTotal,
       completed: lastP.tokensRemaining <= 0,
       numPauses: lastP.numPauses,
@@ -277,15 +394,22 @@ function saveResult(
       actualOverheadPct: Math.round(actualOverheadPct * 100) / 100,
       withinOverheadBudget: overheadS / idealS <= cfg.overheadBudgetPct / 100,
       timestamps: allLabels, carbonIntensitySeries: allCo2, stateSeries: [],
+      emissionsSeries: allEmissions,
+      tokensRemainingSeries: allTokensRemaining,
       issues: lastP.issues, stopReason: lastP.stopReason,
       baselineEmissionsKgco2: baselineEm,
       baselineTimeH: baseLast ? baseLast.totalWallS / 3600 : 0,
       co2SavingsPct: Math.round(co2SavingsPct * 100) / 100,
       score: Math.round(score * 100) / 100,
+      idleTimeH,
+      completionPct: lastP.tokensTotal > 0 ? 100.0 * tokensProcessed / lastP.tokensTotal : 0,
+      ok: lastP.tokensRemaining <= 0 && overheadS / idealS <= cfg.overheadBudgetPct / 100 && !(lastP.issues && lastP.issues.length > 0),
     };
     app.addResult(result);
+    return result;
   } catch (e) {
     console.error("saveResult:", e);
+    return null;
   }
 }
 
@@ -335,6 +459,8 @@ class SimStepper {
   private chartLabels: string[] = [];
   private chartCo2: number[] = [];
   private chartStates: string[] = [];
+  private chartEmissions: number[] = [];
+  private chartTokensRemaining: number[] = [];
   private chartIntervalS = 3600;
   private nextChartWallS = 0;
   private maxChartPoints = 100_000;
@@ -412,6 +538,8 @@ class SimStepper {
     this.chartLabels.push(this.timestamps[this.idx]);
     this.chartCo2.push(this.getCo2(this.idx));
     this.chartStates.push(this.state);
+    this.chartEmissions.push(this.totalEmissionsG / 1000);
+    this.chartTokensRemaining.push(this.tokensRemaining);
   }
 
   private getCo2(i: number): number {
@@ -421,8 +549,8 @@ class SimStepper {
   }
 
   run(
-    onProgress: (p: any, chartLabels: string[], chartCo2: number[], chartStates: string[]) => void,
-    onDone: (last: any, labels: string[], co2: number[], states: string[]) => void,
+    onProgress: (p: any, chartLabels: string[], chartCo2: number[], chartStates: string[], chartEmissions: number[], chartTokensRemaining: number[]) => void,
+    onDone: (last: any, labels: string[], co2: number[], states: string[], emissions: number[], tokensRemaining: number[]) => void,
     isCancelled: () => boolean,
   ) {
     const tick = () => {
@@ -550,10 +678,10 @@ class SimStepper {
           : (this.pausedS + this.checkpointS) / this.idealTrainingS > this.overheadBudgetPct / 100 ? "budget_exceeded"
             : "iteration_limit";
 
-        onDone(this.snap(stopReason), this.chartLabels, this.chartCo2, this.chartStates);
+        onDone(this.snap(stopReason), this.chartLabels, this.chartCo2, this.chartStates, this.chartEmissions, this.chartTokensRemaining);
       } catch (err: any) {
         console.error("SimStepper error:", err);
-        onDone({ ...this.snap("error"), issues: ["Simulation error: " + (err?.message || String(err))] }, this.chartLabels, this.chartCo2, this.chartStates);
+        onDone({ ...this.snap("error"), issues: ["Simulation error: " + (err?.message || String(err))] }, this.chartLabels, this.chartCo2, this.chartStates, this.chartEmissions, this.chartTokensRemaining);
       }
     };
 
@@ -589,7 +717,7 @@ class SimStepper {
     };
   }
 
-  private maybeYield(onProgress: (p: any, chartLabels: string[], chartCo2: number[], chartStates: string[]) => void) {
+  private maybeYield(onProgress: (p: any, chartLabels: string[], chartCo2: number[], chartStates: string[], chartEmissions: number[], chartTokensRemaining: number[]) => void) {
     onProgress({
       timestamp: this.timestamps[this.idx], carbonIntensity: this.getCo2(this.idx),
       state: this.state, tokensRemaining: this.tokensRemaining, tokensTotal: this.tokensTotal,
@@ -603,7 +731,7 @@ class SimStepper {
       checkpointEnergyWh: Math.round(this.checkpointEnergyWh * 100) / 100,
       totalEmissionsG: Math.round(this.totalEmissionsG * 100) / 100,
       numPauses: this.numPauses, issues: [...this.issues], done: false,
-    }, this.chartLabels, this.chartCo2, this.chartStates);
+    }, this.chartLabels, this.chartCo2, this.chartStates, this.chartEmissions, this.chartTokensRemaining);
   }
 }
 

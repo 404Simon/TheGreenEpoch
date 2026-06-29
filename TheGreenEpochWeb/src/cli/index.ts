@@ -9,11 +9,11 @@
  * Only the data-loading layer differs (fs instead of fetch).
  */
 
-import { readFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { Constants, TrainingProfile, Scenario, CO2Timeline, FullProfile } from "../types";
-import { simulateStepwise, buildResult, tokensPerSecond } from "../data/simulation";
+import { simulateStepwise, buildResult, tokensPerSecond } from "../data/simulation.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = resolve(__dirname, "../../public/data");
@@ -42,23 +42,45 @@ function wrapProfile(p: TrainingProfile, c: Constants): FullProfile {
 
 interface CliResult {
   scenario: string;
+  model: string;
   region: string;
-  threshold: number;
-  hysteresis: number;
+  historicalYears: string;
   startTime: string;
+  thetaPause: number;
+  thetaResume: number;
+  overheadBudgetPct: number;
+  totalWallTimeH: number;
+  trainingTimeH: number;
+  pausedTimeH: number;
+  checkpointOverheadH: number;
+  totalEnergyKwh: number;
+  trainingEnergyKwh: number;
+  pausedEnergyKwh: number;
+  checkpointEnergyKwh: number;
+  totalEmissionsKgco2: number;
+  tokensProcessed: number;
+  tokensTotal: number;
+  completed: boolean;
+  numPauses: number;
+  actualOverheadPct: number;
+  withinOverheadBudget: boolean;
+  baselineEmissionsKgco2: number;
+  baselineTimeH: number;
   co2SavingsPct: number;
   score: number;
-  overheadPct: number;
-  pauses: number;
-  wallTimeH: number;
-  emissionsKg: number;
+  idleTimeH: number;
+  completionPct: number;
   ok: boolean;
+  stopReason: string;
+  issues: string;
 }
 
 async function main() {
   const args = process.argv.slice(2);
   const limitIdx = args.indexOf("--limit");
   const limit = limitIdx !== -1 && args[limitIdx + 1] ? parseInt(args[limitIdx + 1]) : null;
+  const csvIdx = args.indexOf("--csv");
+  const csvPath = csvIdx !== -1 && args[csvIdx + 1] ? args[csvIdx + 1] : null;
   const skipLive = args.includes("--no-live");
 
   const { constants, profiles, scenarios } = loadData();
@@ -78,8 +100,8 @@ async function main() {
     const full = wrapProfile(profile, constants);
     const tl = loadJSON<CO2Timeline>(`co2/${sc.region}.json`);
 
-    for (let ti = 0; ti < sc.thresholds.length; ti++) {
-      for (const startTime of sc.startTimes) {
+    for (const startTime of sc.startTimes) {
+      for (let ti = 0; ti < sc.thresholds.length; ti++) {
         const config = {
           scenarioDescription: sc.description,
           region: sc.region,
@@ -112,19 +134,40 @@ async function main() {
         const isOk = last.done && meta.withinOverheadBudget && last.issues.length === 0;
         if (isOk) ok++; else fail++;
 
+        function r6(n: number) { return Math.round(n * 1_000_000) / 1_000_000; }
         results.push({
           scenario: sc.description,
+          model: profile.name,
           region: sc.region,
-          threshold: config.thetaPause,
-          hysteresis: config.thetaResume,
+          historicalYears: sc.historicalYears.join(";"),
           startTime,
-          co2SavingsPct: Math.round(co2SavingsPct * 10) / 10,
-          score: Math.round(score * 10) / 10,
-          overheadPct: Math.round(actualOverheadPct * 10) / 10,
-          pauses: last.numPauses,
-          wallTimeH: Math.round(last.totalWallS / 36) / 100,
-          emissionsKg: Math.round(last.totalEmissionsG / 1000),
+          thetaPause: config.thetaPause,
+          thetaResume: config.thetaResume,
+          overheadBudgetPct: config.overheadBudgetPct,
+          totalWallTimeH: r6(last.totalWallS / 3600),
+          trainingTimeH: r6(last.trainingS / 3600),
+          pausedTimeH: r6(last.pausedS / 3600),
+          checkpointOverheadH: r6(last.checkpointS / 3600),
+          totalEnergyKwh: r6(last.totalEnergyWh / 1000),
+          trainingEnergyKwh: r6(last.trainingEnergyWh / 1000),
+          pausedEnergyKwh: r6(last.pausedEnergyWh / 1000),
+          checkpointEnergyKwh: r6(last.checkpointEnergyWh / 1000),
+          totalEmissionsKgco2: r6(last.totalEmissionsG / 1000),
+          tokensProcessed: last.tokensTotal - last.tokensRemaining,
+          tokensTotal: last.tokensTotal,
+          completed: last.done && last.tokensRemaining <= 0,
+          numPauses: last.numPauses,
+          actualOverheadPct: r6(actualOverheadPct),
+          withinOverheadBudget: meta.withinOverheadBudget,
+          baselineEmissionsKgco2: r6(meta.baselineEmissionsKgco2),
+          baselineTimeH: r6(meta.baselineTimeH),
+          co2SavingsPct: r6(co2SavingsPct),
+          score: r6(score),
+          idleTimeH: r6((last.pausedS + last.checkpointS) / 3600),
+          completionPct: last.tokensTotal > 0 ? r6(100 * (last.tokensTotal - last.tokensRemaining) / last.tokensTotal) : 0,
           ok: isOk,
+          stopReason: last.stopReason,
+          issues: last.issues.join("; "),
         });
 
         if (!skipLive) {
@@ -143,11 +186,58 @@ async function main() {
 
   for (const r of results.slice(0, 20)) {
     const status = r.ok ? "✓" : "✗";
-    console.log(`  ${r.region.padEnd(8)} ${String(r.threshold).padStart(4)} ${(r.co2SavingsPct + "%").padStart(7)} ${String(r.score).padStart(7)} ${(r.overheadPct + "%").padStart(6)} ${String(r.pauses).padStart(7)}  ${status} ${r.scenario.slice(0, 36).padEnd(36)}`);
+    console.log(`  ${r.region.padEnd(8)} ${String(r.thetaPause).padStart(4)} ${(r.co2SavingsPct + "%").padStart(7)} ${String(r.score).padStart(7)} ${(r.actualOverheadPct + "%").padStart(6)} ${String(r.numPauses).padStart(7)}  ${status} ${r.scenario.slice(0, 36).padEnd(36)}`);
   }
 
   if (results.length > 20) {
     console.log(`  … and ${results.length - 20} more`);
+  }
+
+  if (csvPath) {
+    const cols: { key: keyof CliResult; header: string }[] = [
+      { key: "scenario", header: "scenario" },
+      { key: "model", header: "model" },
+      { key: "region", header: "region" },
+      { key: "historicalYears", header: "historical_years" },
+      { key: "startTime", header: "start_time" },
+      { key: "thetaPause", header: "theta_pause" },
+      { key: "thetaResume", header: "theta_resume" },
+      { key: "overheadBudgetPct", header: "overhead_budget_pct" },
+      { key: "totalWallTimeH", header: "total_wall_time_h" },
+      { key: "trainingTimeH", header: "training_time_h" },
+      { key: "pausedTimeH", header: "paused_time_h" },
+      { key: "checkpointOverheadH", header: "checkpoint_overhead_h" },
+      { key: "totalEnergyKwh", header: "total_energy_kwh" },
+      { key: "trainingEnergyKwh", header: "training_energy_kwh" },
+      { key: "pausedEnergyKwh", header: "paused_energy_kwh" },
+      { key: "checkpointEnergyKwh", header: "checkpoint_energy_kwh" },
+      { key: "totalEmissionsKgco2", header: "total_emissions_kgco2" },
+      { key: "tokensProcessed", header: "tokens_processed" },
+      { key: "tokensTotal", header: "tokens_total" },
+      { key: "completed", header: "completed" },
+      { key: "numPauses", header: "num_pauses" },
+      { key: "actualOverheadPct", header: "actual_overhead_pct" },
+      { key: "withinOverheadBudget", header: "within_overhead_budget" },
+      { key: "baselineEmissionsKgco2", header: "baseline_emissions_kgco2" },
+      { key: "baselineTimeH", header: "baseline_time_h" },
+      { key: "co2SavingsPct", header: "co2_savings_pct" },
+      { key: "score", header: "score" },
+      { key: "idleTimeH", header: "idle_time_h" },
+      { key: "completionPct", header: "completion_pct" },
+      { key: "ok", header: "ok" },
+      { key: "stopReason", header: "stop_reason" },
+      { key: "issues", header: "issues" },
+    ];
+
+    function esc(v: unknown): string {
+      const s = String(v);
+      return s.includes(",") || s.includes('"') || s.includes("\n") ? `"${s.replace(/"/g, '""')}"` : s;
+    }
+
+    const lines = results.map((r) => cols.map((c) => esc(r[c.key])).join(","));
+    lines.unshift(cols.map((c) => c.header).join(","));
+    writeFileSync(csvPath, lines.join("\n"), "utf-8");
+    console.log(`\n  📄 CSV: ${csvPath} (${results.length} rows)\n`);
   }
 
   console.log(`\n  Done. ✓ ${ok} · ✗ ${fail}\n`);

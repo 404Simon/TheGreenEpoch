@@ -38,10 +38,10 @@ Chart.register(stateBgPlugin);
 interface Props {
   labels: string[];
   co2Data: number[];
-  stateSeries: string[];
+  stateSeries?: string[];
   thetaPause?: number;
   thetaResume?: number;
-  windowSize: number;
+  windowSize?: number;
 }
 
 export function CO2Chart(props: Props) {
@@ -50,18 +50,19 @@ export function CO2Chart(props: Props) {
   let lastKey = "";
 
   function sliceData(): { labels: string[]; data: number[]; states: string[] } {
-    const n = props.windowSize > 0 ? Math.min(props.windowSize, props.co2Data.length) : props.co2Data.length;
+    const ws = props.windowSize ?? 0;
+    const n = ws > 0 ? Math.min(ws, props.co2Data.length) : props.co2Data.length;
     if (n === 0) return { labels: [], data: [], states: [] };
-    const start = props.windowSize > 0 ? Math.max(0, props.co2Data.length - props.windowSize) : 0;
+    const start = ws > 0 ? Math.max(0, props.co2Data.length - ws) : 0;
     const sliced = props.co2Data.slice(start);
     const slicedLabels = props.labels.slice(start);
-    const slicedStates = props.stateSeries.slice(start);
+    const slicedStates = (props.stateSeries ?? []).slice(start);
     if (sliced.length > 2000) {
       const step = sliced.length / 2000;
       const d: number[] = []; const l: string[] = []; const s: string[] = [];
       for (let i = 0; i < 2000; i++) {
         const idx = Math.min(Math.floor(i * step), sliced.length - 1);
-        d.push(sliced[idx]); l.push(slicedLabels[idx]); s.push(slicedStates[idx]);
+        d.push(sliced[idx]); l.push(slicedLabels[idx]); s.push(slicedStates[idx] ?? "");
       }
       return { labels: l, data: d, states: s };
     }

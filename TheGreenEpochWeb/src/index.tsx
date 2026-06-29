@@ -1,5 +1,4 @@
 import { render } from "solid-js/web";
-import "solid-devtools";
 import "./index.css";
 import { AppProvider } from "./data/store";
 import { App } from "./App";

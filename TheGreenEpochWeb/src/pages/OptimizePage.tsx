@@ -94,7 +94,7 @@ export function OptimizePage() {
   const [iterMsg, setIterMsg] = createSignal("");
   const [points, setPoints] = createSignal<SweepPoint[]>([]);
   const [error, setError] = createSignal<string | null>(null);
-  const [filters, setFilters] = createSignal<Record<string, string>>({});
+  const [filters, setFilters] = createSignal<Record<string, string>>({ stopReason: "completed" });
   const [sortKey, setSortKey] = createSignal("co2SavingsPct");
   const [sortAsc, setSortAsc] = createSignal(false);
 
@@ -171,7 +171,6 @@ export function OptimizePage() {
     setError(null);
     setPoints([]);
     setIterMsg("");
-    clearFilters();
 
     try {
       const profile = app.state.profiles![scenario.model];

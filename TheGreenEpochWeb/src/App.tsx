@@ -45,14 +45,14 @@ function Layout(props: { children?: JSX.Element }) {
 
       <header class="border-b border-border-default/60 bg-surface-2/80 backdrop-blur-md sticky top-0 z-50">
           <div class="w-full mx-auto px-4 sm:px-8 h-14 flex items-center justify-between">
-          <A href="/" class="text-lg font-semibold tracking-tight text-accent hover:text-accent/80 no-underline transition-colors">
-            <span class="mr-1.5">⚡</span>TheGreenEpoch
+          <A href="/" class="text-lg font-semibold tracking-tight text-accent hover:text-accent/80 no-underline transition-colors whitespace-nowrap">
+            <span class="mr-1.5">⚡</span><span class="hidden sm:inline">TheGreenEpoch</span>
           </A>
-          <nav class="flex items-center gap-1 text-sm">
+          <nav class="flex items-center gap-0.5 sm:gap-1 text-sm">
             <A
               href="/"
               end
-              class="px-3 py-1.5 rounded-lg no-underline transition-colors"
+              class="px-2 sm:px-3 py-1.5 rounded-lg no-underline transition-colors"
               activeClass="bg-accent-subtle text-accent font-medium"
               inactiveClass="text-fg-subtle hover:text-fg-body hover:bg-white/5"
             >
@@ -60,7 +60,7 @@ function Layout(props: { children?: JSX.Element }) {
             </A>
             <A
               href="/runs"
-              class="px-3 py-1.5 rounded-lg no-underline transition-colors"
+              class="px-2 sm:px-3 py-1.5 rounded-lg no-underline transition-colors"
               activeClass="bg-accent-subtle text-accent font-medium"
               inactiveClass="text-fg-subtle hover:text-fg-body hover:bg-white/5"
             >
@@ -68,7 +68,7 @@ function Layout(props: { children?: JSX.Element }) {
             </A>
             <A
               href="/optimize"
-              class="px-3 py-1.5 rounded-lg no-underline transition-colors"
+              class="px-2 sm:px-3 py-1.5 rounded-lg no-underline transition-colors"
               activeClass="bg-accent-subtle text-accent font-medium"
               inactiveClass="text-fg-subtle hover:text-fg-body hover:bg-white/5"
             >
@@ -76,7 +76,7 @@ function Layout(props: { children?: JSX.Element }) {
             </A>
             <button
               onClick={toggleTheme}
-              class="ml-2 p-1.5 rounded-lg text-fg-subtle hover:text-fg-body hover:bg-white/5 transition-colors"
+              class="ml-1 sm:ml-2 p-2 sm:p-1.5 rounded-lg text-fg-subtle hover:text-fg-body hover:bg-white/5 transition-colors shrink-0"
               aria-label={`Switch to ${theme() === "dark" ? "light" : "dark"} mode`}
             >
               {theme() === "dark" ? (

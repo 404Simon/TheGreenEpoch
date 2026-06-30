@@ -1,4 +1,4 @@
-import { type JSX, For } from "solid-js";
+import { For } from "solid-js";
 
 interface StatRow {
   label: string;

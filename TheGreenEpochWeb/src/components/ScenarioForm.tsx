@@ -1,4 +1,4 @@
-import { createSignal, Show, For, type JSX } from "solid-js";
+import { createSignal, Show, For } from "solid-js";
 import type { Scenario, Constants, TrainingProfile } from "../types";
 import { useApp } from "../data/store";
 

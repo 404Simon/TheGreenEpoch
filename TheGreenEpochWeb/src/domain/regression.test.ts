@@ -1,9 +1,12 @@
+import { readFileSync } from "node:fs";
+import { resolve, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, it, expect } from "vitest";
 import { simulateStepwise } from "../domain/simulation";
 import { buildSimResult } from "../domain/result";
 import { hysteresisPolicy, neverPausePolicy } from "../domain/policy";
 import { tokensPerSecond } from "../domain/physics";
-import type { FullProfile, CO2Timeline, SimConfig } from "../domain/types";
+import type { FullProfile, CO2Timeline, SimConfig, SimProgress } from "../domain/types";
 
 /**
  * Regression test: TypeScript simulation output must match Python.
@@ -88,26 +91,7 @@ const deepseek: FullProfile = {
   checkpointResumeTime: 0,
 };
 
-/**
- * Build a synthetic CO2 timeline that matches the ENTSO-E data
- * (5-min resolution, 4 years wrapping).  Python averages multiple
- * years into one; TS does the same via simulateStepwise's modulo
- * indexing.  The specific carbon_intensity values come from the
- * actual public/data/co2/CN.json used by both implementations.
- */
-function buildCNTimeline(): CO2Timeline {
-  // Load CN.json (it's a single-line JSON, 105k+ points)
-  // We commit the exact reference values inline so this test
-  // doesn't depend on the data file being present at test time.
-  //
-  // Hard-coding the full 105k array would be enormous, so we
-  // store a fingerprint and verify against it.
-  return { zone: "CN", years: [2022, 2023, 2024, 2025],
-    timestamps: [], carbonIntensity: [] };
-}
-
 describe("regression vs Python (CN, Deepseek, 4-year average)", () => {
-  const MAX_ABS_ERROR = 0.1;  // kg CO₂, hours, percent points
 
   /**
    * Generate averaged CN timeline dynamically from the JSON file.
@@ -116,15 +100,9 @@ describe("regression vs Python (CN, Deepseek, 4-year average)", () => {
    */
   function loadCNTimeline(): CO2Timeline | null {
     try {
-      // Vite-injected BASE_URL — works in dev + test
-      const base = "/data";
-      const url = `${base}/co2/CN.json`;
-      // During Vitest, we read from filesystem via a helper
-      // since there's no HTTP server.
-      const fs = require("fs") as typeof import("fs");
-      const path = require("path") as typeof import("path");
-      const filePath = path.resolve(__dirname, "../../public/data/co2/CN.json");
-      const raw = fs.readFileSync(filePath, "utf-8");
+      const __dirname = dirname(fileURLToPath(import.meta.url));
+      const filePath = resolve(__dirname, "../../public/data/co2/CN.json");
+      const raw = readFileSync(filePath, "utf-8");
       return JSON.parse(raw) as CO2Timeline;
     } catch {
       return null;
@@ -142,7 +120,7 @@ describe("regression vs Python (CN, Deepseek, 4-year average)", () => {
     };
 
     // --- baseline (never-pause) ---
-    const baselineProg: any[] = [];
+    const baselineProg: SimProgress[] = [];
     for (const p of simulateStepwise(deepseek, neverPausePolicy(), tl, simConfig)) {
       baselineProg.push(p);
     }
@@ -150,7 +128,7 @@ describe("regression vs Python (CN, Deepseek, 4-year average)", () => {
 
     // --- policy simulation ---
     const policy = hysteresisPolicy(ref.thetaPause, ref.thetaResume);
-    const prog: any[] = [];
+    const prog: SimProgress[] = [];
     for (const p of simulateStepwise(deepseek, policy, tl, simConfig)) {
       prog.push(p);
     }
@@ -217,11 +195,11 @@ describe("structural invariants (cross-referenced with Python)", () => {
       checkpointPauseTime: 0, checkpointResumeTime: 0,
     };
 
-    const neverPause: any[] = [];
+    const neverPause: SimProgress[] = [];
     for (const p of simulateStepwise(profile, neverPausePolicy(), tl, config)) neverPause.push(p);
     const lastNp = neverPause[neverPause.length - 1];
 
-    const highTheta: any[] = [];
+    const highTheta: SimProgress[] = [];
     const hp = hysteresisPolicy(9999, 0);
     for (const p of simulateStepwise(profile, hp, tl, config)) highTheta.push(p);
     const lastHt = highTheta[highTheta.length - 1];

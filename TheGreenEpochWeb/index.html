@@ -16,6 +16,14 @@
     <title>TheGreenEpoch - CO₂-aware LLM training simulator</title>
     <script>
       (function() {
+        var theme = localStorage.getItem("thegreenepoch-theme");
+        if (theme === "light" || (!theme && window.matchMedia("(prefers-color-scheme: light)").matches)) {
+          document.documentElement.classList.add("light");
+        }
+      })();
+    </script>
+    <script>
+      (function() {
         var redirect = sessionStorage.redirect;
         delete sessionStorage.redirect;
         if (redirect && redirect !== location.pathname + location.search + location.hash) {

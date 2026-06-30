@@ -3,13 +3,11 @@ import { useParams, useSearchParams, A } from "@solidjs/router";
 import { useApp } from "../data/store";
 import { CO2Chart } from "../components/CO2Chart";
 import { StatsPanel } from "../components/StatsPanel";
-import { energyWh, emissionsG } from "../domain/physics";
-import { tokensPerSecond } from "../domain/physics";
 import { simulateStepwise } from "../domain/simulation";
 import { buildSimResult } from "../domain/result";
-import { neverPausePolicy } from "../domain/policy";
+import { neverPausePolicy, hysteresisPolicy } from "../domain/policy";
 import { loadCO2Timeline } from "../data/loadData";
-import type { SimResult, FullProfile, SimConfig, CO2Timeline } from "../domain/types";
+import type { SimResult, Scenario, FullProfile, SimConfig, CO2Timeline, SimProgress } from "../domain/types";
 
 export function LiveSimPage() {
   const params = useParams();
@@ -27,7 +25,7 @@ export function LiveSimPage() {
   const [running, setRunning] = createSignal(false);
   const [finished, setFinished] = createSignal(false);
   const [error, setError] = createSignal<string | null>(null);
-  const [progress, setProgress] = createSignal<any>(null);
+  const [progress, setProgress] = createSignal<SimProgress | null>(null);
   const [speed, setSpeed] = createSignal(100);
   const [labels, setLabels] = createSignal<string[]>([]);
   const [co2Points, setCo2Points] = createSignal<number[]>([]);
@@ -39,7 +37,6 @@ export function LiveSimPage() {
   const [simResult, setSimResult] = createSignal<SimResult | null>(null);
 
   let cancelFlag = false;
-  let stepper: SimStepper | null = null;
 
   const runSim = async () => {
     try {
@@ -72,44 +69,85 @@ export function LiveSimPage() {
       const ts = tl?.timestamps;
       if (!ts || ts.length < 2) { setError("No grid data for " + sc.region); setRunning(false); return; }
 
-      stepper = new SimStepper(full, sc, thresholdIdx(), startIdx(), tl, () => speed());
+      const simConfig: SimConfig = {
+        startTime: sc.startTimes[startIdx()],
+        historicalYears: sc.historicalYears,
+        overheadBudgetPct: sc.overheadBudgetPct,
+      };
 
-      stepper.run(
-        (p: any, chartLabels: string[], chartCo2: number[], chartStates: string[], chartEmissions: number[], chartTokensRemaining: number[]) => {
-          if (cancelFlag) return;
-          setProgress(p);
-          if (chartLabels.length > 0) {
-            setLabels(chartLabels.slice());
-            setCo2Points(chartCo2.slice());
-            setStateSeries(chartStates.slice());
-            setEmissionsSeries(chartEmissions.slice());
-            setTokensRemainingSeries(chartTokensRemaining.slice());
+      const thetaPause = sc.thresholds[thresholdIdx()];
+      const thetaResume = sc.hysteresis[thresholdIdx()];
+
+      const gen = simulateStepwise(
+        full, hysteresisPolicy(thetaPause, thetaResume), tl, simConfig,
+      );
+
+      const chartIntervalS = 3600;
+      const maxChartPoints = 100_000;
+      const labels: string[] = [];
+      const co2PointsArr: number[] = [];
+      const stateArr: string[] = [];
+      const emissionsArr: number[] = [];
+      const tokensRemainingArr: number[] = [];
+      let nextChartWallS = 0;
+      let lastProgress: SimProgress | null = null;
+
+      const tick = () => {
+        if (cancelFlag) return;
+        const deadline = performance.now() + 10;
+        const maxSteps = Math.min(Math.max(1, speed()), 1000);
+        let steps = 0;
+
+        while (steps < maxSteps) {
+          const { value, done } = gen.next();
+          if (done || !value) break;
+          lastProgress = value;
+          steps++;
+
+          while (labels.length < maxChartPoints && lastProgress.totalWallS >= nextChartWallS) {
+            labels.push(lastProgress.timestamp);
+            co2PointsArr.push(lastProgress.carbonIntensity);
+            stateArr.push(lastProgress.state);
+            emissionsArr.push(lastProgress.totalEmissionsG / 1000);
+            tokensRemainingArr.push(lastProgress.tokensRemaining);
+            nextChartWallS += chartIntervalS;
           }
-        },
-        (lastP: any, allLabels: string[], allCo2: number[], allStates: string[], allEmissions: number[], allTokensRemaining: number[]) => {
-          stepper = null;
-          setProgress(lastP);
-          setLabels(allLabels.slice());
-          setCo2Points(allCo2.slice());
-          setStateSeries(allStates.slice());
-          setEmissionsSeries(allEmissions.slice());
-          setTokensRemainingSeries(allTokensRemaining.slice());
+
+          if (lastProgress.done) break;
+          if (performance.now() > deadline) break;
+        }
+
+        if (lastProgress && !lastProgress.done) {
+          setProgress(lastProgress);
+          setLabels(labels.slice());
+          setCo2Points(co2PointsArr.slice());
+          setStateSeries(stateArr.slice());
+          setEmissionsSeries(emissionsArr.slice());
+          setTokensRemainingSeries(tokensRemainingArr.slice());
+          setTimeout(tick, 0);
+        } else if (lastProgress) {
+          setProgress(lastProgress);
+          setLabels(labels.slice());
+          setCo2Points(co2PointsArr.slice());
+          setStateSeries(stateArr.slice());
+          setEmissionsSeries(emissionsArr.slice());
+          setTokensRemainingSeries(tokensRemainingArr.slice());
           setRunning(false);
           setFinished(true);
-          const result = saveResult(lastP, allLabels, allCo2, allEmissions, allTokensRemaining, full, sc, thresholdIdx(), startIdx(), tl, app);
+          const result = saveResult(lastProgress, labels, co2PointsArr, stateArr, emissionsArr, tokensRemainingArr, full, sc, thresholdIdx(), startIdx(), tl, app);
           if (result) setSimResult(result);
-        },
-        () => cancelFlag,
-      );
-    } catch (err: any) {
-      setError(err?.message || String(err));
+        }
+      };
+
+      setTimeout(tick, 50);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
       setRunning(false);
     }
   };
 
   onCleanup(() => {
     cancelFlag = true;
-    stepper = null;
   });
 
   const sc = scenario();
@@ -343,8 +381,8 @@ export function LiveSimPage() {
 }
 
 function saveResult(
-  lastP: any, allLabels: string[], allCo2: number[], allEmissions: number[], allTokensRemaining: number[],
-  full: FullProfile, sc: any, ti: number, si: number, tl: CO2Timeline,
+  lastP: SimProgress, allLabels: string[], allCo2: number[], allStates: string[], allEmissions: number[], allTokensRemaining: number[],
+  full: FullProfile, sc: Scenario, ti: number, si: number, tl: CO2Timeline,
   app: ReturnType<typeof useApp>,
 ): SimResult | null {
   try {
@@ -356,7 +394,7 @@ function saveResult(
     const thetaPause = sc.thresholds[ti];
     const thetaResume = sc.hysteresis[ti];
     const basePolicy = neverPausePolicy();
-    let baseLast: any = null;
+    let baseLast: SimProgress | null = null;
     for (const p of simulateStepwise(full, basePolicy, tl, simConfig)) {
       baseLast = p;
     }
@@ -368,7 +406,7 @@ function saveResult(
       region: sc.region,
       timestamps: allLabels,
       carbonIntensitySeries: allCo2,
-      stateSeries: [],
+      stateSeries: allStates,
       emissionsSeries: allEmissions,
       tokensRemainingSeries: allTokensRemaining,
     });
@@ -380,327 +418,8 @@ function saveResult(
   }
 }
 
-// ---------------------------------------------------------------------------
-// SimStepper - pure simulation engine with time-based chart sampling
-// ---------------------------------------------------------------------------
-
-class SimStepper {
-  private idx = 0;
-  private nPoints = 0;
-  private carbon: number[] = [];
-  private timestamps: string[] = [];
-  private stepS = 0;
-  private meanCo2 = 0;
-
-  private tps = 0;
-  private trainPowerW = 0;
-  private pausePowerW = 0;
-  private ckptPowerW = 0;
-
-  private state: "running" | "paused" = "running";
-  private transitionTimerS = 0;
-  private targetAfterTransition: "running" | "paused" | null = null;
-
-  private tokensTotal = 0;
-  private tokensRemaining = 0;
-  private idealTrainingS = 0;
-
-  private totalWallS = 0;
-  private trainingS = 0;
-  private pausedS = 0;
-  private checkpointS = 0;
-  private totalEnergyWh = 0;
-  private trainingEnergyWh = 0;
-  private pausedEnergyWh = 0;
-  private checkpointEnergyWh = 0;
-  private totalEmissionsG = 0;
-  private numPauses = 0;
-  issues: string[] = [];
-  private nanFallbacks = 0;
-
-  private thetaPause = 0;
-  private thetaResume = 0;
-  private overheadBudgetPct = 0;
-
-  // Chart data - sampled at fixed simulated-time intervals
-  private chartLabels: string[] = [];
-  private chartCo2: number[] = [];
-  private chartStates: string[] = [];
-  private chartEmissions: number[] = [];
-  private chartTokensRemaining: number[] = [];
-  private chartIntervalS = 3600;
-  private nextChartWallS = 0;
-  private maxChartPoints = 100_000;
-
-  private getSpeed: () => number = () => 100;
-
-  constructor(
-    private profile: FullProfile,
-    scenario: any,
-    thresholdIdx: number,
-    startIdx: number,
-    tl: CO2Timeline,
-    getSpeed: () => number,
-  ) {
-    this.getSpeed = getSpeed;
-    if (!tl) throw new Error("SimStepper: tl is null");
-    const tsArr = tl.timestamps;
-    const co2Arr = tl.carbonIntensity;
-    if (!tsArr || !co2Arr) throw new Error("SimStepper: missing timestamps or carbonIntensity");
-    if (tsArr.length < 2 || co2Arr.length < 2) throw new Error("SimStepper: timeline too short");
-    this.carbon = co2Arr;
-    this.timestamps = tsArr;
-    this.nPoints = tsArr.length;
-
-    const diffMs = new Date(tsArr[1]).getTime() - new Date(tsArr[0]).getTime();
-    if (!diffMs || diffMs <= 0) throw new Error("SimStepper: invalid step size");
-    this.stepS = diffMs / 1000;
-
-    let sum = 0;
-    for (let i = 0; i < co2Arr.length; i++) sum += co2Arr[i];
-    this.meanCo2 = sum / co2Arr.length;
-
-    this.tps = tokensPerSecond(profile.gpuCount);
-    this.trainPowerW = profile.gpuCount * profile.gpuPowerTrain * profile.pue;
-    this.pausePowerW = profile.gpuCount * profile.gpuPowerPause * profile.pue;
-    this.ckptPowerW = this.trainPowerW;
-
-    this.thetaPause = scenario.thresholds[thresholdIdx];
-    this.thetaResume = scenario.hysteresis[thresholdIdx];
-    this.overheadBudgetPct = scenario.overheadBudgetPct;
-
-    this.tokensTotal = profile.datasetTokens;
-    this.tokensRemaining = this.tokensTotal;
-    this.idealTrainingS = this.tokensTotal / (this.tps || 1);
-
-    const startTs = scenario.startTimes[startIdx];
-    const baseYear = new Date(tsArr[0]).getUTCFullYear();
-    const [sm, sd] = startTs.split("-").map(Number);
-    const targetStr = new Date(Date.UTC(baseYear, sm - 1, sd)).toISOString();
-    let lo = 0, hi = this.nPoints;
-    while (lo < hi) { const mid = (lo + hi) >>> 1; if (tsArr[mid] < targetStr) lo = mid + 1; else hi = mid; }
-    this.idx = Math.min(lo, this.nPoints - 1);
-
-    // Sample the initial point
-    this.sampleChart();
-
-    const initCo2 = this.getCo2(this.idx);
-    if (initCo2 > this.thetaPause) {
-      if (profile.checkpointPauseTime > 0) {
-        this.transitionTimerS = profile.checkpointPauseTime;
-        this.targetAfterTransition = "paused";
-      } else {
-        this.state = "paused";
-      }
-      this.numPauses++;
-    }
-  }
-
-  getDebug() {
-    return { nextChartWallS: this.nextChartWallS, totalWallS: this.totalWallS, chartLen: this.chartLabels.length, tokensRemaining: this.tokensRemaining };
-  }
-
-  private sampleChart() {
-    if (this.chartLabels.length >= this.maxChartPoints) return;
-    this.chartLabels.push(this.timestamps[this.idx]);
-    this.chartCo2.push(this.getCo2(this.idx));
-    this.chartStates.push(this.state);
-    this.chartEmissions.push(this.totalEmissionsG / 1000);
-    this.chartTokensRemaining.push(this.tokensRemaining);
-  }
-
-  private getCo2(i: number): number {
-    const v = this.carbon[i];
-    if (!isFinite(v)) { this.nanFallbacks++; return this.meanCo2; }
-    return v;
-  }
-
-  run(
-    onProgress: (p: any, chartLabels: string[], chartCo2: number[], chartStates: string[], chartEmissions: number[], chartTokensRemaining: number[]) => void,
-    onDone: (last: any, labels: string[], co2: number[], states: string[], emissions: number[], tokensRemaining: number[]) => void,
-    isCancelled: () => boolean,
-  ) {
-    const tick = () => {
-      try {
-        if (isCancelled()) return;
-        const deadline = performance.now() + 10;
-        let stepsThisChunk = 0;
-        const maxPerChunk = Math.min(Math.max(1, typeof this.getSpeed === "function" ? this.getSpeed() : 100), 1000);
-
-        while (this.tokensRemaining > 0 && !isCancelled()) {
-          stepsThisChunk++;
-          const co2 = this.getCo2(this.idx);
-          let dtS = this.stepS;
-
-          // Checkpoint transition
-          if (this.transitionTimerS > 0) {
-            const spentS = Math.min(dtS, this.transitionTimerS);
-            this.transitionTimerS -= spentS;
-            const eWh = energyWh(this.ckptPowerW, spentS);
-            const emG = emissionsG(eWh, co2);
-            this.checkpointS += spentS;
-            this.checkpointEnergyWh += eWh;
-            this.totalEnergyWh += eWh;
-            this.totalEmissionsG += emG;
-            this.totalWallS += spentS;
-            dtS -= spentS;
-            if (this.transitionTimerS <= 0 && this.targetAfterTransition) {
-              this.state = this.targetAfterTransition;
-              this.targetAfterTransition = null;
-            }
-            if (dtS <= 0) {
-              this.advance();
-              this.maybeYield(onProgress);
-              if (stepsThisChunk >= maxPerChunk || performance.now() > deadline) {
-                setTimeout(tick, 0); return;
-              }
-              continue;
-            }
-          }
-
-          // Policy
-          const shouldPause = !this.isPaused() && co2 > this.thetaPause;
-          const shouldResume = this.isPaused() && co2 < this.thetaResume;
-
-          if (shouldPause) {
-            const ckpt = this.profile.checkpointPauseTime;
-            if ((this.pausedS + this.checkpointS + ckpt) / this.idealTrainingS > this.overheadBudgetPct / 100) {
-              this.issues.push("Overhead would exceed budget - blocking pause");
-              break;
-            }
-            this.numPauses++;
-            if (ckpt <= 0) this.state = "paused";
-            else { this.transitionTimerS = ckpt; this.targetAfterTransition = "paused"; }
-            this.advance();
-            this.maybeYield(onProgress);
-            if (stepsThisChunk >= maxPerChunk || performance.now() > deadline) {
-              setTimeout(tick, 0); return;
-            }
-            continue;
-          }
-
-          if (shouldResume) {
-            const ckpt = this.profile.checkpointResumeTime;
-            if ((this.pausedS + this.checkpointS + ckpt) / this.idealTrainingS > this.overheadBudgetPct / 100) {
-              this.issues.push("Overhead would exceed budget - blocking resume");
-              break;
-            }
-            if (ckpt <= 0) this.state = "running";
-            else { this.transitionTimerS = ckpt; this.targetAfterTransition = "running"; }
-            this.advance();
-            this.maybeYield(onProgress);
-            if (stepsThisChunk >= maxPerChunk || performance.now() > deadline) {
-              setTimeout(tick, 0); return;
-            }
-            continue;
-          }
-
-          // Spend dtS in current state
-          if (this.state === "running") {
-            const maxT = Math.floor(this.tps * dtS);
-            const tokensStep = Math.min(maxT, this.tokensRemaining);
-            const effectiveS = tokensStep >= maxT ? dtS : tokensStep / this.tps;
-            this.tokensRemaining -= tokensStep;
-            const eWh = energyWh(this.trainPowerW, effectiveS);
-            const emG = emissionsG(eWh, co2);
-            this.trainingS += effectiveS;
-            this.trainingEnergyWh += eWh;
-            this.totalEnergyWh += eWh;
-            this.totalEmissionsG += emG;
-            this.totalWallS += effectiveS;
-            const idleS = dtS - effectiveS;
-            if (idleS > 0) {
-              const iWh = energyWh(this.pausePowerW, idleS);
-              this.pausedS += idleS;
-              this.pausedEnergyWh += iWh;
-              this.totalEnergyWh += iWh;
-              this.totalEmissionsG += emissionsG(iWh, co2);
-              this.totalWallS += idleS;
-            }
-          } else {
-            const eWh = energyWh(this.pausePowerW, dtS);
-            const emG = emissionsG(eWh, co2);
-            this.pausedS += dtS;
-            this.pausedEnergyWh += eWh;
-            this.totalEnergyWh += eWh;
-            this.totalEmissionsG += emG;
-            this.totalWallS += dtS;
-          }
-
-          if ((this.pausedS + this.checkpointS) / this.idealTrainingS > this.overheadBudgetPct / 100) {
-            this.issues.push("Overhead exceeded budget");
-            break;
-          }
-
-          this.advance();
-
-          if (stepsThisChunk >= maxPerChunk || performance.now() > deadline) {
-            this.maybeYield(onProgress);
-            setTimeout(tick, 0);
-            return;
-          }
-        }
-
-        const stopReason = this.tokensRemaining <= 0 ? "completed"
-          : (this.pausedS + this.checkpointS) / this.idealTrainingS > this.overheadBudgetPct / 100 ? "budget_exceeded"
-            : "iteration_limit";
-
-        onDone(this.snap(stopReason), this.chartLabels, this.chartCo2, this.chartStates, this.chartEmissions, this.chartTokensRemaining);
-      } catch (err: any) {
-        console.error("SimStepper error:", err);
-        onDone({ ...this.snap("error"), issues: ["Simulation error: " + (err?.message || String(err))] }, this.chartLabels, this.chartCo2, this.chartStates, this.chartEmissions, this.chartTokensRemaining);
-      }
-    };
-
-    setTimeout(tick, 50);
-  }
-
-  private isPaused() { return this.state === "paused"; }
-
-  private advance() {
-    this.idx = (this.idx + 1) % this.nPoints;
-    // Sample chart data at fixed simulated-time intervals
-    while (this.chartLabels.length < this.maxChartPoints && this.totalWallS >= this.nextChartWallS) {
-      this.sampleChart();
-      this.nextChartWallS += this.chartIntervalS;
-    }
-  }
-
-  private snap(stopReason: string) {
-    return {
-      timestamp: this.timestamps[this.idx], carbonIntensity: this.getCo2(this.idx),
-      state: this.state, tokensRemaining: this.tokensRemaining, tokensTotal: this.tokensTotal,
-      totalWallS: Math.round(this.totalWallS * 100) / 100,
-      trainingS: Math.round(this.trainingS * 100) / 100,
-      pausedS: Math.round(this.pausedS * 100) / 100,
-      checkpointS: Math.round(this.checkpointS * 100) / 100,
-      totalEnergyWh: Math.round(this.totalEnergyWh * 100) / 100,
-      trainingEnergyWh: Math.round(this.trainingEnergyWh * 100) / 100,
-      pausedEnergyWh: Math.round(this.pausedEnergyWh * 100) / 100,
-      checkpointEnergyWh: Math.round(this.checkpointEnergyWh * 100) / 100,
-      totalEmissionsG: Math.round(this.totalEmissionsG * 100) / 100,
-      numPauses: this.numPauses, done: true, stopReason,
-      issues: [...this.issues], nanFallbacks: this.nanFallbacks,
-    };
-  }
-
-  private maybeYield(onProgress: (p: any, chartLabels: string[], chartCo2: number[], chartStates: string[], chartEmissions: number[], chartTokensRemaining: number[]) => void) {
-    onProgress({
-      timestamp: this.timestamps[this.idx], carbonIntensity: this.getCo2(this.idx),
-      state: this.state, tokensRemaining: this.tokensRemaining, tokensTotal: this.tokensTotal,
-      totalWallS: Math.round(this.totalWallS * 100) / 100,
-      trainingS: Math.round(this.trainingS * 100) / 100,
-      pausedS: Math.round(this.pausedS * 100) / 100,
-      checkpointS: Math.round(this.checkpointS * 100) / 100,
-      totalEnergyWh: Math.round(this.totalEnergyWh * 100) / 100,
-      trainingEnergyWh: Math.round(this.trainingEnergyWh * 100) / 100,
-      pausedEnergyWh: Math.round(this.pausedEnergyWh * 100) / 100,
-      checkpointEnergyWh: Math.round(this.checkpointEnergyWh * 100) / 100,
-      totalEmissionsG: Math.round(this.totalEmissionsG * 100) / 100,
-      numPauses: this.numPauses, issues: [...this.issues], done: false,
-    }, this.chartLabels, this.chartCo2, this.chartStates, this.chartEmissions, this.chartTokensRemaining);
-  }
-}
+// SimStepper class removed in favor of simulateStepwise generator
+// with chunked execution. See runSim() above for the replacement.
 
 function fmtTime(s: number): string {
   if (s < 60) return `${s.toFixed(0)}s`;

@@ -4,7 +4,7 @@ import { createRoot } from "solid-js";
 import { Router } from "@solidjs/router";
 import { AppProvider, useApp } from "./store";
 import { ScenarioForm } from "../components/ScenarioForm";
-import type { Scenario } from "../types";
+import type { Scenario, SimResult } from "../types";
 
 // ---------------------------------------------------------------------------
 // Store logic tests (no DOM needed)
@@ -72,7 +72,7 @@ describe("store", () => {
   });
 
   it("addResult appends to results", () => {
-    const r = {
+    const r: SimResult = {
       id: "r1", scenarioDescription: "t", model: "M", region: "DE",
       historicalYears: [2022], startTime: "01-01", threshold: 100,
       hysteresisMargin: 50, totalWallTimeH: 1, trainingTimeH: 1,
@@ -82,17 +82,34 @@ describe("store", () => {
       completed: true, numPauses: 0, overheadBudgetPct: 200,
       actualOverheadPct: 0, withinOverheadBudget: true,
       timestamps: [], carbonIntensitySeries: [], stateSeries: [],
+      emissionsSeries: [], tokensRemainingSeries: [],
       issues: [], stopReason: "completed",
       baselineEmissionsKgco2: 0, baselineTimeH: 1,
       co2SavingsPct: 0, score: 0,
-    } as any;
+      idleTimeH: 0, completionPct: 100, ok: true,
+    };
     store.addResult(r);
     expect(store.state.results).toHaveLength(1);
     expect(store.state.results[0].id).toBe("r1");
   });
 
   it("clearResults empties results", () => {
-    store.addResult({ id: "x" } as any);
+    store.addResult({
+      id: "x", scenarioDescription: "", model: "", region: "",
+      historicalYears: [], startTime: "", threshold: 0,
+      hysteresisMargin: 0, totalWallTimeH: 0, trainingTimeH: 0,
+      pausedTimeH: 0, checkpointOverheadH: 0, totalEnergyKwh: 0,
+      trainingEnergyKwh: 0, pausedEnergyKwh: 0, checkpointEnergyKwh: 0,
+      totalEmissionsKgco2: 0, tokensProcessed: 0, tokensTotal: 0,
+      completed: false, numPauses: 0, overheadBudgetPct: 0,
+      actualOverheadPct: 0, withinOverheadBudget: false,
+      timestamps: [], carbonIntensitySeries: [], stateSeries: [],
+      emissionsSeries: [], tokensRemainingSeries: [],
+      issues: [], stopReason: "",
+      baselineEmissionsKgco2: 0, baselineTimeH: 0,
+      co2SavingsPct: 0, score: 0,
+      idleTimeH: 0, completionPct: 0, ok: false,
+    });
     store.clearResults();
     expect(store.state.results).toHaveLength(0);
   });

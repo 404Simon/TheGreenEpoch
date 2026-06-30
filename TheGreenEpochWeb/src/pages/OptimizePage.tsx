@@ -25,6 +25,7 @@ const FIELDS: FieldDef[] = [
   { key: "iteration", label: "Iter", fmt: "num", dec: 0 },
   { key: "thetaPause", label: "\u03B8_p", fmt: "num", dec: 0 },
   { key: "thetaResume", label: "\u03B8_r", fmt: "num", dec: 0 },
+  { key: "startTime", label: "Start", fmt: "text" },
   { key: "actualOverheadPct", label: "Overhead %", fmt: "pct", dec: 1 },
   { key: "co2SavingsPct", label: "CO\u2082 Save %", fmt: "kpct", dec: 2 },
   { key: "score", label: "Score", fmt: "score", dec: 4 },
@@ -89,6 +90,7 @@ export function OptimizePage() {
   const [scenarioId, setScenarioId] = createSignal("");
   const [tpMax, setTpMax] = createSignal(500);
   const [resolution, setResolution] = createSignal(10);
+  const [startDateResolution, setStartDateResolution] = createSignal(7);
   const [budget, setBudget] = createSignal(200);
   const [alpha, setAlpha] = createSignal(1);
   const [running, setRunning] = createSignal(false);
@@ -199,18 +201,18 @@ export function OptimizePage() {
           thetaPauseMax: tpMax(),
           overheadBudgetPct: budget(),
           resolution: resolution(),
+          startDateResolution: startDateResolution(),
           maxIterations: 6,
           minStep: 3,
           shrinkFactor: 0.45,
           alpha: alpha(),
         },
-        0,
         (iter, iterPts, best) => {
           setPoints(prev => {
-            const existing = new Set(prev.map(p => `${p.thetaPause},${p.thetaResume}`));
+            const existing = new Set(prev.map(p => `${p.thetaPause},${p.thetaResume},${p.startTime}`));
             const merged = [...prev];
             for (const pt of iterPts) {
-              const key = `${pt.thetaPause},${pt.thetaResume}`;
+              const key = `${pt.thetaPause},${pt.thetaResume},${pt.startTime}`;
               if (!existing.has(key)) {
                 existing.add(key);
                 merged.push(pt);
@@ -341,6 +343,16 @@ export function OptimizePage() {
           </div>
 
           <div>
+            <label class="block text-xs font-medium text-fg-muted mb-1">Start date resolution</label>
+            <input
+              type="number" value={startDateResolution()}
+              onInput={e => setStartDateResolution(Math.max(2, +e.currentTarget.value || 2))}
+              min="2" max="365"
+              class="w-full bg-surface-3 border border-border-default/50 rounded px-3 py-2 text-sm text-fg-body focus:outline-none focus:border-accent"
+            />
+          </div>
+
+          <div>
             <label class="block text-xs font-medium text-fg-muted mb-1">Overhead budget %</label>
             <input
               type="number" value={budget()}
@@ -424,6 +436,10 @@ export function OptimizePage() {
                   <div class="rounded-xl bg-surface-2 border border-border-default/60 p-4">
                     <div class="text-xs text-fg-muted mb-1">Optimal {"\u03B8"}_r</div>
                     <div class="text-xl font-semibold text-accent">{optPt!.thetaResume}</div>
+                  </div>
+                  <div class="rounded-xl bg-surface-2 border border-border-default/60 p-4">
+                    <div class="text-xs text-fg-muted mb-1">Optimal start date</div>
+                    <div class="text-xl font-semibold text-accent">{optPt!.startTime}</div>
                   </div>
                 </Show>
               </div>

@@ -54,6 +54,7 @@ function sampleSweepPoint(overrides?: Partial<SweepPoint>): SweepPoint {
   return {
     thetaPause: 200,
     thetaResume: 150,
+    startTime: "01-01",
     actualOverheadPct: 12.5,
     co2SavingsPct: 8.3,
     score: 0.664,

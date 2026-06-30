@@ -126,6 +126,7 @@ export interface Policy {
 export interface SweepPoint {
   thetaPause: number;
   thetaResume: number;
+  startTime: string;
   actualOverheadPct: number;
   co2SavingsPct: number;
   score: number;

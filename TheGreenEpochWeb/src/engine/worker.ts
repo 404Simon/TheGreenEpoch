@@ -4,6 +4,7 @@ export interface AdaptiveOptions {
   thetaPauseMax: number;
   overheadBudgetPct: number;
   resolution: number;
+  startDateResolution: number;
   maxIterations: number;
   minStep: number;
   shrinkFactor: number;
@@ -28,7 +29,6 @@ export function runOptimizationInWorker(
   timeline: CO2Timeline,
   scenario: Scenario,
   options: AdaptiveOptions,
-  startTimeIdx: number,
   onIteration?: (iteration: number, points: SweepPoint[], best: SweepPoint | null) => void,
 ): Promise<{ points: SweepPoint[]; best: SweepPoint | null }> {
   return new Promise((resolve, reject) => {
@@ -55,7 +55,6 @@ export function runOptimizationInWorker(
       timeline: stripProxies(timeline),
       scenario: stripProxies(scenario),
       options,
-      startTimeIdx,
     });
   });
 }

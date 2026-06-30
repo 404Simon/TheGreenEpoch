@@ -5,10 +5,54 @@ export interface Bounds {
   tpMax: number;
   trMin: number;
   trMax: number;
+  dayMin: number;
+  dayMax: number;
+}
+
+const DAYS_IN_MONTH = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+export function dayToDate(day: number): string {
+  let d = day;
+  for (let m = 0; m < 12; m++) {
+    if (d < DAYS_IN_MONTH[m]) {
+      const mm = String(m + 1).padStart(2, "0");
+      const dd = String(d + 1).padStart(2, "0");
+      return `${mm}-${dd}`;
+    }
+    d -= DAYS_IN_MONTH[m];
+  }
+  return "12-31";
+}
+
+export function dateToDay(dateStr: string): number {
+  const [month, day] = dateStr.split("-").map(Number);
+  let d = 0;
+  for (let m = 0; m < month - 1; m++) {
+    d += DAYS_IN_MONTH[m];
+  }
+  return d + day - 1;
+}
+
+export function generateDateSamples(bounds: Bounds, resolution: number): number[] {
+  const { dayMin, dayMax } = bounds;
+  if (dayMin >= dayMax) return [Math.round(dayMin)];
+  const step = Math.max(1, Math.round((dayMax - dayMin) / (resolution - 1)));
+  const days: number[] = [];
+  for (let d = dayMin; d <= dayMax; d += step) {
+    days.push(Math.round(d));
+  }
+  if (days[days.length - 1] < dayMax) {
+    days.push(Math.round(dayMax));
+  }
+  return days;
 }
 
 export function initialBounds(thetaPauseMax: number): Bounds {
-  return { tpMin: 10, tpMax: thetaPauseMax, trMin: 0, trMax: thetaPauseMax };
+  return {
+    tpMin: 10, tpMax: thetaPauseMax,
+    trMin: 0, trMax: thetaPauseMax,
+    dayMin: 0, dayMax: 364,
+  };
 }
 
 export function generateGrid(bounds: Bounds, resolution: number): Array<{ thetaPause: number; thetaResume: number }> {
@@ -32,7 +76,7 @@ export function generateGrid(bounds: Bounds, resolution: number): Array<{ thetaP
 }
 
 export function refineBounds(
-  best: { thetaPause: number; thetaResume: number },
+  best: { thetaPause: number; thetaResume: number; startDay: number },
   currentBounds: Bounds,
   shrinkFactor: number,
   minStep: number,
@@ -48,7 +92,12 @@ export function refineBounds(
   trMin = Math.max(0, trMin);
   trMax = Math.max(trMin + minStep, trMax);
 
-  return { tpMin, tpMax, trMin, trMax };
+  const daySpan = currentBounds.dayMax - currentBounds.dayMin;
+  let dayMin = Math.round(Math.max(0, best.startDay - daySpan * shrinkFactor / 2));
+  let dayMax = Math.round(Math.min(364, best.startDay + daySpan * shrinkFactor / 2));
+  dayMax = Math.max(dayMin + 1, dayMax);
+
+  return { tpMin, tpMax, trMin, trMax, dayMin, dayMax };
 }
 
 export function expandBounds(bounds: Bounds): Bounds {
@@ -57,6 +106,8 @@ export function expandBounds(bounds: Bounds): Bounds {
     tpMax: Math.min(bounds.tpMax, round(bounds.tpMax * 0.9)),
     trMin: 0,
     trMax: bounds.tpMax,
+    dayMin: 0,
+    dayMax: 364,
   };
 }
 

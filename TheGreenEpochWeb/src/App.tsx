@@ -125,7 +125,7 @@ export function App() {
 
   return (
     <Show when={app.state.ready} fallback={<LoadingFallback />}>
-      <Router base={import.meta.env.BASE_URL} root={Layout}>
+      <Router base={import.meta.env.BASE_URL.replace(/\/+$/, '')} root={Layout}>
         <Route path="/" component={ScenariosPage} />
         <Route path="/simulate/:id" component={LiveSimPage} />
         <Route path="/results/:id" component={ResultsPage} />

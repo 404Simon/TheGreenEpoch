@@ -40,9 +40,20 @@ function runOnce(
   }
   const baselineLast = baseline[baseline.length - 1];
 
+  const timestamps: string[] = [];
+  const carbonIntensitySeries: number[] = [];
+  const stateSeries: string[] = [];
+  const emissionsSeries: number[] = [];
+  const tokensRemainingSeries: number[] = [];
+
   const sim: import("../domain/types").SimProgress[] = [];
   for (const p of simulateStepwise(profile, hysteresisPolicy(thetaPause, thetaResume), timeline, config)) {
     sim.push(p);
+    timestamps.push(p.timestamp);
+    carbonIntensitySeries.push(p.carbonIntensity);
+    stateSeries.push(p.state);
+    emissionsSeries.push(p.totalEmissionsG / 1000);
+    tokensRemainingSeries.push(p.tokensRemaining);
   }
   const last = sim[sim.length - 1];
 
@@ -51,11 +62,11 @@ function runOnce(
     scenarioDescription: scenario.description,
     model: profile.name,
     region: scenario.region,
-    timestamps: [],
-    carbonIntensitySeries: [],
-    stateSeries: [],
-    emissionsSeries: [],
-    tokensRemainingSeries: [],
+    timestamps,
+    carbonIntensitySeries,
+    stateSeries,
+    emissionsSeries,
+    tokensRemainingSeries,
   });
 }
 

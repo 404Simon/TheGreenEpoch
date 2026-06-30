@@ -11,6 +11,7 @@ interface AppState {
   defaultScenarios: Scenario[];
   userScenarios: Scenario[];
   results: SimResult[];
+  batchResults: SimResult[];
   co2Cache: Record<string, CO2Timeline>;
   running: boolean;
 }
@@ -22,6 +23,7 @@ const defaultState: AppState = {
   defaultScenarios: [],
   userScenarios: [],
   results: [],
+  batchResults: [],
   co2Cache: {},
   running: false,
 };
@@ -36,6 +38,8 @@ interface AppStore {
   allScenarios: () => Scenario[];
   addResult: (r: SimResult) => void;
   clearResults: () => void;
+  findResult: (id: string | undefined) => SimResult | undefined;
+  clearBatchResults: () => void;
 }
 
 const AppCtx = createContext<AppStore>();
@@ -87,6 +91,8 @@ export function AppProvider(props: { children: JSX.Element }) {
     },
 
     async runAllScenarios(onProgress?: (done: number, total: number) => void) {
+      setState("batchResults", []);
+
       const scenarios = store.allScenarios();
       const constants = state.constants!;
       const profiles = state.profiles!;
@@ -99,7 +105,6 @@ export function AppProvider(props: { children: JSX.Element }) {
         }
       }
 
-      const results: SimResult[] = [];
       await runAllInWorker(
         constants,
         profiles,
@@ -107,14 +112,13 @@ export function AppProvider(props: { children: JSX.Element }) {
         scenarios,
         (result, done, total) => {
           if (result) {
-            results.push(result);
-            setState("results", [...state.results, result]);
+            setState("batchResults", [...state.batchResults, result]);
           }
           onProgress?.(done, total);
         },
       );
 
-      return results;
+      return state.batchResults;
     },
 
     addResult(r: SimResult) {
@@ -123,6 +127,14 @@ export function AppProvider(props: { children: JSX.Element }) {
 
     clearResults() {
       setState("results", []);
+    },
+
+    findResult(id: string | undefined) {
+      return state.results.find((r) => r.id === id) || state.batchResults.find((r) => r.id === id);
+    },
+
+    clearBatchResults() {
+      setState("batchResults", []);
     },
   };
 

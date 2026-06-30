@@ -9,7 +9,7 @@ export function ResultsPage() {
   const app = useApp();
 
   const result = createMemo(() => {
-    return app.state.results.find((r) => r.id === params.id);
+    return app.findResult(params.id);
   });
 
   const r = result();
@@ -20,8 +20,8 @@ export function ResultsPage() {
         <div class="text-4xl mb-4 opacity-20">⚡</div>
         <p class="text-lg">Result not found</p>
         <p class="text-sm text-fg-muted mt-1">This simulation result may have been cleared or does not exist.</p>
-        <A href="/" class="mt-4 inline-flex items-center gap-1.5 text-sm text-accent hover:text-accent/80 transition-colors">
-          &larr; Back to scenarios
+        <A href="/runs" class="mt-4 inline-flex items-center gap-1.5 text-sm text-accent hover:text-accent/80 transition-colors">
+          &larr; Back to runs
         </A>
       </div>
     );
@@ -62,8 +62,8 @@ export function ResultsPage() {
       <div class="flex items-center justify-between mb-6">
         <div>
           <h1 class="text-xl font-semibold tracking-tight text-fg-primary">{r.scenarioDescription}</h1>
-          <A href="/" class="text-sm text-accent hover:text-accent/80 inline-flex items-center gap-1 mt-0.5 transition-colors">
-            &larr; Back to scenarios
+          <A href="/runs" class="text-sm text-accent hover:text-accent/80 inline-flex items-center gap-1 mt-0.5 transition-colors">
+            &larr; Back to runs
           </A>
         </div>
       </div>
@@ -93,6 +93,7 @@ export function ResultsPage() {
           <CO2Chart
             labels={r.timestamps}
             co2Data={r.carbonIntensitySeries}
+            stateSeries={r.stateSeries}
             thetaPause={r.threshold}
             thetaResume={r.hysteresisMargin}
           />

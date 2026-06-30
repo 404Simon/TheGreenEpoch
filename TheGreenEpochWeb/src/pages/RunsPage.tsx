@@ -56,7 +56,8 @@ function valClass(v: unknown) {
   return "text-fg-muted";
 }
 
-function colorForSave(v: number) {
+function colorForSave(v: number, budgetExceeded?: boolean) {
+  if (budgetExceeded) return "#ff5e7a";
   if (v > 5) return "#00c9a7";
   if (v > 0) return "#7ddbc6";
   if (v > -5) return "#ff9f43";
@@ -101,11 +102,11 @@ export function RunsPage() {
   const [done, setDone] = createSignal(0);
   const [total, setTotal] = createSignal(0);
   const [error, setError] = createSignal<string | null>(null);
-  const [filters, setFilters] = createSignal<Record<string, string>>({});
+  const [filters, setFilters] = createSignal<Record<string, string>>({ stopReason: "completed" });
   const [sortKey, setSortKey] = createSignal("co2SavingsPct");
   const [sortAsc, setSortAsc] = createSignal(false);
 
-  const results = () => app.state.results;
+  const results = () => app.state.batchResults;
 
   let scatterCanvas: HTMLCanvasElement | undefined;
   let scatterChart: Chart | undefined;
@@ -185,7 +186,7 @@ export function RunsPage() {
 
   createEffect(() => {
     if (running()) { if (scatterChart) { scatterChart.destroy(); scatterChart = undefined; } return; }
-    const data = filteredData().filter(r => r.completed);
+    const data = filteredData();
     if (!scatterCanvas) return;
     if (scatterChart) { scatterChart.destroy(); scatterChart = undefined; }
     if (data.length === 0) return;
@@ -195,7 +196,7 @@ export function RunsPage() {
         datasets: [{
           label: "Run",
           data: data.map(r => ({ x: r.actualOverheadPct, y: r.co2SavingsPct })),
-          backgroundColor: data.map(r => colorForSave(r.co2SavingsPct)),
+          backgroundColor: data.map(r => colorForSave(r.co2SavingsPct, r.stopReason === "budget_exceeded")),
           pointRadius: 6,
           pointHoverRadius: 9,
         }],
@@ -307,7 +308,7 @@ export function RunsPage() {
           )}
         </Show>
 
-        <Show when={filteredData().filter(r => r.completed).length > 0}>
+        <Show when={filteredData().length > 0}>
           <div class="rounded-xl bg-surface-2 border border-border-default/60 p-4 mb-6">
             <h3 class="text-xs font-semibold text-fg-subtle tracking-wide mb-3">{"CO\u2082 Savings vs Overhead"}</h3>
             <div class="relative" style="height: 350px">

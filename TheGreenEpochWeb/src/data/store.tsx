@@ -34,7 +34,7 @@ interface AppStore {
   addScenario: (s: Scenario) => void;
   updateScenario: (id: string, s: Scenario) => void;
   deleteScenario: (id: string) => void;
-  runAllScenarios: (onProgress?: (done: number, total: number) => void) => Promise<SimResult[]>;
+  runAllScenarios: (onProgress?: (done: number, total: number) => void, alpha?: number) => Promise<SimResult[]>;
   allScenarios: () => Scenario[];
   addResult: (r: SimResult) => void;
   clearResults: () => void;
@@ -90,7 +90,7 @@ export function AppProvider(props: { children: JSX.Element }) {
       return [...builtin, ...user];
     },
 
-    async runAllScenarios(onProgress?: (done: number, total: number) => void) {
+    async runAllScenarios(onProgress?: (done: number, total: number) => void, alpha: number = 1) {
       setState("batchResults", []);
 
       const scenarios = store.allScenarios();
@@ -116,6 +116,7 @@ export function AppProvider(props: { children: JSX.Element }) {
           }
           onProgress?.(done, total);
         },
+        alpha,
       );
 
       return state.batchResults;

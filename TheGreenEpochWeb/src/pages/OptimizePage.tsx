@@ -90,6 +90,7 @@ export function OptimizePage() {
   const [tpMax, setTpMax] = createSignal(500);
   const [resolution, setResolution] = createSignal(10);
   const [budget, setBudget] = createSignal(200);
+  const [alpha, setAlpha] = createSignal(1);
   const [running, setRunning] = createSignal(false);
   const [iterMsg, setIterMsg] = createSignal("");
   const [points, setPoints] = createSignal<SweepPoint[]>([]);
@@ -201,6 +202,7 @@ export function OptimizePage() {
           maxIterations: 6,
           minStep: 3,
           shrinkFactor: 0.45,
+          alpha: alpha(),
         },
         0,
         (iter, iterPts, best) => {
@@ -343,6 +345,16 @@ export function OptimizePage() {
             <input
               type="number" value={budget()}
               onInput={e => setBudget(+e.currentTarget.value || 0)}
+              class="w-full bg-surface-3 border border-border-default/50 rounded px-3 py-2 text-sm text-fg-body focus:outline-none focus:border-accent"
+            />
+          </div>
+
+          <div>
+            <label class="block text-xs font-medium text-fg-muted mb-1">{"\u03B1"} (CO₂ weight)</label>
+            <input
+              type="number" value={alpha()}
+              onInput={e => setAlpha(+e.currentTarget.value || 0)}
+              step="0.1" min="0" max="1"
               class="w-full bg-surface-3 border border-border-default/50 rounded px-3 py-2 text-sm text-fg-body focus:outline-none focus:border-accent"
             />
           </div>

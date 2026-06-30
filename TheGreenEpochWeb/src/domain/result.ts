@@ -20,8 +20,15 @@ export function computeSavingsPct(
     : 0;
 }
 
-export function computeScore(savingsPct: number, overheadPct: number): number {
-  return savingsPct / Math.max(overheadPct, 0.001);
+export function computeScore(
+  savingsPct: number,
+  overheadPct: number,
+  budgetPct: number,
+  alpha: number = 1,
+): number {
+  const savingsNorm = savingsPct / 100;
+  const overheadNorm = overheadPct / Math.max(budgetPct, 0.001);
+  return alpha * savingsNorm - (1 - alpha) * overheadNorm;
 }
 
 export function computeIsOk(
@@ -53,6 +60,7 @@ export function buildSimResult(
     emissionsSeries: number[];
     tokensRemainingSeries: number[];
   },
+  alpha: number = 1,
 ): SimResult {
   const tps = tokensPerSecond(profile.gpuCount) || 1;
   const overheadS = lastProgress.pausedS + lastProgress.checkpointS;
@@ -60,7 +68,7 @@ export function buildSimResult(
   const totalEm = lastProgress.totalEmissionsG / 1000;
   const baselineEm = baselineProgress.totalEmissionsG / 1000;
   const co2SavingsPct = computeSavingsPct(totalEm, baselineEm);
-  const score = computeScore(co2SavingsPct, actualOverheadPct);
+  const score = computeScore(co2SavingsPct, actualOverheadPct, simConfig.overheadBudgetPct, alpha);
   const tokensProcessed = lastProgress.tokensTotal - lastProgress.tokensRemaining;
   const pausedTimeH = lastProgress.pausedS / 3600;
   const checkpointOverheadH = lastProgress.checkpointS / 3600;

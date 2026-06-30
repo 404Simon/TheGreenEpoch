@@ -35,6 +35,7 @@ export function LiveSimPage() {
   const [scrollMode, setScrollMode] = createSignal(true);
   const [windowSize, setWindowSize] = createSignal(300);
   const [simResult, setSimResult] = createSignal<SimResult | null>(null);
+  const [alpha, setAlpha] = createSignal(1);
 
   let cancelFlag = false;
 
@@ -134,7 +135,7 @@ export function LiveSimPage() {
           setTokensRemainingSeries(tokensRemainingArr.slice());
           setRunning(false);
           setFinished(true);
-          const result = saveResult(lastProgress, labels, co2PointsArr, stateArr, emissionsArr, tokensRemainingArr, full, sc, thresholdIdx(), startIdx(), tl, app);
+          const result = saveResult(lastProgress, labels, co2PointsArr, stateArr, emissionsArr, tokensRemainingArr, full, sc, thresholdIdx(), startIdx(), tl, app, alpha());
           if (result) setSimResult(result);
         }
       };
@@ -205,6 +206,16 @@ export function LiveSimPage() {
               class="w-20 h-1 accent-accent cursor-pointer" title={`Window: ${windowSize()} pts`} />
             <span class="text-xs text-fg-muted w-8 tabular-nums">{windowSize()}</span>
           </Show>
+
+          <div class="flex items-center gap-1.5">
+            <label class="text-xs text-fg-muted whitespace-nowrap">{"\u03B1"} (CO₂ weight):</label>
+            <input
+              type="number" value={alpha()}
+              onInput={e => setAlpha(+e.currentTarget.value || 0)}
+              step="0.1" min="0" max="1"
+              class="w-16 bg-surface-2 border border-border-default/50 rounded px-2 py-1.5 text-sm text-fg-body tabular-nums focus:outline-none focus:border-accent"
+            />
+          </div>
 
           <button
             onClick={runSim}
@@ -384,6 +395,7 @@ function saveResult(
   lastP: SimProgress, allLabels: string[], allCo2: number[], allStates: string[], allEmissions: number[], allTokensRemaining: number[],
   full: FullProfile, sc: Scenario, ti: number, si: number, tl: CO2Timeline,
   app: ReturnType<typeof useApp>,
+  alpha: number = 1,
 ): SimResult | null {
   try {
     const simConfig: SimConfig = {
@@ -409,7 +421,7 @@ function saveResult(
       stateSeries: allStates,
       emissionsSeries: allEmissions,
       tokensRemainingSeries: allTokensRemaining,
-    });
+    }, alpha);
     app.addResult(result);
     return result;
   } catch (e) {

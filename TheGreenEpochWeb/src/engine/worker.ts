@@ -7,6 +7,7 @@ export interface AdaptiveOptions {
   maxIterations: number;
   minStep: number;
   shrinkFactor: number;
+  alpha: number;
 }
 
 /**

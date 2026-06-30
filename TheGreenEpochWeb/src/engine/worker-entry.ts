@@ -16,6 +16,7 @@ interface StartMessage {
     maxIterations: number;
     minStep: number;
     shrinkFactor: number;
+    alpha: number;
   };
   startTimeIdx: number;
 }
@@ -62,12 +63,14 @@ self.onmessage = (e: MessageEvent<StartMessage>) => {
       const baselineEm = baselineLast.totalEmissionsG / 1000;
       const co2SavingsPct = baselineEm > 0 ? (baselineEm - totalEm) / baselineEm * 100 : 0;
 
+      const savingsNorm = co2SavingsPct / 100;
+      const overheadNorm = actualOverheadPct / Math.max(options.overheadBudgetPct, 0.001);
       iterPoints.push({
         thetaPause: pt.thetaPause,
         thetaResume: pt.thetaResume,
         actualOverheadPct,
         co2SavingsPct,
-        score: co2SavingsPct / Math.max(actualOverheadPct, 0.001),
+        score: options.alpha * savingsNorm - (1 - options.alpha) * overheadNorm,
         numPauses: last.numPauses,
         totalEmissionsKgco2: totalEm,
         baselineEmissionsKgco2: baselineEm,

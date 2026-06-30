@@ -10,6 +10,7 @@ export function runAllInWorker(
   co2Cache: Record<string, CO2Timeline>,
   scenarios: Scenario[],
   onResult: (result: SimResult, done: number, total: number) => void,
+  alpha: number = 1,
 ): Promise<void> {
   return new Promise((resolve, reject) => {
     const worker = new Worker(new URL("./runall-entry", import.meta.url), { type: "module" });
@@ -37,6 +38,7 @@ export function runAllInWorker(
       profiles: stripProxies(profiles),
       co2Cache: stripProxies(co2Cache),
       scenarios: stripProxies(scenarios),
+      alpha,
     });
   });
 }

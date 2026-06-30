@@ -9,6 +9,7 @@ interface StartMessage {
   profiles: Record<string, TrainingProfile>;
   co2Cache: Record<string, CO2Timeline>;
   scenarios: Scenario[];
+  alpha: number;
 }
 
 function fullProfile(profile: TrainingProfile, c: Constants): FullProfile {
@@ -33,6 +34,7 @@ function runOnce(
   thetaPause: number,
   thetaResume: number,
   scenario: Scenario,
+  alpha: number = 1,
 ): SimResult {
   const baseline: import("../domain/types").SimProgress[] = [];
   for (const p of simulateStepwise(profile, neverPausePolicy(), timeline, config)) {
@@ -67,12 +69,12 @@ function runOnce(
     stateSeries,
     emissionsSeries,
     tokensRemainingSeries,
-  });
+  }, alpha);
 }
 
 self.onmessage = (e: MessageEvent<StartMessage>) => {
   if (e.data.type !== "start") return;
-  const { constants, profiles, co2Cache, scenarios } = e.data;
+  const { constants, profiles, co2Cache, scenarios, alpha } = e.data;
 
   const totalRuns = scenarios.reduce((s, sc) => s + sc.thresholds.length * sc.startTimes.length, 0);
   let done = 0;
@@ -99,7 +101,7 @@ self.onmessage = (e: MessageEvent<StartMessage>) => {
         const thetaResume = scenario.hysteresis[ti];
         const config = simConfig(scenario, startTime, scenario.overheadBudgetPct);
 
-        const result = runOnce(fp, timeline, config, thetaPause, thetaResume, scenario);
+        const result = runOnce(fp, timeline, config, thetaPause, thetaResume, scenario, alpha);
         done++;
 
         (self as any).postMessage({ type: "result", result, done, total: totalRuns });

@@ -14,7 +14,7 @@ interface Props {
 
 export function StatsPanel(props: Props) {
   return (
-    <div class={`grid grid-cols-2 gap-2.5 ${props.class || ""}`}>
+    <div class={`grid grid-cols-1 sm:grid-cols-2 gap-2.5 ${props.class || ""}`}>
       <For each={props.rows}>
         {(row) => (
           <div

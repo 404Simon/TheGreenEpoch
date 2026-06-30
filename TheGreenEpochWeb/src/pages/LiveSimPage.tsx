@@ -175,15 +175,15 @@ export function LiveSimPage() {
   };
 
   return (
-    <div>
-      <div class="flex items-start justify-between gap-4 mb-6">
-        <div>
-          <h1 class="text-xl font-semibold tracking-tight text-fg-primary">{sc.description}</h1>
-          <p class="text-sm text-fg-muted mt-0.5">
+    <div class="overflow-x-hidden">
+      <div class="flex flex-col sm:flex-row items-start justify-between gap-3 mb-4">
+        <div class="min-w-0">
+          <h1 class="text-lg sm:text-xl font-semibold tracking-tight text-fg-primary">{sc.description}</h1>
+          <p class="text-sm text-fg-muted mt-0.5 break-words">
             {sc.region} &middot; &#952;pause={threshold} &middot; &#952;resume={hysteresis} &middot; start {sc.startTimes[startIdx()]}
           </p>
         </div>
-        <div class="flex items-center gap-2.5 shrink-0">
+        <div class="flex items-center gap-2 shrink-0 flex-wrap">
           <select
             value={speed()}
             onChange={(e) => setSpeed(Number(e.currentTarget.value))}

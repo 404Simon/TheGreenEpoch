@@ -6,7 +6,6 @@ import { StatsPanel } from "../components/StatsPanel";
 import { simulateStepwise } from "../domain/simulation";
 import { buildSimResult } from "../domain/result";
 import { neverPausePolicy, hysteresisPolicy } from "../domain/policy";
-import { loadCO2Timeline } from "../data/loadData";
 import type { SimResult, Scenario, FullProfile, SimConfig, CO2Timeline, SimProgress } from "../domain/types";
 
 export function LiveSimPage() {
@@ -65,9 +64,8 @@ export function LiveSimPage() {
         pue: c.pue, checkpointPauseTime: c.checkpoint_pause_time, checkpointResumeTime: c.checkpoint_resume_time,
       };
 
-      let tl = app.state.co2Cache[sc.region];
-      if (!tl) tl = await loadCO2Timeline(sc.region);
-      const ts = tl?.timestamps;
+      const tl = await app.getTimeline(sc.region, sc.historicalYears);
+      const ts = tl.timestamps;
       if (!ts || ts.length < 2) { setError("No grid data for " + sc.region); setRunning(false); return; }
 
       const simConfig: SimConfig = {

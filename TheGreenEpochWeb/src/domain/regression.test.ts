@@ -6,7 +6,8 @@ import { simulateStepwise } from "../domain/simulation";
 import { buildSimResult } from "../domain/result";
 import { hysteresisPolicy, neverPausePolicy } from "../domain/policy";
 import { tokensPerSecond } from "../domain/physics";
-import type { FullProfile, CO2Timeline, SimConfig, SimProgress } from "../domain/types";
+import { averageYears } from "../data/co2-loader";
+import type { FullProfile, YearCO2, CO2Timeline, SimConfig, SimProgress } from "../domain/types";
 
 /**
  * Regression test: TypeScript simulation output must match Python.
@@ -91,19 +92,20 @@ const deepseek: FullProfile = {
   checkpointResumeTime: 0,
 };
 
+const CN_YEARS = [2022, 2023, 2024, 2025];
+
 describe("regression vs Python (CN, Deepseek, 4-year average)", () => {
 
-  /**
-   * Generate averaged CN timeline dynamically from the JSON file.
-   * JSON is fetched lazily — if the file is missing, tests that
-   * need it are skipped.
-   */
   function loadCNTimeline(): CO2Timeline | null {
     try {
       const __dirname = dirname(fileURLToPath(import.meta.url));
-      const filePath = resolve(__dirname, "../../public/data/co2/CN.json");
-      const raw = readFileSync(filePath, "utf-8");
-      return JSON.parse(raw) as CO2Timeline;
+      const co2Dir = resolve(__dirname, "../../public/data/co2");
+      const yearData: YearCO2[] = [];
+      for (const y of CN_YEARS) {
+        const raw = readFileSync(resolve(co2Dir, `CN_${y}.json`), "utf-8");
+        yearData.push(JSON.parse(raw) as YearCO2);
+      }
+      return averageYears(yearData);
     } catch {
       return null;
     }
@@ -115,7 +117,7 @@ describe("regression vs Python (CN, Deepseek, 4-year average)", () => {
 
     const simConfig: SimConfig = {
       startTime: ref.startTime,
-      historicalYears: [2022, 2023, 2024, 2025],
+      historicalYears: CN_YEARS,
       overheadBudgetPct: 200,
     };
 

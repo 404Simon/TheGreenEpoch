@@ -189,11 +189,7 @@ export function OptimizePage() {
         checkpointResumeTime: constants.checkpoint_resume_time,
       };
 
-      let timeline = app.state.co2Cache[scenario.region];
-      if (!timeline) {
-        const { loadCO2Timeline } = await import("../data/loadData");
-        timeline = await loadCO2Timeline(scenario.region);
-      }
+      const timeline = await app.getTimeline(scenario.region, scenario.historicalYears);
 
       await runOptimizationInWorker(
         fullProfile, timeline, scenario,

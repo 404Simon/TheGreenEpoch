@@ -43,6 +43,14 @@ export interface SimConfig {
   overheadBudgetPct: number;
 }
 
+export interface YearCO2 {
+  zone: string;
+  year: number;
+  timestamps: string[];
+  carbonIntensity: number[];
+  isEstimated: boolean[];
+}
+
 export interface CO2Timeline {
   zone: string;
   years: number[];

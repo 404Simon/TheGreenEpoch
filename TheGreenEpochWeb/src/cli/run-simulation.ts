@@ -1,10 +1,9 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import type { Constants, TrainingProfile, Scenario, FullProfile, SimConfig, CO2Timeline, YearCO2, SimProgress } from "../domain/types";
-import { simulateStepwise } from "../domain/simulation";
-import { neverPausePolicy, hysteresisPolicy } from "../domain/policy";
-import { buildSimResult } from "../domain/result";
+import type { Constants, TrainingProfile, Scenario, CO2Timeline, YearCO2 } from "../domain/types";
+import { runSimulation } from "../engine/simulate";
+import { hysteresisPolicy } from "../domain/policy";
 import { averageYears } from "../data/co2-loader";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -26,17 +25,6 @@ function loadData() {
   const profiles = loadJSON<Record<string, TrainingProfile>>("profiles.json");
   const scenarios = loadJSON<Scenario[]>("scenarios.json");
   return { constants, profiles, scenarios };
-}
-
-function wrapProfile(p: TrainingProfile, c: Constants): FullProfile {
-  return {
-    ...p,
-    gpuPowerTrain: c.gpu_power_train,
-    gpuPowerPause: c.gpu_power_pause,
-    pue: c.pue,
-    checkpointPauseTime: c.checkpoint_pause_time,
-    checkpointResumeTime: c.checkpoint_resume_time,
-  };
 }
 
 interface CliResult {
@@ -76,7 +64,7 @@ interface CliResult {
 
 function r6(n: number) { return Math.round(n * 1_000_000) / 1_000_000; }
 
-export async function runSimulation(): Promise<void> {
+export async function runSimulationCli(): Promise<void> {
   const args = process.argv.slice(2);
   const idx = args.indexOf("run");
   const sub = idx !== -1 ? args.slice(idx + 1) : args;
@@ -100,39 +88,26 @@ export async function runSimulation(): Promise<void> {
       console.warn(`  ⚠ Unknown model: ${sc.model}`);
       continue;
     }
-    const full = wrapProfile(profile, constants);
+    const full = {
+      ...profile,
+      gpuPowerTrain: constants.gpu_power_train,
+      gpuPowerPause: constants.gpu_power_pause,
+      pue: constants.pue,
+      checkpointPauseTime: constants.checkpoint_pause_time,
+      checkpointResumeTime: constants.checkpoint_resume_time,
+    };
     const tl = loadCO2Timeline(sc.region, sc.historicalYears);
 
     for (const startTime of sc.startTimes) {
       for (let ti = 0; ti < sc.thresholds.length; ti++) {
-        const simConfig: SimConfig = {
-          startTime,
-          historicalYears: sc.historicalYears,
-          overheadBudgetPct: sc.overheadBudgetPct,
-        };
+        const simConfig = { startTime, historicalYears: sc.historicalYears, overheadBudgetPct: sc.overheadBudgetPct };
         const thetaPause = sc.thresholds[ti];
         const thetaResume = sc.hysteresis[ti];
-        const policy = hysteresisPolicy(thetaPause, thetaResume);
-        const baselinePolicy = neverPausePolicy();
 
-        const progress: SimProgress[] = [];
-        for (const p of simulateStepwise(full, baselinePolicy, tl, simConfig)) progress.push(p);
-        const lastBaseline = progress[progress.length - 1];
-
-        const simProgress: SimProgress[] = [];
-        for (const p of simulateStepwise(full, policy, tl, simConfig)) simProgress.push(p);
-        const last = simProgress[simProgress.length - 1];
-
-        const result = buildSimResult(full, simConfig, last, lastBaseline, thetaPause, thetaResume, {
-          id: `cli-${Date.now()}`,
+        const result = runSimulation(full, hysteresisPolicy(thetaPause, thetaResume), tl, simConfig, thetaPause, thetaResume, {
           scenarioDescription: sc.description,
           model: profile.name,
           region: sc.region,
-          timestamps: [],
-          carbonIntensitySeries: [],
-          stateSeries: [],
-          emissionsSeries: [],
-          tokensRemainingSeries: [],
         });
 
         if (result.ok) ok++; else fail++;

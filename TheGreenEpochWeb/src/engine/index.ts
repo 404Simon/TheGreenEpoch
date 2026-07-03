@@ -1,4 +1,6 @@
-export { runSimulation } from "./runner";
-export type { RunOptions } from "./runner";
-export { runOptimizationInWorker } from "./worker";
-export type { AdaptiveOptions as WorkerAdaptiveOptions } from "./worker";
+export { runSimulation, runBaseline } from "./simulate";
+export type { RunOptions } from "./simulate";
+export { runOptimizationInWorker } from "./launch-optimize";
+export type { AdaptiveOptions as WorkerAdaptiveOptions } from "./launch-optimize";
+export { runAllInWorker } from "./launch-batch";
+export { loadCO2Timeline } from "./launch-co2-loader";

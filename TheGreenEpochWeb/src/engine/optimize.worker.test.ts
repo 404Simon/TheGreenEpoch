@@ -5,10 +5,6 @@ function structuredCloneSafe<T>(data: T): T {
   return structuredClone(data);
 }
 
-// ---------------------------------------------------------------------------
-// Sample data factories — these mirror what the app sends to the worker
-// ---------------------------------------------------------------------------
-
 function sampleProfile(): FullProfile {
   return {
     name: "Deepseek",
@@ -24,7 +20,6 @@ function sampleProfile(): FullProfile {
 }
 
 function sampleTimeline(): CO2Timeline {
-  // Realistic size: 5-min intervals for 1 year ≈ 105_120 entries
   const n = 105_120;
   const base = new Date("2022-01-01T00:00:00Z");
   const timestamps: string[] = [];
@@ -68,10 +63,6 @@ function sampleSweepPoint(overrides?: Partial<SweepPoint>): SweepPoint {
     ...overrides,
   };
 }
-
-// ---------------------------------------------------------------------------
-// Cloneability tests
-// ---------------------------------------------------------------------------
 
 describe("worker message data is structured-clone safe", () => {
   it("clones FullProfile", () => {
@@ -137,7 +128,6 @@ describe("worker message data is structured-clone safe", () => {
   });
 
   it("clones SweepPoint with Infinity-like large thetaPause", () => {
-    // Simulates thetaPause = Infinity converted to 9999
     const pt = sampleSweepPoint({ thetaPause: 9999 });
     const cloned = structuredCloneSafe(pt);
     expect(cloned.thetaPause).toBe(9999);
@@ -163,10 +153,6 @@ describe("worker message data is structured-clone safe", () => {
     expect(cloned.timestamps).toHaveLength(2);
   });
 });
-
-// ---------------------------------------------------------------------------
-// "run all" worker message cloneability
-// ---------------------------------------------------------------------------
 
 describe("runall worker message data is structured-clone safe", () => {
   function sampleConstants(): Constants {
@@ -264,22 +250,11 @@ describe("runall worker message data is structured-clone safe", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// Solid-store proxy simulation — the REAL cause of DataCloneError
-// ---------------------------------------------------------------------------
-
 describe("Solid store proxies (runtime DataCloneError reproduction)", () => {
-  /**
-   * Solid's createStore wraps objects in Proxy.  When those proxied
-   * objects are passed to postMessage, the Structured Clone algorithm
-   * fails because it can't clone Proxy objects.
-   */
-
   function solidProxy<T extends object>(target: T): T {
     return new Proxy(target, {
       get(t, key) {
         const v = (t as any)[key];
-        // Solid deeply wraps nested objects/arrays in proxies too
         if (v !== null && typeof v === "object" && !Array.isArray(v)) {
           return solidProxy(v);
         }
@@ -296,8 +271,6 @@ describe("Solid store proxies (runtime DataCloneError reproduction)", () => {
       carbonIntensity: [100, 200],
     };
     const proxied = solidProxy(raw);
-    // Some engines (V8 ≥12.9) handle Proxy in structuredClone — either
-    // outcome validates that the JSON round-trip fix is the correct approach.
     try {
       const cloned = structuredClone(proxied);
       expect((cloned as CO2Timeline).zone).toBe("DE");
@@ -321,7 +294,6 @@ describe("Solid store proxies (runtime DataCloneError reproduction)", () => {
 
   it("deep-clones FullProfile from Solid store", () => {
     const raw: FullProfile = sampleProfile();
-    // Simulate the store returning a proxy
     const proxied = solidProxy(raw);
     const safe = JSON.parse(JSON.stringify(proxied)) as FullProfile;
     const cloned = structuredClone(safe);

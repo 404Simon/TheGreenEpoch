@@ -8,8 +8,8 @@ async function main() {
       break;
     }
     case "run": {
-      const { runSimulation } = await import("./run-simulation");
-      await runSimulation();
+      const { runSimulationCli } = await import("./run-simulation");
+      await runSimulationCli();
       break;
     }
     default:

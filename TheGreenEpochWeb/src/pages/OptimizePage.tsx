@@ -1,6 +1,6 @@
 import { createSignal, createMemo, createEffect, For, Show, onCleanup } from "solid-js";
 import { useApp } from "../data/store";
-import { runOptimizationInWorker } from "../engine/worker";
+import { runOptimizationInWorker } from "../engine";
 import type { SweepPoint, FullProfile } from "../domain/types";
 import {
   Chart, ScatterController, PointElement,

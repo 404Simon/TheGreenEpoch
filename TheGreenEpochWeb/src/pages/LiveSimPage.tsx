@@ -5,7 +5,8 @@ import { CO2Chart } from "../components/CO2Chart";
 import { StatsPanel } from "../components/StatsPanel";
 import { simulateStepwise } from "../domain/simulation";
 import { buildSimResult } from "../domain/result";
-import { neverPausePolicy, hysteresisPolicy } from "../domain/policy";
+import { hysteresisPolicy } from "../domain/policy";
+import { runBaseline } from "../engine";
 import type { SimResult, Scenario, FullProfile, SimConfig, CO2Timeline, SimProgress } from "../domain/types";
 
 export function LiveSimPage() {
@@ -403,11 +404,7 @@ function saveResult(
     };
     const thetaPause = sc.thresholds[ti];
     const thetaResume = sc.hysteresis[ti];
-    const basePolicy = neverPausePolicy();
-    let baseLast: SimProgress | null = null;
-    for (const p of simulateStepwise(full, basePolicy, tl, simConfig)) {
-      baseLast = p;
-    }
+    const baseLast = runBaseline(full, tl, simConfig);
 
     const result = buildSimResult(full, simConfig, lastP, baseLast, thetaPause, thetaResume, {
       id: `result-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,

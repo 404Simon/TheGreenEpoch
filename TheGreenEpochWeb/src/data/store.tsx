@@ -1,9 +1,10 @@
 import { createContext, useContext, type JSX } from "solid-js";
 import { createStore } from "solid-js/store";
-import type { Constants, TrainingProfile, Scenario, YearCO2, CO2Timeline, SimResult } from "../domain/types";
-import { loadYearCO2, loadConstants, loadProfiles, loadScenarios, loadUserScenarios, saveUserScenarios } from "./loadData";
-import { averageYears } from "./co2-loader";
-import { runAllInWorker } from "../engine/runall";
+import type { Constants, TrainingProfile, Scenario, CO2Timeline, SimResult } from "../domain/types";
+import { loadConstants, loadProfiles, loadScenarios, loadUserScenarios, saveUserScenarios } from "./loadData";
+import { loadCO2Timeline, runAllInWorker } from "../engine";
+
+const BASE = `${import.meta.env.BASE_URL}data`;
 
 interface AppState {
   ready: boolean;
@@ -13,7 +14,6 @@ interface AppState {
   userScenarios: Scenario[];
   results: SimResult[];
   batchResults: SimResult[];
-  yearDataCache: Record<string, YearCO2>;
   running: boolean;
 }
 
@@ -25,7 +25,6 @@ const defaultState: AppState = {
   userScenarios: [],
   results: [],
   batchResults: [],
-  yearDataCache: {},
   running: false,
 };
 
@@ -46,9 +45,7 @@ interface AppStore {
 
 const AppCtx = createContext<AppStore>();
 
-function cacheKey(zone: string, year: number): string {
-  return `${zone}_${year}`;
-}
+const timelineCache = new Map<string, Promise<CO2Timeline>>();
 
 export function AppProvider(props: { children: JSX.Element }) {
   const [state, setState] = createStore<AppState>({ ...defaultState });
@@ -97,21 +94,12 @@ export function AppProvider(props: { children: JSX.Element }) {
     },
 
     async getTimeline(zone: string, years: number[]): Promise<CO2Timeline> {
-      const missing: Promise<void>[] = [];
-      for (const y of years) {
-        const key = cacheKey(zone, y);
-        if (!state.yearDataCache[key]) {
-          missing.push(
-            loadYearCO2(zone, y).then((data) => {
-              setState("yearDataCache", key, data);
-            }),
-          );
-        }
-      }
-      await Promise.all(missing);
-
-      const yearData = years.map((y) => state.yearDataCache[cacheKey(zone, y)]);
-      return averageYears(yearData);
+      const key = `${zone}|${[...years].sort().join(",")}`;
+      let promise = timelineCache.get(key);
+      if (promise) return promise;
+      promise = loadCO2Timeline(BASE, zone, years);
+      timelineCache.set(key, promise);
+      return promise;
     },
 
     async runAllScenarios(onProgress?: (done: number, total: number) => void, alpha: number = 1) {
@@ -127,25 +115,9 @@ export function AppProvider(props: { children: JSX.Element }) {
         for (const y of s.historicalYears) needed.get(s.region)!.add(y);
       }
 
-      const missing: Promise<void>[] = [];
-      for (const [zone, years] of needed) {
-        for (const y of years) {
-          const key = cacheKey(zone, y);
-          if (!state.yearDataCache[key]) {
-            missing.push(
-              loadYearCO2(zone, y).then((data) => {
-                setState("yearDataCache", key, data);
-              }),
-            );
-          }
-        }
-      }
-      await Promise.all(missing);
-
       const co2Cache: Record<string, CO2Timeline> = {};
       for (const [zone, years] of needed) {
-        const yearData = [...years].map((y) => state.yearDataCache[cacheKey(zone, y)]);
-        co2Cache[zone] = averageYears(yearData);
+        co2Cache[zone] = await store.getTimeline(zone, [...years]);
       }
 
       await runAllInWorker(

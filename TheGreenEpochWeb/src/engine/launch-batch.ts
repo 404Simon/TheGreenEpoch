@@ -13,7 +13,7 @@ export function runAllInWorker(
   alpha: number = 1,
 ): Promise<void> {
   return new Promise((resolve, reject) => {
-    const worker = new Worker(new URL("./runall-entry", import.meta.url), { type: "module" });
+    const worker = new Worker(new URL("./batch.worker", import.meta.url), { type: "module" });
 
     worker.onmessage = (e) => {
       const msg = e.data;

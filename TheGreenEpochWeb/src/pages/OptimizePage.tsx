@@ -103,6 +103,8 @@ export function OptimizePage() {
 
   let scatterCanvas: HTMLCanvasElement | undefined;
   let scatterChart: Chart | undefined;
+  let hysteresisCanvas: HTMLCanvasElement | undefined;
+  let hysteresisChart: Chart | undefined;
 
   const scenarios = createMemo(() => app.allScenarios());
 
@@ -294,7 +296,83 @@ export function OptimizePage() {
     });
   });
 
-  onCleanup(() => { scatterChart?.destroy(); });
+  function scoreToColor(score: number, min: number, max: number): string {
+    if (max <= min) return "rgba(128,128,128,0.6)";
+    const t = Math.max(0, Math.min(1, (score - min) / (max - min)));
+    const r = Math.round(255 * (1 - t));
+    const g = Math.round(255 * t);
+    const a = 0.85;
+    return `rgba(${r},${g},80,${a})`;
+  }
+
+  createEffect(() => {
+    const data = filteredData();
+    if (data.length === 0) {
+      if (hysteresisChart) { hysteresisChart.destroy(); hysteresisChart = undefined; }
+      return;
+    }
+    if (!hysteresisCanvas) return;
+    if (hysteresisChart) { hysteresisChart.destroy(); hysteresisChart = undefined; }
+
+    const scores = data.map(r => r.score).filter(s => !isNaN(s));
+    const minScore = Math.min(...scores);
+    const maxScore = Math.max(...scores);
+    const opt = optimal();
+
+    hysteresisChart = new Chart(hysteresisCanvas, {
+      type: "scatter",
+      data: {
+        datasets: [{
+          label: "Hysteresis pair",
+          data: data.map(r => ({ x: r.thetaPause, y: r.thetaResume })),
+          backgroundColor: data.map(r =>
+            r === opt ? "#ffd700" : scoreToColor(r.score, minScore, maxScore),
+          ),
+          pointRadius: data.map(r => (r === opt ? 10 : 5)),
+          pointHoverRadius: data.map(r => (r === opt ? 12 : 8)),
+          borderColor: data.map(r => (r === opt ? "#ffd700" : "transparent")),
+          borderWidth: data.map(r => (r === opt ? 2 : 0)),
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => {
+                const r = data[ctx.dataIndex];
+                if (!r) return "";
+                return [
+                  `\u03B8_p=${r.thetaPause}, \u03B8_r=${r.thetaResume}`,
+                  `  Score: ${r.score.toFixed(4)}`,
+                  `  Start: ${r.startTime}`,
+                  `  Savings: ${r.co2SavingsPct.toFixed(2)}%`,
+                  `  Overhead: ${r.actualOverheadPct.toFixed(1)}%`,
+                  `  Iter: ${r.iteration + 1}`,
+                ].join("\n");
+              },
+            },
+          },
+        },
+        scales: {
+          x: {
+            title: { display: true, text: "\u03B8_p (pause threshold)", color: "rgba(156,163,175,0.6)" },
+            ticks: { color: "rgba(156,163,175,0.6)", font: { size: 10 } },
+            grid: { color: "rgba(75,85,99,0.15)" },
+          },
+          y: {
+            title: { display: true, text: "\u03B8_r (resume threshold)", color: "rgba(156,163,175,0.6)" },
+            ticks: { color: "rgba(156,163,175,0.6)", font: { size: 10 } },
+            grid: { color: "rgba(75,85,99,0.15)" },
+          },
+        },
+      },
+    });
+  });
+
+  onCleanup(() => { scatterChart?.destroy(); hysteresisChart?.destroy(); });
 
   return (
     <div>
@@ -443,31 +521,53 @@ export function OptimizePage() {
           }}
         </Show>
 
-        <div class="rounded-xl bg-surface-2 border border-border-default/60 p-4 mb-6">
-          <h3 class="text-xs font-semibold text-fg-subtle tracking-wide mb-3">Search space: Overhead vs CO{"\u2082"} Savings</h3>
-          <div class="relative" style="height: 350px">
-            <canvas ref={scatterCanvas!} class="w-full h-full" />
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+          <div class="rounded-xl bg-surface-2 border border-border-default/60 p-4">
+            <h3 class="text-xs font-semibold text-fg-subtle tracking-wide mb-3">Search space: Overhead vs CO{"\u2082"} Savings</h3>
+            <div class="relative" style="height: 350px">
+              <canvas ref={scatterCanvas!} class="w-full h-full" />
+            </div>
+            <div class="flex flex-wrap gap-3 mt-3 text-xs text-fg-muted">
+              <For each={Array.from({ length: iterCount() })}>
+                {(_v, i) => (
+                  <span class="flex items-center gap-1">
+                    <span
+                      class="inline-block w-3 h-3 rounded-full"
+                      style={{ background: ITER_COLORS[i() % ITER_COLORS.length] }}
+                    />
+                    Iter {i() + 1}
+                  </span>
+                )}
+              </For>
+              <span class="flex items-center gap-1">
+                <span class="inline-block w-3 h-3 rounded-full bg-[#ff5e7a55]" />
+                Over budget
+              </span>
+              <span class="flex items-center gap-1">
+                <span class="inline-block w-3 h-3 rounded-full bg-[#ffd700]" />
+                Optimal
+              </span>
+            </div>
           </div>
-          <div class="flex flex-wrap gap-3 mt-3 text-xs text-fg-muted">
-            <For each={Array.from({ length: iterCount() })}>
-              {(_v, i) => (
-                <span class="flex items-center gap-1">
-                  <span
-                    class="inline-block w-3 h-3 rounded-full"
-                    style={{ background: ITER_COLORS[i() % ITER_COLORS.length] }}
-                  />
-                  Iter {i() + 1}
-                </span>
-              )}
-            </For>
-            <span class="flex items-center gap-1">
-              <span class="inline-block w-3 h-3 rounded-full bg-[#ff5e7a55]" />
-              Over budget
-            </span>
-            <span class="flex items-center gap-1">
-              <span class="inline-block w-3 h-3 rounded-full bg-[#ffd700]" />
-              Optimal
-            </span>
+          <div class="rounded-xl bg-surface-2 border border-border-default/60 p-4">
+            <h3 class="text-xs font-semibold text-fg-subtle tracking-wide mb-3">Hysteresis map: {"\u03B8_p"} vs {"\u03B8_r"} (color = score)</h3>
+            <div class="relative" style="height: 350px">
+              <canvas ref={hysteresisCanvas!} class="w-full h-full" />
+            </div>
+            <div class="flex flex-wrap gap-3 mt-3 text-xs text-fg-muted">
+              <span class="flex items-center gap-1">
+                <span class="inline-block w-3 h-3 rounded-full bg-[rgb(0,255,80)]" />
+                High score
+              </span>
+              <span class="flex items-center gap-1">
+                <span class="inline-block w-3 h-3 rounded-full bg-[rgb(255,0,80)]" />
+                Low score
+              </span>
+              <span class="flex items-center gap-1">
+                <span class="inline-block w-3 h-3 rounded-full bg-[#ffd700]" />
+                Optimal
+              </span>
+            </div>
           </div>
         </div>
 

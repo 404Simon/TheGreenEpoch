@@ -2,6 +2,7 @@ import { createSignal, createMemo, createEffect, For, Show, onCleanup } from "so
 import { useApp } from "../data/store";
 import { runOptimizationInWorker } from "../engine";
 import type { SweepPoint, FullProfile } from "../domain/types";
+import { Optimize3DPlot } from "../components/Optimize3DPlot";
 import {
   Chart, ScatterController, PointElement,
   LinearScale, Tooltip,
@@ -577,53 +578,39 @@ export function OptimizePage() {
         </div>
       </Show>
 
-      <Show when={points().length > 0}>
-        <Show when={filteredData().length > 0}>
-          {s => {
-            const fd = filteredData();
-            const n = points().length;
-            const avgSave = fd.length > 0 ? fd.reduce((s, r) => s + r.co2SavingsPct, 0) / fd.length : 0;
-            const within = fd.filter(r => r.withinBudget).length;
-            const bestSave = Math.max(...fd.filter(r => r.withinBudget).map(r => r.co2SavingsPct), 0);
-            const optPt = optimal();
-            const isOptInView = optPt && fd.includes(optPt);
-            return (
-              <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
-                <div class="rounded-xl bg-surface-2 border border-border-default/60 p-4">
-                  <div class="text-xs text-fg-muted mb-1">Points</div>
-                  <div class="text-xl font-semibold text-fg-primary">{n}</div>
-                </div>
-                <div class="rounded-xl bg-surface-2 border border-border-default/60 p-4">
-                  <div class="text-xs text-fg-muted mb-1">Iterations</div>
-                  <div class="text-xl font-semibold text-fg-primary">{iterCount()}</div>
-                </div>
-                <div class="rounded-xl bg-surface-2 border border-border-default/60 p-4">
-                  <div class="text-xs text-fg-muted mb-1">Within budget</div>
-                  <div class="text-xl font-semibold text-accent">{within}</div>
-                </div>
-                <div class="rounded-xl bg-surface-2 border border-border-default/60 p-4">
-                  <div class="text-xs text-fg-muted mb-1">Avg CO{"\u2082"} savings</div>
-                  <div class="text-xl font-semibold" classList={{ "text-accent": true }}>{fmtPct(avgSave, 2)}</div>
-                </div>
-                <Show when={isOptInView}>
-                  <div class="rounded-xl bg-surface-2 border border-border-default/60 p-4">
-                    <div class="text-xs text-fg-muted mb-1">Optimal {"\u03B8"}_p</div>
-                    <div class="text-xl font-semibold text-accent">{optPt!.thetaPause}</div>
-                  </div>
-                  <div class="rounded-xl bg-surface-2 border border-border-default/60 p-4">
-                    <div class="text-xs text-fg-muted mb-1">Optimal {"\u03B8"}_r</div>
-                    <div class="text-xl font-semibold text-accent">{optPt!.thetaResume}</div>
-                  </div>
-                  <div class="rounded-xl bg-surface-2 border border-border-default/60 p-4">
-                    <div class="text-xs text-fg-muted mb-1">Optimal start date</div>
-                    <div class="text-xl font-semibold text-accent">{optPt!.startTime}</div>
-                  </div>
-                </Show>
-              </div>
-            );
-          }}
-        </Show>
+      <div classList={{ hidden: filteredData().length === 0 }}>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+          <div class="rounded-xl bg-surface-2 border border-border-default/60 p-4">
+            <div class="text-xs text-fg-muted mb-1">Simulations</div>
+            <div class="text-xl font-semibold text-fg-primary">{filteredData().length}<span class="text-sm text-fg-muted font-normal"> / {points().length}</span></div>
+          </div>
+          <div class="rounded-xl bg-surface-2 border border-border-default/60 p-4">
+            <div class="text-xs text-fg-muted mb-1">Iterations</div>
+            <div class="text-xl font-semibold text-fg-primary">{iterCount()}</div>
+          </div>
 
+          <div class="rounded-xl bg-surface-2 border border-border-default/60 p-4">
+            <div class="text-xs text-fg-muted mb-1">Avg CO{"\u2082"} savings</div>
+            <div class="text-xl font-semibold" classList={{ "text-accent": true }}>{fmtPct(filteredData().reduce((s, r) => s + r.co2SavingsPct, 0) / Math.max(filteredData().length, 1), 2)}</div>
+          </div>
+          <Show when={optimal() && filteredData().includes(optimal()!)}>
+            <div class="rounded-xl bg-surface-2 border border-border-default/60 p-4">
+              <div class="text-xs text-fg-muted mb-1">Optimal {"\u03B8"}_p</div>
+              <div class="text-xl font-semibold text-accent">{optimal()!.thetaPause}</div>
+            </div>
+            <div class="rounded-xl bg-surface-2 border border-border-default/60 p-4">
+              <div class="text-xs text-fg-muted mb-1">Optimal {"\u03B8"}_r</div>
+              <div class="text-xl font-semibold text-accent">{optimal()!.thetaResume}</div>
+            </div>
+            <div class="rounded-xl bg-surface-2 border border-border-default/60 p-4">
+              <div class="text-xs text-fg-muted mb-1">Optimal start date</div>
+              <div class="text-xl font-semibold text-accent">{optimal()!.startTime}</div>
+            </div>
+          </Show>
+        </div>
+      </div>
+
+      <Show when={points().length > 0}>
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
           <div class="rounded-xl bg-surface-2 border border-border-default/60 p-4">
             <h3 class="text-xs font-semibold text-fg-subtle tracking-wide mb-3">Search space: Overhead vs CO{"\u2082"} Savings</h3>
@@ -652,26 +639,40 @@ export function OptimizePage() {
               </span>
             </div>
           </div>
-          <div class="rounded-xl bg-surface-2 border border-border-default/60 p-4">
-            <h3 class="text-xs font-semibold text-fg-subtle tracking-wide mb-3">Hysteresis map: {"\u03B8_p"} vs {"\u03B8_r"} (color = score)</h3>
-            <div class="relative" style="height: 350px">
-              <canvas ref={hysteresisCanvas!} class="w-full h-full" />
+          <Show when={optimizeStartTime() && filteredData().length > 0}>
+            <div class="rounded-xl bg-surface-2 border border-border-default/60 p-4">
+              <h3 class="text-xs font-semibold text-fg-subtle tracking-wide mb-3">3D search space: {"\u03B8_p"} vs {"\u03B8_r"} vs Start date (color = score)</h3>
+              <Optimize3DPlot data={filteredData()} optimal={optimal()} />
+              <div class="flex flex-wrap gap-3 mt-3 text-xs text-fg-muted">
+                <span class="flex items-center gap-1">
+                  <span class="inline-block w-3 h-3 rounded-full" style="background: #ffd700" />
+                  Optimal
+                </span>
+              </div>
             </div>
-            <div class="flex flex-wrap gap-3 mt-3 text-xs text-fg-muted">
-              <span class="flex items-center gap-1">
-                <span class="inline-block w-3 h-3 rounded-full bg-[rgb(0,255,80)]" />
-                High score
-              </span>
-              <span class="flex items-center gap-1">
-                <span class="inline-block w-3 h-3 rounded-full bg-[rgb(255,0,80)]" />
-                Low score
-              </span>
-              <span class="flex items-center gap-1">
-                <span class="inline-block w-3 h-3 rounded-full bg-[#ffd700]" />
-                Optimal
-              </span>
+          </Show>
+          <Show when={!optimizeStartTime()}>
+            <div class="rounded-xl bg-surface-2 border border-border-default/60 p-4">
+              <h3 class="text-xs font-semibold text-fg-subtle tracking-wide mb-3">Hysteresis map: {"\u03B8_p"} vs {"\u03B8_r"} (color = score)</h3>
+              <div class="relative" style="height: 350px">
+                <canvas ref={hysteresisCanvas!} class="w-full h-full" />
+              </div>
+              <div class="flex flex-wrap gap-3 mt-3 text-xs text-fg-muted">
+                <span class="flex items-center gap-1">
+                  <span class="inline-block w-3 h-3 rounded-full bg-[rgb(0,255,80)]" />
+                  High score
+                </span>
+                <span class="flex items-center gap-1">
+                  <span class="inline-block w-3 h-3 rounded-full bg-[rgb(255,0,80)]" />
+                  Low score
+                </span>
+                <span class="flex items-center gap-1">
+                  <span class="inline-block w-3 h-3 rounded-full bg-[#ffd700]" />
+                  Optimal
+                </span>
+              </div>
             </div>
-          </div>
+          </Show>
         </div>
 
         <div class="rounded-xl bg-surface-2 border border-border-default/60 overflow-hidden">
@@ -781,7 +782,7 @@ export function OptimizePage() {
             </table>
           </div>
           <div class="flex items-center justify-between px-3 py-2 text-xs text-fg-muted border-t border-border-default/30">
-            <span>{sortedData().length} / {points().length} point{points().length !== 1 ? "s" : ""}</span>
+            <span>{sortedData().length} / {points().length} simulation{points().length !== 1 ? "s" : ""}</span>
           </div>
         </div>
       </Show>

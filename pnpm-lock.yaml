@@ -26,6 +26,9 @@ importers:
       commander:
         specifier: ^15.0.0
         version: 15.0.0
+      plotly.js-dist-min:
+        specifier: ^3.7.0
+        version: 3.7.0
       solid-js:
         specifier: ^1.9.14
         version: 1.9.14
@@ -51,6 +54,9 @@ importers:
       '@types/node':
         specifier: ^26.1.0
         version: 26.1.0
+      '@types/plotly.js':
+        specifier: ^3.0.10
+        version: 3.0.10
       jsdom:
         specifier: ^29.1.1
         version: 29.1.1
@@ -674,6 +680,9 @@ packages:
   '@types/node@26.1.0':
     resolution: {integrity: sha512-O0A1G3xPGy4w7AgQdAQYUlQ+BKk2Oovw8eRpofyp5KdBZULnbe+WqaOVNrm705SHphCiG4XHsACrSmPu1f+Kgw==}
 
+  '@types/plotly.js@3.0.10':
+    resolution: {integrity: sha512-q+MgO4aajC2HrO7FllTYWzrpdfbTjboSMfjkz/aXKjg1v7HNo1zMEFfAW7quKfk6SL+bH74A5ThBEps/7hZxOA==}
+
   '@vitest/expect@4.1.9':
     resolution: {integrity: sha512-vl/rYsUKcBr3SnQn166+XR5ZQcgMx3DQhFWdfli/cWpLnLUmbxZvyrJZotLFUryib+LtArYMSTJ5RbQ57ZqrlA==}
 
@@ -1175,6 +1184,9 @@ packages:
   picomatch@4.0.5:
     resolution: {integrity: sha512-RvwwcruNjI1ncT5xRakeyS9Lf8lcItv34KD+aif+VH9kduAyfYBipGh12274xtenIPZ119/R9BdTBa8gAwSh0A==}
     engines: {node: '>=12'}
+
+  plotly.js-dist-min@3.7.0:
+    resolution: {integrity: sha512-IRWNnBJZmKss3URDnicBK2nvt/VTSi/MD1GnUscAYFjwSuN6g/CTde5R1UC0RYtblehj8rkT4BL8r05e/c8j5Q==}
 
   postcss@8.5.16:
     resolution: {integrity: sha512-vuwillviilfKZsg0VGj5R/YwwcHx4SLsIOI/7K6mQkWx+l5cUHTjj5g0AasTBcyXsbfTgrwsUNmVUb5xVwyPwg==}
@@ -2094,6 +2106,8 @@ snapshots:
     dependencies:
       undici-types: 8.3.0
 
+  '@types/plotly.js@3.0.10': {}
+
   '@vitest/expect@4.1.9':
     dependencies:
       '@standard-schema/spec': 1.1.0
@@ -2537,6 +2551,8 @@ snapshots:
   picocolors@1.1.1: {}
 
   picomatch@4.0.5: {}
+
+  plotly.js-dist-min@3.7.0: {}
 
   postcss@8.5.16:
     dependencies:

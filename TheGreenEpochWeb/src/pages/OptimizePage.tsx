@@ -93,6 +93,7 @@ export function OptimizePage() {
   const [resolution, setResolution] = createSignal(10);
   const [startDateResolution, setStartDateResolution] = createSignal(7);
   const [budget, setBudget] = createSignal(200);
+  const [maxIterations, setMaxIterations] = createSignal(6);
   const [alpha, setAlpha] = createSignal(1);
   const [running, setRunning] = createSignal(false);
   const [iterMsg, setIterMsg] = createSignal("");
@@ -201,7 +202,7 @@ export function OptimizePage() {
           overheadBudgetPct: budget(),
           resolution: resolution(),
           startDateResolution: startDateResolution(),
-          maxIterations: 6,
+          maxIterations: maxIterations(),
           minStep: 3,
           shrinkFactor: 0.45,
           alpha: alpha(),
@@ -455,6 +456,16 @@ export function OptimizePage() {
               class="w-full bg-surface-3 border border-border-default/50 rounded px-3 py-2 text-sm text-fg-body focus:outline-none focus:border-accent"
             />
           </div>
+
+          <div>
+            <label class="block text-xs font-medium text-fg-muted mb-1">Iterations</label>
+            <input
+              type="number" value={maxIterations()}
+              onInput={e => setMaxIterations(Math.max(1, +e.currentTarget.value || 1))}
+              min="1" max="50"
+              class="w-full bg-surface-3 border border-border-default/50 rounded px-3 py-2 text-sm text-fg-body focus:outline-none focus:border-accent"
+            />
+          </div>
         </div>
 
         <div class="flex items-center gap-3">
@@ -588,18 +599,14 @@ export function OptimizePage() {
               <thead>
                 <tr class="border-b border-border-default/60">
                   <For each={FIELDS}>
-                    {(field) => {
-                      const sorted = sortKey() === field.key;
-                      const dir = sorted ? (sortAsc() ? " \u2191" : " \u2193") : "";
-                      return (
-                        <th
-                          onClick={() => handleSort(field.key)}
-                          class={`px-3 py-2.5 text-left font-medium cursor-pointer select-none whitespace-nowrap hover:text-fg-body transition-colors ${sorted ? "text-accent" : "text-fg-muted"}`}
-                        >
-                          {field.label}{dir}
-                        </th>
-                      );
-                    }}
+                    {(field) => (
+                      <th
+                        onClick={() => handleSort(field.key)}
+                        class={`px-3 py-2.5 text-left font-medium cursor-pointer select-none whitespace-nowrap hover:text-fg-body transition-colors ${sortKey() === field.key ? "text-accent" : "text-fg-muted"}`}
+                      >
+                        {field.label}{sortKey() === field.key ? (sortAsc() ? " \u2191" : " \u2193") : ""}
+                      </th>
+                    )}
                   </For>
                   <th class="px-3 py-2.5 text-left font-medium text-fg-muted whitespace-nowrap">
                     {Object.values(filters()).some(v => v) ? (

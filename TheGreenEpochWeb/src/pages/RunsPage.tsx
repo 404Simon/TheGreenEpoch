@@ -323,18 +323,14 @@ export function RunsPage() {
               <thead>
                 <tr class="border-b border-border-default/60">
                   <For each={FIELDS}>
-                    {(field) => {
-                      const sorted = sortKey() === field.key;
-                      const dir = sorted ? (sortAsc() ? " \u2191" : " \u2193") : "";
-                      return (
-                        <th
-                          onClick={() => handleSort(field.key)}
-                          class={`px-3 py-2.5 text-left font-medium cursor-pointer select-none whitespace-nowrap hover:text-fg-body transition-colors ${sorted ? "text-accent" : "text-fg-muted"}`}
-                        >
-                          {field.label}{dir}
-                        </th>
-                      );
-                    }}
+                    {(field) => (
+                      <th
+                        onClick={() => handleSort(field.key)}
+                        class={`px-3 py-2.5 text-left font-medium cursor-pointer select-none whitespace-nowrap hover:text-fg-body transition-colors ${sortKey() === field.key ? "text-accent" : "text-fg-muted"}`}
+                      >
+                        {field.label}{sortKey() === field.key ? (sortAsc() ? " \u2191" : " \u2193") : ""}
+                      </th>
+                    )}
                   </For>
                   <th class="px-3 py-2.5 text-left font-medium text-fg-muted whitespace-nowrap">
                     {Object.values(filters()).some(v => v) ? (

@@ -6,8 +6,9 @@ import {
   Chart, ScatterController, PointElement,
   LinearScale, Tooltip,
 } from "chart.js";
+import zoomPlugin from "chartjs-plugin-zoom";
 
-Chart.register(ScatterController, PointElement, LinearScale, Tooltip);
+Chart.register(ScatterController, PointElement, LinearScale, Tooltip, zoomPlugin);
 
 const ITER_COLORS = [
   "#00c9a7", "#36a2eb", "#a29bfe", "#00cec9",
@@ -262,6 +263,7 @@ export function OptimizePage() {
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        animation: false,
         plugins: {
           legend: { display: false },
           tooltip: {
@@ -278,6 +280,10 @@ export function OptimizePage() {
                 ].join("\n");
               },
             },
+          },
+          zoom: {
+            zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: "xy" },
+            pan: { enabled: true, mode: "xy" },
           },
         },
         scales: {
@@ -337,6 +343,7 @@ export function OptimizePage() {
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        animation: false,
         plugins: {
           legend: { display: false },
           tooltip: {
@@ -354,6 +361,10 @@ export function OptimizePage() {
                 ].join("\n");
               },
             },
+          },
+          zoom: {
+            zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: "xy" },
+            pan: { enabled: true, mode: "xy" },
           },
         },
         scales: {

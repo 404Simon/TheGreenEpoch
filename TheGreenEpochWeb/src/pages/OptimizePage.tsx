@@ -67,6 +67,23 @@ function fmtCell(v: unknown, fmt: string, dec?: number) {
   }
 }
 
+function downloadCSV(data: SweepPoint[]) {
+  const sep = ",";
+  const esc = (v: string) => /[,"\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
+  const labels = FIELDS.map(f => esc(f.label)).join(sep);
+  const rows = data.map(r =>
+    FIELDS.map(f => esc(fmtCell((r as any)[f.key], f.fmt, f.dec))).join(sep),
+  );
+  const bom = "\uFEFF";
+  const blob = new Blob([bom + labels + "\n" + rows.join("\n")], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "optimization-results.csv";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 function uniqVals(data: SweepPoint[], key: string, fmt: string, dec?: number) {
   const map = new Map<string, unknown>();
   data.forEach(r => {
@@ -564,8 +581,8 @@ export function OptimizePage() {
         <Show when={filteredData().length > 0}>
           {s => {
             const fd = filteredData();
-            const n = fd.length;
-            const avgSave = fd.reduce((s, r) => s + r.co2SavingsPct, 0) / n;
+            const n = points().length;
+            const avgSave = fd.length > 0 ? fd.reduce((s, r) => s + r.co2SavingsPct, 0) / fd.length : 0;
             const within = fd.filter(r => r.withinBudget).length;
             const bestSave = Math.max(...fd.filter(r => r.withinBudget).map(r => r.co2SavingsPct), 0);
             const optPt = optimal();
@@ -672,14 +689,26 @@ export function OptimizePage() {
                       </th>
                     )}
                   </For>
-                  <th class="px-3 py-2.5 text-left font-medium text-fg-muted whitespace-nowrap">
-                    {Object.values(filters()).some(v => v) ? (
-                      <button onClick={clearFilters} class="text-xs text-fg-muted hover:text-fg-body bg-surface-3 border border-border-default/50 rounded px-2 py-1 transition-colors">
-                        Clear
+                  <th class="px-3 py-2.5 text-right font-medium text-fg-muted whitespace-nowrap">
+                    <div class="flex items-center gap-1.5 justify-end">
+                      <button
+                        onClick={() => downloadCSV(sortedData())}
+                        class="flex items-center gap-1 px-2 py-1 rounded text-xs bg-surface-3 border border-border-default/50 text-fg-muted hover:text-fg-body hover:border-border-default transition-colors"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="w-3 h-3">
+                          <path d="M8.75 2h-1.5v4.69L5.03 4.47 3.97 5.53 8 9.56l4.03-4.03-1.06-1.06L8.75 6.69V2Z"/>
+                          <path d="M2 10.5v2A1.5 1.5 0 0 0 3.5 14h9a1.5 1.5 0 0 0 1.5-1.5v-2h-1.5v2h-9v-2H2Z"/>
+                        </svg>
+                        CSV
                       </button>
-                    ) : (
-                      "Details"
-                    )}
+                      {Object.values(filters()).some(v => v) ? (
+                        <button onClick={clearFilters} class="text-xs text-fg-muted hover:text-fg-body bg-surface-3 border border-border-default/50 rounded px-2 py-1 transition-colors">
+                          Clear
+                        </button>
+                      ) : (
+                        <span class="text-xs">Details</span>
+                      )}
+                    </div>
                   </th>
                 </tr>
                 <tr class="border-b border-border-default/30">

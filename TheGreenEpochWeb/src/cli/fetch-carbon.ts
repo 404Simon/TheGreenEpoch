@@ -7,6 +7,13 @@ const OUT_DIR = resolve(__dirname, "../../public/data/co2");
 
 const API_URL = "https://api.electricitymaps.com/v3/carbon-intensity/past-range";
 
+interface ApiEntry {
+  datetime?: string;
+  updatedAt?: string;
+  carbonIntensity?: number;
+  isEstimated?: boolean;
+}
+
 interface FetchOpts {
   zones: string[];
   years: number[];
@@ -16,48 +23,12 @@ interface FetchOpts {
   maxRequestsPerMinute: number;
 }
 
-interface ApiEntry {
-  datetime?: string;
-  updatedAt?: string;
-  carbonIntensity?: number;
-  isEstimated?: boolean;
-}
-
 interface ApiResponse {
   history?: ApiEntry[];
   data?: ApiEntry[];
   datetime?: string;
   carbonIntensity?: number;
   isEstimated?: boolean;
-}
-
-function parseArgs(): FetchOpts {
-  const args = process.argv.slice(2);
-  const get = (flag: string): string | undefined => {
-    const i = args.indexOf(flag);
-    return i !== -1 && args[i + 1] ? args[i + 1] : undefined;
-  };
-
-  const zones = (get("--zones") ?? "").split(",").filter(Boolean);
-  const yearsStr = (get("--years") ?? "").split(",").filter(Boolean);
-  const years = yearsStr.map(Number).filter((y) => !isNaN(y));
-  const token = get("--token") ?? "";
-  const granularity = get("--granularity") ?? "5_minutes";
-  const disableEstimations = args.includes("--disable-estimations");
-  const maxReq = parseInt(get("--max-rpm") ?? "120", 10);
-
-  if (!zones.length || !years.length || !token) {
-    console.error("Usage: pnpm cli fetch --zones DE,SE --years 2022,2023 --token <API_KEY>");
-    console.error("  --zones               Grid zones, comma-separated");
-    console.error("  --years               Years, comma-separated");
-    console.error("  --token               Electricity Maps API token");
-    console.error("  --granularity         5_minutes (default), 15_minutes, hourly, daily");
-    console.error("  --disable-estimations  Skip estimated data points");
-    console.error("  --max-rpm             Max requests per minute (default 120)");
-    process.exit(1);
-  }
-
-  return { zones, years, token, granularity, disableEstimations, maxRequestsPerMinute: maxReq };
 }
 
 function isoZ(d: Date): string {
@@ -163,8 +134,15 @@ async function fetchZoneYear(opts: FetchOpts, zone: string, year: number): Promi
   return accum;
 }
 
-export async function fetchCarbon(): Promise<void> {
-  const opts = parseArgs();
+export async function fetchCarbon(raw: { zones: string; years: string; token: string; granularity: string; disableEstimations: boolean; maxRpm: string }): Promise<void> {
+  const opts = {
+    zones: raw.zones.split(",").filter(Boolean),
+    years: raw.years.split(",").map(Number).filter((y) => !isNaN(y)),
+    token: raw.token,
+    granularity: raw.granularity,
+    disableEstimations: raw.disableEstimations,
+    maxRequestsPerMinute: parseInt(raw.maxRpm, 10),
+  };
 
   mkdirSync(OUT_DIR, { recursive: true });
   console.log(`Output: ${OUT_DIR}`);

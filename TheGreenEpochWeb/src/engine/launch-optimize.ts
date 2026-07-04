@@ -1,15 +1,5 @@
 import type { FullProfile, CO2Timeline, Scenario, SweepPoint } from "../domain/types";
-
-export interface AdaptiveOptions {
-  thetaPauseMax: number;
-  overheadBudgetPct: number;
-  resolution: number;
-  startDateResolution: number;
-  maxIterations: number;
-  minStep: number;
-  shrinkFactor: number;
-  alpha: number;
-}
+import type { AdaptiveOptions } from "../domain/optimize";
 
 function stripProxies<T>(data: T): T {
   return JSON.parse(JSON.stringify(data));

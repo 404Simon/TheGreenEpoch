@@ -64,15 +64,10 @@ interface CliResult {
 
 function r6(n: number) { return Math.round(n * 1_000_000) / 1_000_000; }
 
-export async function runSimulationCli(): Promise<void> {
-  const args = process.argv.slice(2);
-  const idx = args.indexOf("run");
-  const sub = idx !== -1 ? args.slice(idx + 1) : args;
-  const limitIdx = sub.indexOf("--limit");
-  const limit = limitIdx !== -1 && sub[limitIdx + 1] ? parseInt(sub[limitIdx + 1]) : null;
-  const csvIdx = sub.indexOf("--csv");
-  const csvPath = csvIdx !== -1 && sub[csvIdx + 1] ? sub[csvIdx + 1] : null;
-  const skipLive = sub.includes("--no-live");
+export async function runSimulationCli(opts: { limit?: string; csv?: string; noLive?: boolean }): Promise<void> {
+  const limit = opts.limit ? parseInt(opts.limit) : null;
+  const csvPath = opts.csv ?? null;
+  const skipLive = opts.noLive ?? false;
 
   const { constants, profiles, scenarios } = loadData();
   const toRun = limit ? scenarios.slice(0, limit) : scenarios;

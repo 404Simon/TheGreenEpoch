@@ -27,8 +27,8 @@ export function computeScore(
   alpha: number = 1,
 ): number {
   const savingsNorm = savingsPct / 100;
-  const overheadNorm = overheadPct / Math.max(budgetPct, 0.001);
-  return alpha * savingsNorm - (1 - alpha) * overheadNorm;
+  const overheadNorm = overheadPct / budgetPct;
+  return (alpha * savingsNorm + 1 - (1 - alpha) * overheadNorm) / 2;
 }
 
 export function computeIsOk(

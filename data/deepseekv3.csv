@@ -1,4 +1,0 @@
-variable,unit,requirements_section,report_value,report_evidence
-model_params,count,Fixed constant,671B,671B total parameters
-dataset_tokens,count,Fixed constant,14.8T,pre-train on 14.8T tokens
-gpu_count,count,Fixed constant,2048,trained on a cluster equipped with 2048 NVIDIA H800 GPUs

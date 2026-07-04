@@ -3,7 +3,6 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
-    paths: ['TheGreenEpochWeb/**']
   workflow_dispatch:
 
 permissions:
@@ -18,9 +17,6 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: TheGreenEpochWeb
     steps:
       - uses: actions/checkout@v7
 
@@ -41,7 +37,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v5
         with:
-          path: TheGreenEpochWeb/dist/
+          path: dist/
 
       - name: Deploy to GitHub Pages
         id: deployment

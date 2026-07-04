@@ -1,7 +1,7 @@
 # Project TheGreenEpoch
 
 - Domain: Energy Systems / Smart Grids / LLM training
-- Tools: Python, Rust, Java
+- Tools: TypeScript, Python
 
 ## Description
 
@@ -9,23 +9,30 @@ LLM training can involve thousands of GPUs running over the period of a couple o
 
 This project builds a simulation of CO2-aware LLM training to evaluate the effect of stopping and starting the training process on the CO2 consumption of the overall process.
 
-## Research Questions
+The main project is a SolidJS single-page application with:
 
-- How do different thresholds (gCo2 eq/kWh) influence the training duration?
-- What would be the best starting time / season / region for the training?
-- How much CO2 can be saved during the training of certain (state of the art) models?
+- **Live simulation**: interactive scenario runner with configurable thresholds, regions, and training durations
+- **Optimization**: parameter sweep to find optimal CO2 threshold configurations
+- **Results viewer**: charts and statistics for completed simulation runs
+- **CLI**: command-line tools for simulation, optimization, and data fetching
+
+```text
+pnpm dev       # start dev server on :3000
+pnpm build     # production build
+pnpm test      # run tests
+pnpm cli       # CLI entry point
+```
+
+The `legacy/` directory contains the original Python simulation engine (moved here when the project migrated to the web).
+
+## Research Scope
+
+- How do different CO2 intensity thresholds (gCO2 eq/kWh) influence training duration?
+- What is the best starting time, season, or region for training?
+- How much CO2 can be saved during LLM training?
 - What is the best region for CO2-aware model training?
-- (What would be the best breakpoint for pausing and resuming? (Batch, Epoch, ... -> dependent on duration)?)
-
-## Scope
-
-- Transform real historic CO2 intensity data over a certain period to a much smaller period (simulation period / time)
-- Simulate the CO2 intensity data for certain regions using information about the historic data
-- Vary: Training duration, energy consumption, starting time, region (maybe even distributed over multiple regions), season, CO2 threshold
-- Measure: Average and 95th percentile batch delay, total CO2 saving
-- validate against model training using the real historic data (Actual training validation not possible)
 
 ## Data Sources
 
-- "Electricity Maps" API for CO2 intensity data (https://app.electricitymaps.com/map/live/fifteen_minutes)
-- LLM Providers to find out about the training duration and energy consumption during training
+- [Electricity Maps API](https://app.electricitymaps.com/map/live/fifteen_minutes) for CO2 intensity data
+- LLM provider specifications for training duration and energy consumption

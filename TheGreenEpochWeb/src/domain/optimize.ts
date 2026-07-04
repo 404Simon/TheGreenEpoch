@@ -1,4 +1,4 @@
-import type { SweepPoint, FullProfile, CO2Timeline, Scenario, SimConfig } from "./types";
+import type { SweepPoint, FullProfile, CO2Timeline, SimConfig } from "./types";
 import { simulateStepwise } from "./simulation";
 import { neverPausePolicy, hysteresisPolicy } from "./policy";
 import { tokensPerSecond } from "./physics";
@@ -13,18 +13,19 @@ export interface AdaptiveOptions {
   minStep: number;
   shrinkFactor: number;
   alpha: number;
+  fixedStartTime?: string;
 }
 
 export function runOptimization(
   profile: FullProfile,
   timeline: CO2Timeline,
-  scenario: Scenario,
+  historicalYears: number[],
   options: AdaptiveOptions,
   onIteration?: (iteration: number, points: SweepPoint[], best: SweepPoint | null) => void,
 ): { points: SweepPoint[]; best: SweepPoint | null } {
   const baseSimConfig: SimConfig = {
     startTime: "01-01",
-    historicalYears: scenario.historicalYears,
+    historicalYears,
     overheadBudgetPct: options.overheadBudgetPct,
   };
 
@@ -34,7 +35,9 @@ export function runOptimization(
   let bounds = initialBounds(options.thetaPauseMax);
 
   for (let iter = 0; iter < options.maxIterations; iter++) {
-    const dateSamples = generateDateSamples(bounds, options.startDateResolution);
+    const dateSamples = options.fixedStartTime
+      ? [dateToDay(options.fixedStartTime)]
+      : generateDateSamples(bounds, options.startDateResolution);
     const grid = generateGrid(bounds, options.resolution);
     if (grid.length === 0 || dateSamples.length === 0) break;
 

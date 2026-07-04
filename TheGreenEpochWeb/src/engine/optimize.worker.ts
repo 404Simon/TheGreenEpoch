@@ -1,4 +1,4 @@
-import type { FullProfile, CO2Timeline, Scenario, SweepPoint } from "../domain/types";
+import type { FullProfile, CO2Timeline, SweepPoint } from "../domain/types";
 import { runOptimization } from "../domain/optimize";
 import type { AdaptiveOptions } from "../domain/optimize";
 
@@ -6,16 +6,16 @@ interface StartMessage {
   type: "start";
   profile: FullProfile;
   timeline: CO2Timeline;
-  scenario: Scenario;
+  historicalYears: number[];
   options: AdaptiveOptions;
 }
 
 self.onmessage = (e: MessageEvent<StartMessage>) => {
   if (e.data.type !== "start") return;
 
-  const { profile, timeline, scenario, options } = e.data;
+  const { profile, timeline, historicalYears, options } = e.data;
 
-  const result = runOptimization(profile, timeline, scenario, options, (iteration, points, best) => {
+  const result = runOptimization(profile, timeline, historicalYears, options, (iteration, points, best) => {
     (self as any).postMessage({ type: "iteration", iteration, points, best });
   });
 

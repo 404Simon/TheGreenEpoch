@@ -31,13 +31,16 @@ program.command("run")
 
 program.command("optimize")
   .description("Adaptive grid search for optimal hysteresis policy")
-  .requiredOption("-s, --scenario <name>", "Scenario name (partial match)")
+  .requiredOption("-m, --model <name>", "Model name (e.g. Deepseek, Kimi)")
+  .requiredOption("-r, --region <zone>", "Grid zone (e.g. CN, DE, SE, US)")
+  .requiredOption("-y, --years <years>", "Historical years, comma-separated (e.g. 2022,2023,2024)")
   .option("--tp-max <number>", "Max theta_pause threshold (default 500)")
-  .option("--budget <number>", "Overhead budget % (default from scenario)")
+  .option("--budget <number>", "Overhead budget % (default 200)")
   .option("--resolution <number>", "Grid resolution per axis (default 10)")
   .option("--date-res <number>", "Start date resolution (default 7)")
   .option("--max-iter <number>", "Max adaptive iterations (default 6)")
   .option("--alpha <number>", "CO₂ weight in score (α=1 pure CO₂, α=0 pure overhead, default 1)")
+  .option("--start <date>", "Fixed start date MM-DD (skip date sweep)")
   .option("-o, --output <path>", "Write results as JSON")
   .action(async (opts) => {
     const { optimizeCli } = await import("./optimize");

@@ -88,7 +88,13 @@ function uniqVals(data: SweepPoint[], key: string, fmt: string, dec?: number) {
 export function OptimizePage() {
   const app = useApp();
 
-  const [scenarioId, setScenarioId] = createSignal("");
+  const [model, setModel] = createSignal("");
+  const [region, setRegion] = createSignal("");
+  const [historicalYears, setHistoricalYears] = createSignal<number[]>([]);
+  const [optimizeStartTime, setOptimizeStartTime] = createSignal(true);
+  const [fixedStartTime, setFixedStartTime] = createSignal("01-01");
+  const [availableRegions, setAvailableRegions] = createSignal<string[]>([]);
+  const [availableYears, setAvailableYears] = createSignal<number[]>([]);
   const [tpMax, setTpMax] = createSignal(500);
   const [resolution, setResolution] = createSignal(10);
   const [startDateResolution, setStartDateResolution] = createSignal(7);
@@ -108,11 +114,13 @@ export function OptimizePage() {
   let hysteresisCanvas: HTMLCanvasElement | undefined;
   let hysteresisChart: Chart | undefined;
 
-  const scenarios = createMemo(() => app.allScenarios());
-
-  const selectedScenario = createMemo(() =>
-    scenarios().find(s => s.id === scenarioId()),
-  );
+  fetch(`${import.meta.env.BASE_URL}data/available-co2.json`)
+    .then(r => r.json())
+    .then(data => {
+      setAvailableRegions(data.regions);
+      setAvailableYears(data.years);
+    })
+    .catch(() => {});
 
   const optimal = createMemo(() => {
     const p = points();
@@ -171,17 +179,18 @@ export function OptimizePage() {
     return data;
   });
 
+  const canRun = () => model() && region() && historicalYears().length > 0;
+
   const handleRun = async () => {
-    const scenario = selectedScenario();
-    if (!scenario) return;
+    if (!canRun()) return;
     setRunning(true);
     setError(null);
     setPoints([]);
     setIterMsg("");
 
     try {
-      const profile = app.state.profiles![scenario.model];
-      if (!profile) throw new Error(`Unknown model: ${scenario.model}`);
+      const profile = app.state.profiles![model()];
+      if (!profile) throw new Error(`Unknown model: ${model()}`);
       const constants = app.state.constants!;
 
       const fullProfile: FullProfile = {
@@ -193,19 +202,20 @@ export function OptimizePage() {
         checkpointResumeTime: constants.checkpoint_resume_time,
       };
 
-      const timeline = await app.getTimeline(scenario.region, scenario.historicalYears);
+      const timeline = await app.getTimeline(region(), historicalYears());
 
       await runOptimizationInWorker(
-        fullProfile, timeline, scenario,
+        fullProfile, timeline, historicalYears(),
         {
           thetaPauseMax: tpMax(),
           overheadBudgetPct: budget(),
           resolution: resolution(),
-          startDateResolution: startDateResolution(),
+          startDateResolution: optimizeStartTime() ? startDateResolution() : 0,
           maxIterations: maxIterations(),
           minStep: 3,
           shrinkFactor: 0.45,
           alpha: alpha(),
+          ...(optimizeStartTime() ? {} : { fixedStartTime: fixedStartTime() }),
         },
         (iter, iterPts, best) => {
           setPoints(prev => {
@@ -395,17 +405,81 @@ export function OptimizePage() {
       <div class="rounded-xl bg-surface-2 border p-6 mb-6 transition-[border-color,box-shadow] duration-700" classList={{ "animate-breathe": running(), "border-border-default/60": !running() }}>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
           <div>
-            <label class="block text-xs font-medium text-fg-muted mb-1">Scenario</label>
+            <label class="block text-xs font-medium text-fg-muted mb-1">Model</label>
             <select
-              value={scenarioId()}
-              onChange={e => setScenarioId(e.currentTarget.value)}
+              value={model()}
+              onChange={e => setModel(e.currentTarget.value)}
               class="w-full bg-surface-3 border border-border-default/50 rounded px-3 py-2 text-sm text-fg-body focus:outline-none focus:border-accent"
             >
               <option value="">Select...</option>
-              <For each={scenarios()}>
-                {s => <option value={s.id}>{s.description} ({s.model}, {s.region})</option>}
+              <For each={Object.keys(app.state.profiles || {})}>
+                {m => <option value={m}>{m}</option>}
               </For>
             </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-medium text-fg-muted mb-1">Region</label>
+            <select
+              value={region()}
+              onChange={e => setRegion(e.currentTarget.value)}
+              class="w-full bg-surface-3 border border-border-default/50 rounded px-3 py-2 text-sm text-fg-body focus:outline-none focus:border-accent"
+            >
+              <option value="">Select...</option>
+              <For each={availableRegions()}>
+                {r => <option value={r}>{r}</option>}
+              </For>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-medium text-fg-muted mb-1">Years</label>
+            <div class="flex flex-wrap gap-2 pt-1">
+              <For each={availableYears()}>
+                {y => (
+                  <label class="flex items-center gap-1 text-xs text-fg-body cursor-pointer select-none">
+                    <input
+                      type="checkbox" checked={historicalYears().includes(y)}
+                      onChange={e => {
+                        setHistoricalYears(prev =>
+                          e.currentTarget.checked ? [...prev, y] : prev.filter(v => v !== y)
+                        );
+                      }}
+                      class="accent-accent"
+                    />
+                    {y}
+                  </label>
+                )}
+              </For>
+            </div>
+          </div>
+
+          <div>
+            <label class="flex items-center gap-2 text-xs font-medium text-fg-muted mb-1 cursor-pointer select-none">
+              <input
+                type="checkbox" checked={optimizeStartTime()}
+                onChange={e => setOptimizeStartTime(e.currentTarget.checked)}
+                class="accent-accent"
+              />
+              Optimize start time
+            </label>
+            <Show when={!optimizeStartTime()}>
+              <input
+                type="text" value={fixedStartTime()}
+                onInput={e => setFixedStartTime(e.currentTarget.value)}
+                placeholder="MM-DD"
+                class="w-full bg-surface-3 border border-border-default/50 rounded px-3 py-2 text-sm text-fg-body focus:outline-none focus:border-accent"
+              />
+            </Show>
+            <Show when={optimizeStartTime()}>
+              <input
+                type="number" value={startDateResolution()}
+                onInput={e => setStartDateResolution(Math.max(2, +e.currentTarget.value || 2))}
+                min="2" max="365"
+                placeholder="Resolution"
+                class="w-full bg-surface-3 border border-border-default/50 rounded px-3 py-2 text-sm text-fg-body focus:outline-none focus:border-accent"
+              />
+            </Show>
           </div>
 
           <div>
@@ -424,16 +498,6 @@ export function OptimizePage() {
               type="number" value={resolution()}
               onInput={e => setResolution(Math.max(3, +e.currentTarget.value || 3))}
               min="3" max="25"
-              class="w-full bg-surface-3 border border-border-default/50 rounded px-3 py-2 text-sm text-fg-body focus:outline-none focus:border-accent"
-            />
-          </div>
-
-          <div>
-            <label class="block text-xs font-medium text-fg-muted mb-1">Start date resolution</label>
-            <input
-              type="number" value={startDateResolution()}
-              onInput={e => setStartDateResolution(Math.max(2, +e.currentTarget.value || 2))}
-              min="2" max="365"
               class="w-full bg-surface-3 border border-border-default/50 rounded px-3 py-2 text-sm text-fg-body focus:outline-none focus:border-accent"
             />
           </div>
@@ -471,7 +535,7 @@ export function OptimizePage() {
         <div class="flex items-center gap-3">
           <button
             onClick={handleRun}
-            disabled={running() || !selectedScenario()}
+            disabled={running() || !canRun()}
             class="px-5 py-2 rounded-lg bg-accent text-fg-primary text-sm font-medium hover:bg-accent/90 active:scale-[0.97] disabled:opacity-40 disabled:active:scale-100 transition-all"
           >
             {running() ? "Running..." : "Run optimization"}

@@ -1,4 +1,4 @@
-import type { FullProfile, CO2Timeline, Scenario, SweepPoint } from "../domain/types";
+import type { FullProfile, CO2Timeline, SweepPoint } from "../domain/types";
 import type { AdaptiveOptions } from "../domain/optimize";
 
 function stripProxies<T>(data: T): T {
@@ -8,7 +8,7 @@ function stripProxies<T>(data: T): T {
 export function runOptimizationInWorker(
   profile: FullProfile,
   timeline: CO2Timeline,
-  scenario: Scenario,
+  historicalYears: number[],
   options: AdaptiveOptions,
   onIteration?: (iteration: number, points: SweepPoint[], best: SweepPoint | null) => void,
 ): Promise<{ points: SweepPoint[]; best: SweepPoint | null }> {
@@ -34,7 +34,7 @@ export function runOptimizationInWorker(
       type: "start",
       profile: stripProxies(profile),
       timeline: stripProxies(timeline),
-      scenario: stripProxies(scenario),
+      historicalYears,
       options,
     });
   });

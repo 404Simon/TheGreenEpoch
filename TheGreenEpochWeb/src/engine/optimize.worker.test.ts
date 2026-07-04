@@ -92,7 +92,7 @@ describe("worker message data is structured-clone safe", () => {
   it("clones the full worker message payload", () => {
     const profile = sampleProfile();
     const timeline = sampleTimeline();
-    const scenario = sampleScenario();
+    const historicalYears = [2022, 2023, 2024, 2025];
     const options = {
       thetaPauseMax: 500,
       overheadBudgetPct: 200,
@@ -101,12 +101,12 @@ describe("worker message data is structured-clone safe", () => {
       minStep: 3,
       shrinkFactor: 0.45,
     };
-    const payload = { type: "start" as const, profile, timeline, scenario, options, startTimeIdx: 0 };
+    const payload = { type: "start" as const, profile, timeline, historicalYears, options };
     const cloned = structuredCloneSafe(payload);
     expect(cloned.type).toBe("start");
     expect(cloned.profile.name).toBe("Deepseek");
     expect(cloned.timeline.timestamps.length).toBe(105_120);
-    expect(cloned.scenario.thresholds).toEqual([200, 300]);
+    expect(cloned.historicalYears).toEqual([2022, 2023, 2024, 2025]);
   });
 
   it("clones SweepPoint arrays (iteration messages)", () => {
@@ -311,19 +311,18 @@ describe("Solid store proxies (runtime DataCloneError reproduction)", () => {
   it("deep-clones full worker payload from Solid stores", () => {
     const profile = solidProxy(sampleProfile());
     const timeline = solidProxy(sampleTimeline());
-    const scenario = solidProxy(sampleScenario());
+    const historicalYears = [2022, 2023, 2024, 2025];
     const options = { thetaPauseMax: 500, overheadBudgetPct: 200, resolution: 10, maxIterations: 6, minStep: 3, shrinkFactor: 0.45 };
 
     const payload = {
       type: "start" as const,
       profile: JSON.parse(JSON.stringify(profile)),
       timeline: JSON.parse(JSON.stringify(timeline)),
-      scenario: JSON.parse(JSON.stringify(scenario)),
+      historicalYears,
       options,
-      startTimeIdx: 0,
     };
     const cloned = structuredClone(payload);
-    expect(cloned.scenario.thresholds).toEqual([200, 300]);
+    expect(cloned.historicalYears).toEqual([2022, 2023, 2024, 2025]);
     expect(cloned.timeline.timestamps.length).toBe(105_120);
   });
 });

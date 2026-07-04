@@ -1,7 +1,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import type { Constants, TrainingProfile, Scenario, CO2Timeline, YearCO2, FullProfile } from "../domain/types";
+import type { Constants, TrainingProfile, CO2Timeline, YearCO2, FullProfile } from "../domain/types";
 import { runOptimization } from "../domain/optimize";
 import type { AdaptiveOptions } from "../domain/optimize";
 import { averageYears } from "../data/co2-loader";
@@ -21,11 +21,13 @@ function loadCO2Timeline(zone: string, years: number[]): CO2Timeline {
 }
 
 export async function optimizeCli(raw: {
-  scenario: string; tpMax?: string; budget?: string; resolution?: string;
-  dateRes?: string; maxIter?: string; alpha?: string; output?: string;
+  model: string; region: string; years: string;
+  tpMax?: string; budget?: string; resolution?: string;
+  dateRes?: string; maxIter?: string; alpha?: string;
+  start?: string; output?: string;
 }): Promise<void> {
-  const scenarioDesc = raw.scenario;
   const output = raw.output ?? null;
+  const historicalYears = raw.years.split(",").map(Number);
   const cliOpts = {
     thetaPauseMax: raw.tpMax ? parseFloat(raw.tpMax) : undefined,
     overheadBudgetPct: raw.budget ? parseFloat(raw.budget) : undefined,
@@ -37,22 +39,10 @@ export async function optimizeCli(raw: {
 
   const constants = loadJSON<Constants>("constants.json");
   const profiles = loadJSON<Record<string, TrainingProfile>>("profiles.json");
-  const scenarios = loadJSON<Scenario[]>("scenarios.json");
 
-  const match = (s: Scenario) =>
-    s.description.toLowerCase().includes(scenarioDesc.toLowerCase());
-  const scenario = scenarios.find(match);
-  if (!scenario) {
-    console.error(`  No scenario matching "${scenarioDesc}". Available:`);
-    for (const s of scenarios) {
-      console.error(`    ${s.description}`);
-    }
-    process.exit(1);
-  }
-
-  const profile = profiles[scenario.model];
+  const profile = profiles[raw.model];
   if (!profile) {
-    console.error(`  Unknown model: ${scenario.model}`);
+    console.error(`  Unknown model: ${raw.model}. Available: ${Object.keys(profiles).join(", ")}`);
     process.exit(1);
   }
 
@@ -65,25 +55,26 @@ export async function optimizeCli(raw: {
     checkpointResumeTime: constants.checkpoint_resume_time,
   };
 
-  const timeline = loadCO2Timeline(scenario.region, scenario.historicalYears);
+  const timeline = loadCO2Timeline(raw.region, historicalYears);
 
   const options: AdaptiveOptions = {
     thetaPauseMax: cliOpts.thetaPauseMax ?? 500,
-    overheadBudgetPct: cliOpts.overheadBudgetPct ?? scenario.overheadBudgetPct,
+    overheadBudgetPct: cliOpts.overheadBudgetPct ?? 200,
     resolution: cliOpts.resolution ?? 10,
     startDateResolution: cliOpts.startDateResolution ?? 7,
     maxIterations: cliOpts.maxIterations ?? 6,
     minStep: 3,
     shrinkFactor: 0.45,
     alpha: cliOpts.alpha ?? 1,
+    ...(raw.start ? { fixedStartTime: raw.start } : {}),
   };
 
   console.log(`\n  TheGreenEpoch Optimize`);
-  console.log(`  ${scenario.description} (${scenario.model}, ${scenario.region})`);
+  console.log(`  Model: ${raw.model}, Region: ${raw.region}, Years: ${raw.years}`);
   console.log(`  Grid: ${options.resolution}×${options.startDateResolution}, ${options.maxIterations} iter(s)`);
   console.log(`  Budget: ${options.overheadBudgetPct}%, α=${options.alpha}\n`);
 
-  const { points, best } = runOptimization(fullProfile, timeline, scenario, options, (iter, iterPts, iterBest) => {
+  const { points, best } = runOptimization(fullProfile, timeline, historicalYears, options, (iter, iterPts, iterBest) => {
     const msg = iterBest
       ? `iter ${iter + 1}: ${iterPts.length} pts, best score=${iterBest.score.toFixed(4)} (θₚ=${iterBest.thetaPause}, θᵣ=${iterBest.thetaResume})`
       : `iter ${iter + 1}: ${iterPts.length} pts, no valid point`;
@@ -106,7 +97,7 @@ export async function optimizeCli(raw: {
     console.log(`  No valid best point found`);
   }
 
-  const result = { scenario: { description: scenario.description, model: scenario.model, region: scenario.region }, options, points, best };
+  const result = { model: raw.model, region: raw.region, historicalYears, options, points, best };
 
   if (output) {
     writeFileSync(output, JSON.stringify(result, null, 2), "utf-8");

@@ -2,6 +2,7 @@ import type { SweepPoint, FullProfile, CO2Timeline, Scenario, SimConfig } from "
 import { simulateStepwise } from "./simulation";
 import { neverPausePolicy, hysteresisPolicy } from "./policy";
 import { tokensPerSecond } from "./physics";
+import { computeOverheadPct, computeSavingsPct, computeScore } from "./result";
 
 export interface AdaptiveOptions {
   thetaPauseMax: number;
@@ -58,24 +59,22 @@ export function runOptimization(
         }
         if (!last) continue;
 
-        const overheadS = last.pausedS + last.checkpointS;
-        const actualOverheadPct = 100 * overheadS / (last.tokensTotal / tps || 1);
+        const actualOverheadPct = computeOverheadPct(last.pausedS, last.checkpointS, last.tokensTotal, tps);
         const totalEm = last.totalEmissionsG / 1000;
-        const co2SavingsPct = baselineEm > 0 ? (baselineEm - totalEm) / baselineEm * 100 : 0;
+        const co2SavingsPct = computeSavingsPct(totalEm, baselineEm);
 
-        const savingsNorm = co2SavingsPct / 100;
-        const overheadNorm = actualOverheadPct / Math.max(options.overheadBudgetPct, 0.001);
+        const score = computeScore(co2SavingsPct, actualOverheadPct, options.overheadBudgetPct, options.alpha);
         iterPoints.push({
           thetaPause: pt.thetaPause,
           thetaResume: pt.thetaResume,
           startTime,
           actualOverheadPct,
           co2SavingsPct,
-          score: options.alpha * savingsNorm - (1 - options.alpha) * overheadNorm,
+          score,
           numPauses: last.numPauses,
           totalEmissionsKgco2: totalEm,
           baselineEmissionsKgco2: baselineEm,
-          withinBudget: overheadS / (last.tokensTotal / tps || 1) <= options.overheadBudgetPct / 100,
+          withinBudget: actualOverheadPct <= options.overheadBudgetPct,
           stopReason: last.stopReason,
           completed: last.tokensRemaining <= 0,
           iteration: iter,

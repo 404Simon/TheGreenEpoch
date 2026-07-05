@@ -53,8 +53,9 @@ def parse_filename(filename: str) -> dict:
     """Extract metadata from a result CSV filename.
 
     Expected patterns:
-      Fixed start:  {MODEL}_{REGION}_{MM}_{DD}_{YYYY}_{MAXTHR}_{MAXIT}.csv
-      All starts:   {MODEL}_{REGION}_all_{YYYY}_{MAXTHR}_{MAXIT}.csv
+      Fixed start:    {MODEL}_{REGION}_{MM}_{DD}_{YYYY}_{MAXTHR}_{MAXIT}.csv
+      All starts:     {MODEL}_{REGION}_all_{YYYY}_{MAXTHR}_{MAXIT}.csv
+      Multi-year:     {MODEL}_{REGION}_all_{YYYY-YYYY}_{MAXTHR}_{MAXIT}_alpha{N}.csv
     """
     stem = Path(filename).stem
     parts = stem.split("_")
@@ -63,9 +64,16 @@ def parse_filename(filename: str) -> dict:
 
     if parts[2] == "all":
         start_date = "all"
-        year = parts[3]
-        max_threshold = int(parts[4])
-        max_iter = int(parts[5].replace("it", ""))
+        if "-" in parts[3] and len(parts[3]) == 9:
+            # Multi-year: all_2022-2025_800_10it_alpha1
+            year = parts[3]
+            max_threshold = int(parts[4])
+            max_iter = int(parts[5].replace("it", ""))
+        else:
+            # Single year: all_2025_800_10it
+            year = parts[3]
+            max_threshold = int(parts[4])
+            max_iter = int(parts[5].replace("it", ""))
     else:
         start_month = parts[2]
         start_day = parts[3]
@@ -1563,6 +1571,99 @@ def plot_score_vs_iteration(df: pd.DataFrame, output_dir: Path):
     print(f"  ✓ {filename}")
 
 
+def plot_avg_score_vs_iteration(df: pd.DataFrame, output_dir: Path):
+    """Plot average score vs optimization iteration.
+
+    Same layout as plot_score_vs_iteration, but uses mean instead of max.
+    For each (model, region, iteration), compute the average score across
+    all (θ_p, θ_r, start_date) configurations.
+    Uses all data (fixed + _all_).
+    """
+    linestyles = {"DeepSeek V3": "-", "Kimi K2": "--"}
+
+    # Per-region figures
+    for region in REGION_ORDER:
+        region_df = df[df["region"] == region]
+        if region_df.empty:
+            continue
+
+        fig, ax = plt.subplots(figsize=(10, 7))
+
+        for model in MODEL_ORDER:
+            model_df = region_df[region_df["model"] == model]
+            if model_df.empty:
+                continue
+
+            agg = (
+                model_df.groupby("iter")
+                .agg(avg_score=("score", "mean"))
+                .reset_index()
+                .sort_values("iter")
+            )
+
+            ax.plot(
+                agg["iter"],
+                agg["avg_score"],
+                linewidth=2,
+                marker="o",
+                markersize=6,
+                color=COLORS_MODEL.get(model, "gray"),
+                label=model,
+            )
+
+        ax.set_xlabel("Iteration")
+        ax.set_ylabel("Average Score")
+        ax.set_title(f"Average Score vs Iteration — {region}")
+        ax.legend(fontsize=10)
+        ax.grid(True, alpha=0.3)
+        ax.set_xticks(range(10))
+
+        filename = f"avg_score_vs_iteration_{region}.png"
+        fig.savefig(output_dir / filename)
+        plt.close(fig)
+        print(f"  ✓ {filename}")
+
+    # Combined figure
+    fig, ax = plt.subplots(figsize=(14, 9))
+
+    for model in MODEL_ORDER:
+        for region in REGION_ORDER:
+            subset = df[(df["model"] == model) & (df["region"] == region)]
+            if subset.empty:
+                continue
+
+            agg = (
+                subset.groupby("iter")
+                .agg(avg_score=("score", "mean"))
+                .reset_index()
+                .sort_values("iter")
+            )
+
+            ls = linestyles.get(model, "-")
+            ax.plot(
+                agg["iter"],
+                agg["avg_score"],
+                linewidth=2,
+                linestyle=ls,
+                marker="o",
+                markersize=5,
+                color=COLORS_REGION.get(region, "gray"),
+                label=f"{region} ({model})",
+            )
+
+    ax.set_xlabel("Iteration")
+    ax.set_ylabel("Average Score")
+    ax.set_title("Average Score vs Iteration — All Regions & Models")
+    ax.legend(fontsize=8, loc="best", ncol=2)
+    ax.grid(True, alpha=0.3)
+    ax.set_xticks(range(10))
+
+    filename = "avg_score_vs_iteration_all.png"
+    fig.savefig(output_dir / filename)
+    plt.close(fig)
+    print(f"  ✓ {filename}")
+
+
 def plot_alpha_comparison(df: pd.DataFrame, output_dir: Path):
     """Compare alpha variants for DS_DE (alpha=1.0, 0.8, 0.5).
 
@@ -1743,6 +1844,207 @@ def plot_alpha_comparison(df: pd.DataFrame, output_dir: Path):
     print(f"  ✓ {filename}")
 
 
+def plot_multiyear_comparison(df: pd.DataFrame, output_dir: Path):
+    """Compare multi-year (2022-2025) vs single-year (2025) results.
+
+    Figures:
+      A. Best score per (model, region): single-year vs multi-year
+      B. Savings% and Overhead% per (model, region)
+      C. Average best score across regions per model
+      D. Average iteration score vs iteration (per-region + combined)
+    """
+    df_all = df[df["file_type"] == "all"].copy()
+    if df_all.empty:
+        print("  No _all_ data found, skipping multi-year comparison.")
+        return
+
+    # Classify as single-year or multi-year
+    df_all["is_multiyear"] = df_all["year"].astype(str).str.contains("-")
+    df_single = df_all[~df_all["is_multiyear"]]
+    df_multi = df_all[df_all["is_multiyear"]]
+
+    if df_multi.empty:
+        print("  No multi-year data found, skipping multi-year comparison.")
+        return
+
+    year_label_single = "2025"
+    year_labels_multi = {y: y for y in df_multi["year"].unique()}
+
+    # ── Figure A: Best score comparison ──
+    rows_a = []
+    for (model, region), group in df_all.groupby(["model", "region"]):
+        for is_my, sub in group.groupby("is_multiyear"):
+            if sub.empty:
+                continue
+            best = find_best_tradeoff(sub)
+            rows_a.append({
+                "model": model,
+                "region": region,
+                "is_multiyear": is_my,
+                "score": best["score"],
+            })
+
+    if not rows_a:
+        return
+
+    best_df = pd.DataFrame(rows_a)
+
+    fig, ax = plt.subplots(figsize=(14, 7))
+    x_labels = []
+    x_positions = []
+    bar_width = 0.35
+    x = 0
+
+    for model in MODEL_ORDER:
+        for region in REGION_ORDER:
+            sub = best_df[(best_df["model"] == model) & (best_df["region"] == region)]
+            if sub.empty:
+                continue
+            x_labels.append(f"{region}\n({model.split()[0]})")
+            x_positions.append(x)
+
+            single = sub[sub["is_multiyear"] == False]
+            multi = sub[sub["is_multiyear"] == True]
+
+            if not single.empty:
+                ax.bar(
+                    x - bar_width / 2, single["score"].values[0], bar_width,
+                    color=COLORS_MODEL.get(model, "gray"), alpha=0.5,
+                    edgecolor="black", linewidth=0.5,
+                    label=year_label_single if x == 0 else "",
+                )
+            if not multi.empty:
+                ax.bar(
+                    x + bar_width / 2, multi["score"].values[0], bar_width,
+                    color=COLORS_MODEL.get(model, "gray"), alpha=1.0,
+                    edgecolor="black", linewidth=0.5,
+                    label="Multi-year" if x == 0 else "",
+                )
+            x += 1
+
+    ax.set_xticks(x_positions)
+    ax.set_xticklabels(x_labels, fontsize=8)
+    ax.set_ylabel("Best Score")
+    ax.set_title("Best Score: Single-Year vs Multi-Year")
+    ax.legend()
+    ax.grid(True, alpha=0.3, axis="y")
+
+    fig.tight_layout()
+    filename = "multiyear_comparison_best.png"
+    fig.savefig(output_dir / filename)
+    plt.close(fig)
+    print(f"  ✓ {filename}")
+
+    # ── Figure B: Savings and Overhead comparison ──
+    rows_b = []
+    for (model, region), group in df_all.groupby(["model", "region"]):
+        for is_my, sub in group.groupby("is_multiyear"):
+            if sub.empty:
+                continue
+            best = find_best_tradeoff(sub)
+            rows_b.append({
+                "model": model,
+                "region": region,
+                "is_multiyear": is_my,
+                "co2_save_pct": best["co2_save_pct"],
+                "overhead_pct": best["overhead_pct"],
+            })
+
+    best_b = pd.DataFrame(rows_b)
+
+    fig, axes = plt.subplots(1, 2, figsize=(18, 7))
+
+    for ax_idx, (metric, label) in enumerate([
+        ("co2_save_pct", "CO₂ Savings (%)"),
+        ("overhead_pct", "Time Overhead (%)"),
+    ]):
+        ax = axes[ax_idx]
+        x = 0
+        x_labels = []
+        x_positions = []
+
+        for model in MODEL_ORDER:
+            for region in REGION_ORDER:
+                sub = best_b[(best_b["model"] == model) & (best_b["region"] == region)]
+                if sub.empty:
+                    continue
+                x_labels.append(f"{region}\n({model.split()[0]})")
+                x_positions.append(x)
+
+                single = sub[sub["is_multiyear"] == False]
+                multi = sub[sub["is_multiyear"] == True]
+
+                if not single.empty:
+                    ax.bar(
+                        x - bar_width / 2, single[metric].values[0], bar_width,
+                        color=COLORS_MODEL.get(model, "gray"), alpha=0.5,
+                        edgecolor="black", linewidth=0.5,
+                        label=year_label_single if x == 0 else "",
+                    )
+                if not multi.empty:
+                    ax.bar(
+                        x + bar_width / 2, multi[metric].values[0], bar_width,
+                        color=COLORS_MODEL.get(model, "gray"), alpha=1.0,
+                        edgecolor="black", linewidth=0.5,
+                        label="Multi-year" if x == 0 else "",
+                    )
+                x += 1
+
+        ax.set_xticks(x_positions)
+        ax.set_xticklabels(x_labels, fontsize=8)
+        ax.set_ylabel(label)
+        ax.set_title(f"{label}: Single-Year vs Multi-Year")
+        ax.legend()
+        ax.grid(True, alpha=0.3, axis="y")
+
+    fig.tight_layout()
+    filename = "multiyear_comparison_metrics.png"
+    fig.savefig(output_dir / filename)
+    plt.close(fig)
+    print(f"  ✓ {filename}")
+
+    # ── Figure C: Average best score across regions ──
+    fig, ax = plt.subplots(figsize=(8, 7))
+    x = np.arange(len(MODEL_ORDER))
+    bar_width_c = 0.35
+
+    for i, is_my in enumerate([False, True]):
+        label = "Multi-year" if is_my else year_label_single
+        vals = []
+        for model in MODEL_ORDER:
+            sub = best_df[(best_df["model"] == model) & (best_df["is_multiyear"] == is_my)]
+            vals.append(sub["score"].mean() if not sub.empty else 0)
+
+        offset = (i - 0.5) * bar_width_c
+        bars = ax.bar(
+            x + offset, vals, bar_width_c,
+            color=[COLORS_MODEL.get(m, "gray") for m in MODEL_ORDER],
+            alpha=1.0 if is_my else 0.5,
+            edgecolor="black", linewidth=0.5,
+            label=label,
+        )
+        for bar, val in zip(bars, vals):
+            ax.annotate(
+                f"{val:.4f}",
+                (bar.get_x() + bar.get_width() / 2, bar.get_height()),
+                textcoords="offset points", xytext=(0, 4),
+                ha="center", fontsize=9,
+            )
+
+    ax.set_xticks(x)
+    ax.set_xticklabels(MODEL_ORDER)
+    ax.set_ylabel("Average Best Score")
+    ax.set_title("Average Best Score Across Regions")
+    ax.legend()
+    ax.grid(True, alpha=0.3, axis="y")
+
+    fig.tight_layout()
+    filename = "multiyear_avg_score.png"
+    fig.savefig(output_dir / filename)
+    plt.close(fig)
+    print(f"  ✓ {filename}")
+
+
 def plot_best_run_comparison(df: pd.DataFrame, output_dir: Path):
     """Compare savings and overhead of the best run of each model per country.
 
@@ -1866,11 +2168,13 @@ def main():
     print_best_startdate_table(df, FIGURES_DIR)
     plot_best_startdate_histogram(df, FIGURES_DIR)
     plot_score_vs_iteration(df, FIGURES_DIR)
+    plot_avg_score_vs_iteration(df, FIGURES_DIR)
     plot_savings_vs_overhead_all(df, FIGURES_DIR)
     plot_score_vs_overhead_all(df, FIGURES_DIR)
     plot_savings_vs_overhead_combined(df, FIGURES_DIR)
     plot_score_vs_overhead_combined(df, FIGURES_DIR)
     plot_alpha_comparison(df, FIGURES_DIR)
+    plot_multiyear_comparison(df, FIGURES_DIR)
     plot_best_run_comparison(df, FIGURES_DIR)
 
     print(f"\n✓ All figures saved to {FIGURES_DIR}/")

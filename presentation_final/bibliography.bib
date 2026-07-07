@@ -1,92 +1,89 @@
 @misc{kimi_team_kimi_2025,
   title = {Kimi K2: Open Agentic Intelligence},
-  rights = {Creative Commons Attribution Non Commercial No
-  Derivatives 4.0 International},
+  rights = {Creative Commons Attribution Non Commercial No Derivatives 4.0
+            International},
   url = {https://arxiv.org/abs/2507.20534},
   doi = {10.48550/ARXIV.2507.20534},
   shorttitle = {Kimi K2},
-  abstract = {We introduce Kimi K2, a Mixture-of-Experts ({MoE})
-    large language model with 32 billion activated parameters and 1
-    trillion total parameters. We propose the {MuonClip} optimizer,
-    which improves upon Muon with a novel {QK}-clip technique to
-    address training instability while enjoying the advanced token
-    efficiency of Muon. Based on {MuonClip}, K2 was pre-trained on
-    15.5 trillion tokens with zero loss spike. During post-training,
-    K2 undergoes a multi-stage post-training process, highlighted by
-    a large-scale agentic data synthesis pipeline and a joint
-    reinforcement learning ({RL}) stage, where the model improves its
-    capabilities through interactions with real and synthetic environments.
-    Kimi K2 achieves state-of-the-art performance among open-source
-    non-thinking models, with strengths in agentic capabilities.
-    Notably, K2 obtains 66.1 on Tau2-Bench, 76.5 on {ACEBench} (En),
-    65.8 on {SWE}-Bench Verified, and 47.3 on {SWE}-Bench Multilingual
-    -- surpassing most open and closed-sourced baselines in
-    non-thinking settings. It also exhibits strong capabilities in
-    coding, mathematics, and reasoning tasks, with a score of 53.7 on
-    {LiveCodeBench} v6, 49.5 on {AIME} 2025, 75.1 on {GPQA}-Diamond,
-    and 27.1 on {OJBench}, all without extended thinking. These results
-    position Kimi K2 as one of the most capable open-source large
-    language models to date, particularly in software engineering and
-    agentic tasks. We release our base and post-trained model
-    checkpoints to facilitate future research and applications of
-  agentic intelligence.},
+  abstract = {We introduce Kimi K2, a Mixture-of-Experts ({MoE}) large language
+              model with 32 billion activated parameters and 1 trillion total
+              parameters. We propose the {MuonClip} optimizer, which improves
+              upon Muon with a novel {QK}-clip technique to address training
+              instability while enjoying the advanced token efficiency of Muon.
+              Based on {MuonClip}, K2 was pre-trained on 15.5 trillion tokens
+              with zero loss spike. During post-training, K2 undergoes a
+              multi-stage post-training process, highlighted by a large-scale
+              agentic data synthesis pipeline and a joint reinforcement learning
+              ({RL}) stage, where the model improves its capabilities through
+              interactions with real and synthetic environments. Kimi K2 achieves
+              state-of-the-art performance among open-source non-thinking models,
+              with strengths in agentic capabilities. Notably, K2 obtains 66.1 on
+              Tau2-Bench, 76.5 on {ACEBench} (En), 65.8 on {SWE}-Bench Verified,
+              and 47.3 on {SWE}-Bench Multilingual -- surpassing most open and
+              closed-sourced baselines in non-thinking settings. It also exhibits
+              strong capabilities in coding, mathematics, and reasoning tasks,
+              with a score of 53.7 on {LiveCodeBench} v6, 49.5 on {AIME} 2025,
+              75.1 on {GPQA}-Diamond, and 27.1 on {OJBench}, all without extended
+              thinking. These results position Kimi K2 as one of the most capable
+              open-source large language models to date, particularly in software
+              engineering and agentic tasks. We release our base and post-trained
+              model checkpoints to facilitate future research and applications of
+              agentic intelligence.},
   publisher = {{arXiv}},
-  author = {{Kimi Team} and Bai, Yifan and Bao, Yiping and Charles,
-    Y. and Chen, Cheng and Chen, Guanduo and Chen, Haiting and Chen,
-    Huarong and Chen, Jiahao and Chen, Ningxin and Chen, Ruijue and
-    Chen, Yanru and Chen, Yuankun and Chen, Yutian and Chen, Zhuofu and
-    Cui, Jialei and Ding, Hao and Dong, Mengnan and Du, Angang and Du,
-    Chenzhuang and Du, Dikang and Du, Yulun and Fan, Yu and Feng,
-    Yichen and Fu, Kelin and Gao, Bofei and Gao, Chenxiao and Gao,
-    Hongcheng and Gao, Peizhong and Gao, Tong and Ge, Yuyao and Geng,
-    Shangyi and Gu, Qizheng and Gu, Xinran and Guan, Longyu and Guo,
-    Haiqing and Guo, Jianhang and Hao, Xiaoru and He, Tianhong and He,
-    Weiran and He, Wenyang and He, Yunjia and Hong, Chao and Hu, Hao
-    and Hu, Yangyang and Hu, Zhenxing and Huang, Weixiao and Huang,
-    Zhiqi and Huang, Zihao and Jiang, Tao and Jiang, Zhejun and Jin,
-    Xinyi and Kang, Yongsheng and Lai, Guokun and Li, Cheng and Li,
-    Fang and Li, Haoyang and Li, Ming and Li, Wentao and Li, Yang and
-    Li, Yanhao and Li, Yiwei and Li, Zhaowei and Li, Zheming and Lin,
-    Hongzhan and Lin, Xiaohan and Lin, Zongyu and Liu, Chengyin and
-    Liu, Chenyu and Liu, Hongzhang and Liu, Jingyuan and Liu, Junqi and
-    Liu, Liang and Liu, Shaowei and Liu, T. Y. and Liu, Tianwei and
-    Liu, Weizhou and Liu, Yangyang and Liu, Yibo and Liu, Yiping and
-    Liu, Yue and Liu, Zhengying and Lu, Enzhe and Lu, Haoyu and Lu,
-    Lijun and Luo, Yashuo and Ma, Shengling and Ma, Xinyu and Ma,
-    Yingwei and Mao, Shaoguang and Mei, Jie and Men, Xin and Miao, Yibo
-    and Pan, Siyuan and Peng, Yebo and Qin, Ruoyu and Qin, Zeyu and Qu,
-    Bowen and Shang, Zeyu and Shi, Lidong and Shi, Shengyuan and Song,
-    Feifan and Su, Jianlin and Su, Zhengyuan and Sui, Lin and Sun,
-    Xinjie and Sung, Flood and Tai, Yunpeng and Tang, Heyi and Tao,
-    Jiawen and Teng, Qifeng and Tian, Chaoran and Wang, Chensi and
-    Wang, Dinglu and Wang, Feng and Wang, Hailong and Wang, Haiming and
-    Wang, Jianzhou and Wang, Jiaxing and Wang, Jinhong and Wang,
-    Shengjie and Wang, Shuyi and Wang, Si and Wang, Xinyuan and Wang,
-    Yao and Wang, Yejie and Wang, Yiqin and Wang, Yuxin and Wang, Yuzhi
-    and Wang, Zhaoji and Wang, Zhengtao and Wang, Zhexu and Wei, Chu
-    and Wei, Qianqian and Wu, Haoning and Wu, Wenhao and Wu, Xingzhe
-    and Wu, Yuxin and Xiao, Chenjun and Xie, Jin and Xie, Xiaotong and
-    Xiong, Weimin and Xu, Boyu and Xu, Jinjing and Xu, L. H. and Xu,
-    Lin and Xu, Suting and Xu, Weixin and Xu, Xinran and Xu, Yangchuan
-    and Xu, Ziyao and Xu, Jing and Yan, Junjie and Yan, Yuzi and Yang,
-    Hao and Yang, Xiaofei and Yang, Yi and Yang, Ying and Yang, Zhen
-    and Yang, Zhilin and Yang, Zonghan and Yao, Haotian and Yao,
-    Xingcheng and Ye, Wenjie and Ye, Zhuorui and Yin, Bohong and Yu,
-    Longhui and Yuan, Enming and Yuan, Hongbang and Yuan, Mengjie and
-    Yuan, Siyu and Zhan, Haobing and Zhang, Dehao and Zhang, Hao and
-    Zhang, Wanlu and Zhang, Xiaobin and Zhang, Yadong and Zhang,
-    Yangkun and Zhang, Yichi and Zhang, Yizhi and Zhang, Yongting and
-    Zhang, Yu and Zhang, Yutao and Zhang, Yutong and Zhang, Zheng and
-    Zhao, Haotian and Zhao, Yikai and Zhao, Zijia and Zheng, Huabin and
-    Zheng, Shaojie and Zhong, Longguang and Zhou, Jianren and Zhou,
-    Xinyu and Zhou, Zaida and Zhu, Jinguo and Zhu, Zhen and Zhuang,
-  Weiyu and Zu, Xinxing},
+  author = {{Kimi Team} and Bai, Yifan and Bao, Yiping and Charles, Y. and Chen,
+            Cheng and Chen, Guanduo and Chen, Haiting and Chen, Huarong and Chen,
+            Jiahao and Chen, Ningxin and Chen, Ruijue and Chen, Yanru and Chen,
+            Yuankun and Chen, Yutian and Chen, Zhuofu and Cui, Jialei and Ding,
+            Hao and Dong, Mengnan and Du, Angang and Du, Chenzhuang and Du,
+            Dikang and Du, Yulun and Fan, Yu and Feng, Yichen and Fu, Kelin and
+            Gao, Bofei and Gao, Chenxiao and Gao, Hongcheng and Gao, Peizhong and
+            Gao, Tong and Ge, Yuyao and Geng, Shangyi and Gu, Qizheng and Gu,
+            Xinran and Guan, Longyu and Guo, Haiqing and Guo, Jianhang and Hao,
+            Xiaoru and He, Tianhong and He, Weiran and He, Wenyang and He, Yunjia
+            and Hong, Chao and Hu, Hao and Hu, Yangyang and Hu, Zhenxing and
+            Huang, Weixiao and Huang, Zhiqi and Huang, Zihao and Jiang, Tao and
+            Jiang, Zhejun and Jin, Xinyi and Kang, Yongsheng and Lai, Guokun and
+            Li, Cheng and Li, Fang and Li, Haoyang and Li, Ming and Li, Wentao
+            and Li, Yang and Li, Yanhao and Li, Yiwei and Li, Zhaowei and Li,
+            Zheming and Lin, Hongzhan and Lin, Xiaohan and Lin, Zongyu and Liu,
+            Chengyin and Liu, Chenyu and Liu, Hongzhang and Liu, Jingyuan and Liu
+            , Junqi and Liu, Liang and Liu, Shaowei and Liu, T. Y. and Liu,
+            Tianwei and Liu, Weizhou and Liu, Yangyang and Liu, Yibo and Liu,
+            Yiping and Liu, Yue and Liu, Zhengying and Lu, Enzhe and Lu, Haoyu
+            and Lu, Lijun and Luo, Yashuo and Ma, Shengling and Ma, Xinyu and Ma,
+            Yingwei and Mao, Shaoguang and Mei, Jie and Men, Xin and Miao, Yibo
+            and Pan, Siyuan and Peng, Yebo and Qin, Ruoyu and Qin, Zeyu and Qu,
+            Bowen and Shang, Zeyu and Shi, Lidong and Shi, Shengyuan and Song,
+            Feifan and Su, Jianlin and Su, Zhengyuan and Sui, Lin and Sun, Xinjie
+            and Sung, Flood and Tai, Yunpeng and Tang, Heyi and Tao, Jiawen and
+            Teng, Qifeng and Tian, Chaoran and Wang, Chensi and Wang, Dinglu and
+            Wang, Feng and Wang, Hailong and Wang, Haiming and Wang, Jianzhou and
+            Wang, Jiaxing and Wang, Jinhong and Wang, Shengjie and Wang, Shuyi
+            and Wang, Si and Wang, Xinyuan and Wang, Yao and Wang, Yejie and Wang
+            , Yiqin and Wang, Yuxin and Wang, Yuzhi and Wang, Zhaoji and Wang,
+            Zhengtao and Wang, Zhexu and Wei, Chu and Wei, Qianqian and Wu,
+            Haoning and Wu, Wenhao and Wu, Xingzhe and Wu, Yuxin and Xiao,
+            Chenjun and Xie, Jin and Xie, Xiaotong and Xiong, Weimin and Xu, Boyu
+            and Xu, Jinjing and Xu, L. H. and Xu, Lin and Xu, Suting and Xu,
+            Weixin and Xu, Xinran and Xu, Yangchuan and Xu, Ziyao and Xu, Jing
+            and Yan, Junjie and Yan, Yuzi and Yang, Hao and Yang, Xiaofei and
+            Yang, Yi and Yang, Ying and Yang, Zhen and Yang, Zhilin and Yang,
+            Zonghan and Yao, Haotian and Yao, Xingcheng and Ye, Wenjie and Ye,
+            Zhuorui and Yin, Bohong and Yu, Longhui and Yuan, Enming and Yuan,
+            Hongbang and Yuan, Mengjie and Yuan, Siyu and Zhan, Haobing and Zhang
+            , Dehao and Zhang, Hao and Zhang, Wanlu and Zhang, Xiaobin and Zhang,
+            Yadong and Zhang, Yangkun and Zhang, Yichi and Zhang, Yizhi and Zhang
+            , Yongting and Zhang, Yu and Zhang, Yutao and Zhang, Yutong and Zhang
+            , Zheng and Zhao, Haotian and Zhao, Yikai and Zhao, Zijia and Zheng,
+            Huabin and Zheng, Shaojie and Zhong, Longguang and Zhou, Jianren and
+            Zhou, Xinyu and Zhou, Zaida and Zhu, Jinguo and Zhu, Zhen and Zhuang,
+            Weiyu and Zu, Xinxing},
   urldate = {2026-05-20},
   date = {2025},
   note = {Version Number: 2},
-  keywords = {Artificial Intelligence (cs.{AI}), Computation and
-    Language (cs.{CL}), {FOS}: Computer and information sciences,
-  Machine Learning (cs.{LG})},
+  keywords = {Artificial Intelligence (cs.{AI}), Computation and Language (cs.{
+              CL}), {FOS}: Computer and information sciences, Machine Learning
+              (cs.{LG})},
 }
 
 @misc{deepseek-ai_deepseek-v3_2024,
@@ -94,78 +91,306 @@
   rights = {{arXiv}.org perpetual, non-exclusive license},
   url = {https://arxiv.org/abs/2412.19437},
   doi = {10.48550/ARXIV.2412.19437},
-  abstract = {We present {DeepSeek}-V3, a strong Mixture-of-Experts
-    ({MoE}) language model with 671B total parameters with 37B
-    activated for each token. To achieve efficient inference and
-    cost-effective training, {DeepSeek}-V3 adopts Multi-head Latent
-    Attention ({MLA}) and {DeepSeekMoE} architectures, which were
-    thoroughly validated in {DeepSeek}-V2. Furthermore, {DeepSeek}-V3
-    pioneers an auxiliary-loss-free strategy for load balancing and
-    sets a multi-token prediction training objective for stronger
-    performance. We pre-train {DeepSeek}-V3 on 14.8 trillion diverse
-    and high-quality tokens, followed by Supervised Fine-Tuning and
-    Reinforcement Learning stages to fully harness its capabilities.
-    Comprehensive evaluations reveal that {DeepSeek}-V3 outperforms
-    other open-source models and achieves performance comparable to
-    leading closed-source models. Despite its excellent performance,
-    {DeepSeek}-V3 requires only 2.788M H800 {GPU} hours for its full
-    training. In addition, its training process is remarkably stable.
-    Throughout the entire training process, we did not experience any
-    irrecoverable loss spikes or perform any rollbacks. The model
-  checkpoints are available at https://github.com/deepseek-ai/{DeepSeek}-V3.},
+  abstract = {We present {DeepSeek}-V3, a strong Mixture-of-Experts ({MoE})
+              language model with 671B total parameters with 37B activated for
+              each token. To achieve efficient inference and cost-effective
+              training, {DeepSeek}-V3 adopts Multi-head Latent Attention ({MLA})
+              and {DeepSeekMoE} architectures, which were thoroughly validated in
+              {DeepSeek}-V2. Furthermore, {DeepSeek}-V3 pioneers an
+              auxiliary-loss-free strategy for load balancing and sets a
+              multi-token prediction training objective for stronger performance.
+              We pre-train {DeepSeek}-V3 on 14.8 trillion diverse and
+              high-quality tokens, followed by Supervised Fine-Tuning and
+              Reinforcement Learning stages to fully harness its capabilities.
+              Comprehensive evaluations reveal that {DeepSeek}-V3 outperforms
+              other open-source models and achieves performance comparable to
+              leading closed-source models. Despite its excellent performance, {
+              DeepSeek}-V3 requires only 2.788M H800 {GPU} hours for its full
+              training. In addition, its training process is remarkably stable.
+              Throughout the entire training process, we did not experience any
+              irrecoverable loss spikes or perform any rollbacks. The model
+              checkpoints are available at https://github.com/deepseek-ai/{
+              DeepSeek}-V3.},
   publisher = {{arXiv}},
-  author = {{DeepSeek-AI} and Liu, Aixin and Feng, Bei and Xue, Bing
-    and Wang, Bingxuan and Wu, Bochao and Lu, Chengda and Zhao,
-    Chenggang and Deng, Chengqi and Zhang, Chenyu and Ruan, Chong and
-    Dai, Damai and Guo, Daya and Yang, Dejian and Chen, Deli and Ji,
-    Dongjie and Li, Erhang and Lin, Fangyun and Dai, Fucong and Luo,
-    Fuli and Hao, Guangbo and Chen, Guanting and Li, Guowei and Zhang,
-    H. and Bao, Han and Xu, Hanwei and Wang, Haocheng and Zhang, Haowei
-    and Ding, Honghui and Xin, Huajian and Gao, Huazuo and Li, Hui and
-    Qu, Hui and Cai, J. L. and Liang, Jian and Guo, Jianzhong and Ni,
-    Jiaqi and Li, Jiashi and Wang, Jiawei and Chen, Jin and Chen,
-    Jingchang and Yuan, Jingyang and Qiu, Junjie and Li, Junlong and
-    Song, Junxiao and Dong, Kai and Hu, Kai and Gao, Kaige and Guan,
-    Kang and Huang, Kexin and Yu, Kuai and Wang, Lean and Zhang, Lecong
-    and Xu, Lei and Xia, Leyi and Zhao, Liang and Wang, Litong and
-    Zhang, Liyue and Li, Meng and Wang, Miaojun and Zhang, Mingchuan
-    and Zhang, Minghua and Tang, Minghui and Li, Mingming and Tian,
-    Ning and Huang, Panpan and Wang, Peiyi and Zhang, Peng and Wang,
-    Qiancheng and Zhu, Qihao and Chen, Qinyu and Du, Qiushi and Chen,
-    R. J. and Jin, R. L. and Ge, Ruiqi and Zhang, Ruisong and Pan,
-    Ruizhe and Wang, Runji and Xu, Runxin and Zhang, Ruoyu and Chen,
-    Ruyi and Li, S. S. and Lu, Shanghao and Zhou, Shangyan and Chen,
-    Shanhuang and Wu, Shaoqing and Ye, Shengfeng and Ma, Shirong and
-    Wang, Shiyu and Zhou, Shuang and Yu, Shuiping and Zhou, Shunfeng
-    and Pan, Shuting and Wang, T. and Yun, Tao and Pei, Tian and Sun,
-    Tianyu and Xiao, W. L. and Zeng, Wangding and Zhao, Wanjia and An,
-    Wei and Liu, Wen and Liang, Wenfeng and Gao, Wenjun and Yu, Wenqin
-    and Zhang, Wentao and Li, X. Q. and Jin, Xiangyue and Wang, Xianzu
-    and Bi, Xiao and Liu, Xiaodong and Wang, Xiaohan and Shen, Xiaojin
-    and Chen, Xiaokang and Zhang, Xiaokang and Chen, Xiaosha and Nie,
-    Xiaotao and Sun, Xiaowen and Wang, Xiaoxiang and Cheng, Xin and
-    Liu, Xin and Xie, Xin and Liu, Xingchao and Yu, Xingkai and Song,
-    Xinnan and Shan, Xinxia and Zhou, Xinyi and Yang, Xinyu and Li,
-    Xinyuan and Su, Xuecheng and Lin, Xuheng and Li, Y. K. and Wang, Y.
-    Q. and Wei, Y. X. and Zhu, Y. X. and Zhang, Yang and Xu, Yanhong
-    and Huang, Yanping and Li, Yao and Zhao, Yao and Sun, Yaofeng and
-    Li, Yaohui and Wang, Yaohui and Yu, Yi and Zheng, Yi and Zhang,
-    Yichao and Shi, Yifan and Xiong, Yiliang and He, Ying and Tang,
-    Ying and Piao, Yishi and Wang, Yisong and Tan, Yixuan and Ma,
-    Yiyang and Liu, Yiyuan and Guo, Yongqiang and Wu, Yu and Ou, Yuan
-    and Zhu, Yuchen and Wang, Yuduan and Gong, Yue and Zou, Yuheng and
-    He, Yujia and Zha, Yukun and Xiong, Yunfan and Ma, Yunxian and Yan,
-    Yuting and Luo, Yuxiang and You, Yuxiang and Liu, Yuxuan and Zhou,
-    Yuyang and Wu, Z. F. and Ren, Z. Z. and Ren, Zehui and Sha, Zhangli
-    and Fu, Zhe and Xu, Zhean and Huang, Zhen and Zhang, Zhen and Xie,
-    Zhenda and Zhang, Zhengyan and Hao, Zhewen and Gou, Zhibin and Ma,
-    Zhicheng and Yan, Zhigang and Shao, Zhihong and Xu, Zhipeng and Wu,
-    Zhiyu and Zhang, Zhongyu and Li, Zhuoshu and Gu, Zihui and Zhu,
-    Zijia and Liu, Zijun and Li, Zilin and Xie, Ziwei and Song, Ziyang
-  and Gao, Ziyi and Pan, Zizheng},
+  author = {{DeepSeek-AI} and Liu, Aixin and Feng, Bei and Xue, Bing and Wang,
+            Bingxuan and Wu, Bochao and Lu, Chengda and Zhao, Chenggang and Deng,
+            Chengqi and Zhang, Chenyu and Ruan, Chong and Dai, Damai and Guo,
+            Daya and Yang, Dejian and Chen, Deli and Ji, Dongjie and Li, Erhang
+            and Lin, Fangyun and Dai, Fucong and Luo, Fuli and Hao, Guangbo and
+            Chen, Guanting and Li, Guowei and Zhang, H. and Bao, Han and Xu,
+            Hanwei and Wang, Haocheng and Zhang, Haowei and Ding, Honghui and Xin
+            , Huajian and Gao, Huazuo and Li, Hui and Qu, Hui and Cai, J. L. and
+            Liang, Jian and Guo, Jianzhong and Ni, Jiaqi and Li, Jiashi and Wang,
+            Jiawei and Chen, Jin and Chen, Jingchang and Yuan, Jingyang and Qiu,
+            Junjie and Li, Junlong and Song, Junxiao and Dong, Kai and Hu, Kai
+            and Gao, Kaige and Guan, Kang and Huang, Kexin and Yu, Kuai and Wang,
+            Lean and Zhang, Lecong and Xu, Lei and Xia, Leyi and Zhao, Liang and
+            Wang, Litong and Zhang, Liyue and Li, Meng and Wang, Miaojun and
+            Zhang, Mingchuan and Zhang, Minghua and Tang, Minghui and Li,
+            Mingming and Tian, Ning and Huang, Panpan and Wang, Peiyi and Zhang,
+            Peng and Wang, Qiancheng and Zhu, Qihao and Chen, Qinyu and Du,
+            Qiushi and Chen, R. J. and Jin, R. L. and Ge, Ruiqi and Zhang,
+            Ruisong and Pan, Ruizhe and Wang, Runji and Xu, Runxin and Zhang,
+            Ruoyu and Chen, Ruyi and Li, S. S. and Lu, Shanghao and Zhou,
+            Shangyan and Chen, Shanhuang and Wu, Shaoqing and Ye, Shengfeng and
+            Ma, Shirong and Wang, Shiyu and Zhou, Shuang and Yu, Shuiping and
+            Zhou, Shunfeng and Pan, Shuting and Wang, T. and Yun, Tao and Pei,
+            Tian and Sun, Tianyu and Xiao, W. L. and Zeng, Wangding and Zhao,
+            Wanjia and An, Wei and Liu, Wen and Liang, Wenfeng and Gao, Wenjun
+            and Yu, Wenqin and Zhang, Wentao and Li, X. Q. and Jin, Xiangyue and
+            Wang, Xianzu and Bi, Xiao and Liu, Xiaodong and Wang, Xiaohan and
+            Shen, Xiaojin and Chen, Xiaokang and Zhang, Xiaokang and Chen,
+            Xiaosha and Nie, Xiaotao and Sun, Xiaowen and Wang, Xiaoxiang and
+            Cheng, Xin and Liu, Xin and Xie, Xin and Liu, Xingchao and Yu,
+            Xingkai and Song, Xinnan and Shan, Xinxia and Zhou, Xinyi and Yang,
+            Xinyu and Li, Xinyuan and Su, Xuecheng and Lin, Xuheng and Li, Y. K.
+            and Wang, Y. Q. and Wei, Y. X. and Zhu, Y. X. and Zhang, Yang and Xu,
+            Yanhong and Huang, Yanping and Li, Yao and Zhao, Yao and Sun, Yaofeng
+            and Li, Yaohui and Wang, Yaohui and Yu, Yi and Zheng, Yi and Zhang,
+            Yichao and Shi, Yifan and Xiong, Yiliang and He, Ying and Tang, Ying
+            and Piao, Yishi and Wang, Yisong and Tan, Yixuan and Ma, Yiyang and
+            Liu, Yiyuan and Guo, Yongqiang and Wu, Yu and Ou, Yuan and Zhu,
+            Yuchen and Wang, Yuduan and Gong, Yue and Zou, Yuheng and He, Yujia
+            and Zha, Yukun and Xiong, Yunfan and Ma, Yunxian and Yan, Yuting and
+            Luo, Yuxiang and You, Yuxiang and Liu, Yuxuan and Zhou, Yuyang and Wu
+            , Z. F. and Ren, Z. Z. and Ren, Zehui and Sha, Zhangli and Fu, Zhe
+            and Xu, Zhean and Huang, Zhen and Zhang, Zhen and Xie, Zhenda and
+            Zhang, Zhengyan and Hao, Zhewen and Gou, Zhibin and Ma, Zhicheng and
+            Yan, Zhigang and Shao, Zhihong and Xu, Zhipeng and Wu, Zhiyu and
+            Zhang, Zhongyu and Li, Zhuoshu and Gu, Zihui and Zhu, Zijia and Liu,
+            Zijun and Li, Zilin and Xie, Ziwei and Song, Ziyang and Gao, Ziyi and
+            Pan, Zizheng},
   urldate = {2026-05-20},
   date = {2024},
   note = {Version Number: 2},
-  keywords = {Artificial Intelligence (cs.{AI}), Computation and
-  Language (cs.{CL}), {FOS}: Computer and information sciences},
+  keywords = {Artificial Intelligence (cs.{AI}), Computation and Language (cs.{
+              CL}), {FOS}: Computer and information sciences},
+}
+
+@inproceedings{acun_carbon_2023,
+  title = {Carbon Explorer: A Holistic Approach for Designing Carbon Aware
+           Datacenters},
+  url = {http://arxiv.org/abs/2201.10036},
+  doi = {10.1145/3575693.3575754},
+  shorttitle = {Carbon Explorer},
+  abstract = {Technology companies have been leading the way to a renewable
+              energy transformation, by investing in renewable energy sources to
+              reduce the carbon footprint of their datacenters. In addition to
+              helping build new solar and wind farms, companies make power
+              purchase agreements or purchase carbon offsets, rather than relying
+              on renewable energy every hour of the day, every day of the week
+              (24/7). Relying on renewable energy 24/7 is challenging due to the
+              intermittent nature of wind and solar energy. Inherent variations
+              in solar and wind energy production causes excess or lack of supply
+              at different times. To cope with the fluctuations of renewable
+              energy generation, multiple solutions must be applied. These
+              include: capacity sizing with a mix of solar and wind power, energy
+              storage options, and carbon aware workload scheduling. However,
+              depending on the region and datacenter workload characteristics,
+              the carbon-optimal solution varies. Existing work in this space
+              does not give a holistic view of the trade-offs of each solution
+              and often ignore the embodied carbon cost of the solutions. In this
+              work, we provide a framework, Carbon Explorer, to analyze the
+              multi-dimensional solution space by taking into account operational
+              and embodided footprint of the solutions to help make datacenters
+              operate on renewable energy 24/7. The solutions we analyze include
+              capacity sizing with a mix of solar and wind power, battery storage
+              , and carbon aware workload scheduling, which entails shifting the
+              workloads from times when there is lack of renewable supply to
+              times with abundant supply.},
+  pages = {118--132},
+  booktitle = {Proceedings of the 28th {ACM} International Conference on
+               Architectural Support for Programming Languages and Operating
+               Systems, Volume 2},
+  author = {Acun, Bilge and Lee, Benjamin and Kazhamiaka, Fiodar and Maeng,
+            Kiwan and Chakkaravarthy, Manoj and Gupta, Udit and Brooks, David and
+            Wu, Carole-Jean},
+  urldate = {2026-06-15},
+  date = {2023-01-27},
+  langid = {english},
+  eprinttype = {arxiv},
+  eprint = {2201.10036 [cs.DC]},
+  keywords = {Computer Science - Distributed, Parallel, and Cluster Computing,
+              Electrical Engineering and Systems Science - Systems and Control},
+  file = {PDF:/home/simon/Zotero/storage/PIJX3IA7/Acun et al. - 2023 - Carbon
+          Explorer A Holistic Approach for Designing Carbon Aware
+          Datacenters.pdf:application/pdf},
+}
+
+@article{patterson_carbon_nodate,
+  title = {Carbon Emissions and Large Neural Network Training},
+  abstract = {The computation demand for machine learning ({ML}) has grown
+              rapidly recently, which comes with a number of costs. Estimating
+              the energy cost helps measure its environmental impact and finding
+              greener strategies, yet it is challenging without detailed
+              information. We calculate the energy use and carbon footprint of
+              several recent large models—T5, Meena, {GShard}, Switch Transformer
+              , and {GPT}-3—and refine earlier estimates for the neural
+              architecture search that found Evolved Transformer. We highlight
+              the following opportunities to improve energy efficiency and {CO}2
+              equivalent emissions ({CO}2e): ● Large but sparsely activated {DNNs
+              } can consume {\textless}1/10th the energy of large, dense {DNNs}
+              without sacrificing accuracy despite using as many or even more
+              parameters. ● Geographic location matters for {ML} workload
+              scheduling since the fraction of carbon-free energy and resulting {
+              CO}2e vary {\textasciitilde}5X-10X, even within the same country
+              and the same organization. We are now optimizing where and when
+              large models are trained. ● Specific datacenter infrastructure
+              matters, as Cloud datacenters can be {\textasciitilde}1.4-2X more
+              energy efficient than typical datacenters, and the {ML}-oriented
+              accelerators inside them can be {\textasciitilde}2-5X more
+              effective than off-the-shelf systems. Remarkably, the choice of {
+              DNN}, datacenter, and processor can reduce the carbon footprint up
+              to {\textasciitilde}100-1000X. These large factors also make
+              retroactive estimates of energy cost difficult. To avoid
+              miscalculations, we believe {ML} papers requiring large
+              computational resources should make energy consumption and {CO}2e
+              explicit when practical. We are working to be more transparent
+              about energy use and {CO}2e in our future research. To help reduce
+              the carbon footprint of {ML}, we believe energy usage and {CO}2e
+              should be a key metric in evaluating models, and we are
+              collaborating with {MLPerf} developers to include energy usage
+              during training and inference in this industry standard benchmark.},
+  author = {Patterson, David and Gonzalez, Joseph and Le, Quoc and Liang, Chen
+            and Munguia, Lluis-Miquel and Rothchild, Daniel and So, David and
+            Texier, Maud and Dean, Jeff},
+  langid = {english},
+  file = {PDF:/home/simon/Zotero/storage/MDLBZB6M/Patterson et al. - Carbon
+          Emissions and Large Neural Network Training.pdf:application/pdf},
+}
+
+@misc{wiesner_distributed_2026,
+  title = {Distributed {LLM} Pretraining During Renewable Curtailment Windows: A
+           Feasibility Study},
+  url = {http://arxiv.org/abs/2602.22760},
+  doi = {10.48550/arXiv.2602.22760},
+  shorttitle = {Distributed {LLM} Pretraining During Renewable Curtailment
+                Windows},
+  abstract = {Training large language models ({LLMs}) requires substantial
+              compute and energy. At the same time, renewable energy sources
+              regularly produce more electricity than the grid can absorb,
+              leading to curtailment, the deliberate reduction of clean
+              generation that would otherwise go to waste. These periods
+              represent an opportunity: if training is aligned with curtailment
+              windows, {LLMs} can be pretrained using electricity that is both
+              clean and cheap. This technical report presents a system that
+              performs full-parameter {LLM} training across geo-distributed {GPU}
+              clusters during regional curtailment windows, elastically switching
+              between local single-site training and federated multi-site
+              synchronization as sites become available or unavailable. Our
+              prototype trains a 561M-parameter transformer model across three
+              clusters using the Flower federated learning framework, with
+              curtailment periods derived from real-world marginal carbon
+              intensity traces. Preliminary results show that curtailment-aware
+              scheduling preserves training quality while reducing operational
+              emissions to 5–12\% of single-site baselines.},
+  number = {{arXiv}:2602.22760},
+  publisher = {{arXiv}},
+  author = {Wiesner, Philipp and Becker, Soeren and Cornick, Brett and Scheinert
+            , Dominik and Acker, Alexander and Kao, Odej},
+  urldate = {2026-06-15},
+  date = {2026-02-26},
+  langid = {english},
+  eprinttype = {arxiv},
+  eprint = {2602.22760 [cs.DC]},
+  keywords = {Computer Science - Artificial Intelligence, Computer Science -
+              Distributed, Parallel, and Cluster Computing},
+  file = {PDF:/home/simon/Zotero/storage/DUN54757/Wiesner et al. - 2026 -
+          Distributed LLM Pretraining During Renewable Curtailment Windows A
+          Feasibility Study.pdf:application/pdf},
+}
+
+@misc{dodge_measuring_2022,
+  title = {Measuring the Carbon Intensity of {AI} in Cloud Instances},
+  url = {http://arxiv.org/abs/2206.05229},
+  doi = {10.48550/arXiv.2206.05229},
+  abstract = {By providing unprecedented access to computational resources,
+              cloud computing has enabled rapid growth in technologies such as
+              machine learning, the computational demands of which incur a high
+              energy cost and a commensurate carbon footprint. As a result,
+              recent scholarship has called for better estimates of the
+              greenhouse gas impact of {AI}: data scientists today do not have
+              easy or reliable access to measurements of this information,
+              precluding development of actionable tactics. Cloud providers
+              presenting information about software carbon intensity to users is
+              a fundamental stepping stone towards minimizing emissions. In this
+              paper, we provide a framework for measuring software carbon
+              intensity, and propose to measure operational carbon emissions by
+              using location-based and time-specific marginal emissions data per
+              energy unit. We provide measurements of operational software carbon
+              intensity for a set of modern models for natural language
+              processing and computer vision, and a wide range of model sizes,
+              including pretraining of a 6.1 billion parameter language model. We
+              then evaluate a suite of approaches for reducing emissions on the
+              Microsoft Azure cloud compute platform: using cloud instances in
+              different geographic regions, using cloud instances at different
+              times of day, and dynamically pausing cloud instances when the
+              marginal carbon intensity is above a certain threshold. We confirm
+              previous results that the geographic region of the data center
+              plays a significant role in the carbon intensity for a given cloud
+              instance, and find that choosing an appropriate region can have the
+              largest operational emissions reduction impact. We also show that
+              the time of day has notable impact on operational software carbon
+              intensity. Finally, we conclude with recommendations for how
+              machine learning practitioners can use software carbon intensity
+              information to reduce environmental impact.},
+  number = {{arXiv}:2206.05229},
+  publisher = {{arXiv}},
+  author = {Dodge, Jesse and Prewitt, Taylor and Combes, Remi Tachet Des and
+            Odmark, Erika and Schwartz, Roy and Strubell, Emma and Luccioni,
+            Alexandra Sasha and Smith, Noah A. and {DeCario}, Nicole and Buchanan
+            , Will},
+  urldate = {2026-06-15},
+  date = {2022-06-10},
+  langid = {english},
+  eprinttype = {arxiv},
+  eprint = {2206.05229 [cs.LG]},
+  keywords = {Computer Science - Machine Learning},
+  file = {PDF:/home/simon/Zotero/storage/JJDDFA98/Dodge et al. - 2022 -
+          Measuring the Carbon Intensity of AI in Cloud
+          Instances.pdf:application/pdf},
+}
+
+@inproceedings{wiesner_lets_2021,
+  title = {Let's Wait Awhile: How Temporal Workload Shifting Can Reduce Carbon
+           Emissions in the Cloud},
+  url = {http://arxiv.org/abs/2110.13234},
+  doi = {10.1145/3464298.3493399},
+  shorttitle = {Let's Wait Awhile},
+  abstract = {Depending on energy sources and demand, the carbon intensity of
+              the public power grid fluctuates over time. Exploiting this
+              variability is an important factor in reducing the emissions caused
+              by data centers. However, regional differences in the availability
+              of low-carbon energy sources make it hard to provide general best
+              practices for when to consume electricity. Moreover, existing
+              research in this domain focuses mostly on carbon-aware workload
+              migration across geo-distributed data centers, or addresses demand
+              response purely from the perspective of power grid stability and
+              costs. In this paper, we examine the potential impact of shifting
+              computational workloads towards times where the energy supply is
+              expected to be less carbon-intensive. To this end, we identify
+              characteristics of delay-tolerant workloads and analyze the
+              potential for temporal workload shifting in Germany, Great Britain,
+              France, and California over the year 2020. Furthermore, we
+              experimentally evaluate two workload shifting scenarios in a
+              simulation to investigate the influence of time constraints,
+              scheduling strategies, and the accuracy of carbon intensity
+              forecasts. To accelerate research in the domain of carbon-aware
+              computing and to support the evaluation of novel scheduling
+              algorithms, our simulation framework and datasets are publicly
+              available.},
+  pages = {260--272},
+  booktitle = {Proceedings of the 22nd International Middleware Conference},
+  author = {Wiesner, Philipp and Behnke, Ilja and Scheinert, Dominik and
+            Gontarska, Kordian and Thamsen, Lauritz},
+  urldate = {2026-07-04},
+  date = {2021-12-06},
+  eprinttype = {arxiv},
+  eprint = {2110.13234 [cs.DC]},
+  keywords = {Computer Science - Distributed, Parallel, and Cluster Computing},
+  file = {Preprint PDF:/home/simon/Zotero/storage/9VWNSH9W/Wiesner et al. - 2021
+          - Let's Wait Awhile How Temporal Workload Shifting Can Reduce Carbon
+          Emissions in the
+          Cloud.pdf:application/pdf;Snapshot:/home/simon/Zotero/storage/7RF8TD3E/2110.html:text/html
+          },
 }

@@ -74,7 +74,7 @@
 %Third Author\thanks{Third Insitute}%
 %}
 
-\date{18.06.2026}
+\date{09.07.2026}
 
 % ================================================
 % Bibliography
@@ -153,27 +153,44 @@
 %\input{sections/01_introduction}
 
 \section{Problem and Setup}
+% 1. Introduction
 \input{sections/02_motivation}
 \input{sections/06_objectives}
 \input{sections/07_electricity_map}
+% 2. Related Work
+\input{sections/03_related_work}
+% 3. Method
+% 3.1 Problem Formulation
 \input{sections/08a_parameters}
 \input{sections/08b_parameters}
 \input{sections/09_policy_scoring}
-\input{sections/12_scenarios}
+%\input{sections/12_scenarios}
 
 % \input{sections/13_result_evaluation}
 
+% 3.2 Simulation Engine
 \section{Simulation and Design}
 \input{sections/14_activity}
 \input{sections/11_project_design}
-\input{sections/17_planning}
+%\input{sections/17_planning}
+% 3.3 Adaptive Grid-Search Optimization
+\input{sections/30_optimization}
 
-\section{Validation and Verification}
-\input{sections/15_validation}
-\input{sections/16_verification}
-\section{Input Modeling}
-\input{sections/18_input_modeling.tex}
-%\input{sections/19_conclusion}
+% 4. Experimental Setup
+\section{Experimental Setup}
+\input{sections/31_experiment_setup}
+
+% 5. Results
+\section{Results}
+% 5.1 Pareto Frontier Analysis
+% 5.2 Threshold Space Analysis
+% 5.3 Regional Comparison
+% 5.4 Start Date Sensitivity
+% 5.5 Optimization Convergence
+% 5.6 Multi-Year Stability
+
+% Conclusion and future Work
+\section{Conclusion and Outlook}
 \input{sections/20_outlook}
 
 \begin{frame}[titleimagenofooter]{}{}

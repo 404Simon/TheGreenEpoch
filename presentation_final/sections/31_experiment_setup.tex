@@ -1,1 +1,54 @@
-TODO: Add a slide for the experiment setup for the final run
+\begin{frame}[t]{Experimental Setup}{Models, regions, and constants}
+
+  \small
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \textbf{Models}
+      \vspace{0.1cm}
+      \begin{tabular}{l|c|c}
+        \toprule
+        & \textbf{DeepSeek V3} & \textbf{Kimi K2} \\
+        \midrule
+        Params & 671B (37B active) & 1T (32B active) \\
+        Tokens & 14.8T & 15.5T \\
+        GPUs & 2,048 H800 & 256 \\
+        GPU hours & 2.79M & --- \\
+        \bottomrule
+      \end{tabular}
+
+      \vspace{0.3cm}
+      \textbf{Constants}
+      \begin{itemize}
+        \item GPU train: 700\,W, GPU idle: 60\,W
+        \item PUE: 1.27
+        \item Checkpoint: 148.8\,s pause, 0\,s resume
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \textbf{Regions}
+      \vspace{0.1cm}
+      \begin{tabular}{l|c|c}
+        \toprule
+        Region & Mean (g/kWh) & Variance \\
+        \midrule
+        SE (Sweden) & $\sim$30 & Low \\
+        DE (Germany) & $\sim$350 & High \\
+        IT (Italy) & $\sim$300 & High \\
+        US (United States) & $\sim$400 & Moderate \\
+        CN (China) & $\sim$600 & Low \\
+        \bottomrule
+      \end{tabular}
+
+      \vspace{0.2cm}
+      \textbf{Optimizer}
+      \begin{itemize}
+        \item $\theta_p^{\max}$: 100 (SE), 800 (others)
+        \item Budget $B$: 200\%, $\alpha = 1.0$
+        \item Resolution $N$: 10, Iterations $K$: 10
+        \item Years: 2022--2025 (4 years)
+        \item Start dates: Jan 1, Jul 1 (+ full sweep)
+      \end{itemize}
+    \end{column}
+  \end{columns}
+
+\end{frame}

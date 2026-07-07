@@ -14,51 +14,13 @@
     \begin{column}{0.48\textwidth}
       \textbf{Data quality}
       \begin{itemize}
-        \item Most values are measured, not estimated.
-        \item Estimated-value share is below 3\% for DE, ES, FR, SE.
+        \item Most values measured, not estimated.
+        \item Estimated-value share below 3\% for DE, ES, FR, SE.
         \item For China all values are estimated.
-        \item The dataset is usable for region-level input modeling.
+        \item Dataset is usable for region-level modeling.
       \end{itemize}
     \end{column}
   \end{columns}
-\end{frame}
-
-\begin{frame}[t]{Input Modeling}{Average grid intensity differs strongly}
-  \small
-
-  \centering
-  \includegraphics[width=\textwidth,height=0.66\textheight,keepaspectratio]{assets/daily_co2_intensity.png}
-
-  \vspace{0.1cm}
-  \begin{itemize}
-    \item Mean intensities span from 23 to 519 gCO$_2$eq/kWh.
-    \item DE is about 16.3x higher than SE on average.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}[t]{Input Modeling}{Absolute and relative variability tell
-  different stories}
-  \small
-
-  \centering
-  \resizebox{0.46\textwidth}{!}{%
-    \input{tables/metric_table.tex}%
-  }
-
-  \vspace{0.2cm}
-  \begin{itemize}
-    \item DE has the largest absolute swing, so pause/resume can avoid
-      high-emission windows.
-    \item Region-specific thresholds are necessary because ``high carbon'' is
-      not the same numeric value everywhere.
-  \end{itemize}
-
-  \vspace{0.4cm}
-  \begin{block}{Main takeaway}
-    The data is dense enough for simulation input modeling, but the regions are
-    very different and should not share one global threshold.
-  \end{block}
-
 \end{frame}
 
 \begin{frame}[t]{Input Modeling}{The time series is not independent}
@@ -74,49 +36,21 @@
 
 \end{frame}
 
-\begin{frame}[t]{Input Modeling}{Best-fitting distributions differ by region}
-
-  \centering
-  \includegraphics[width=\textwidth,height=0.68\textheight,keepaspectratio]{assets/best_fit_distributions.png}
-
-  \vspace{0.1cm}
-  \begin{itemize}
-    \item SE fits Lognormal best, all others fit Weibull best.
-    \item The standardized panel compares shape independent of absolute
-      intensity.
-  \end{itemize}
-
-\end{frame}
-
-\begin{frame}[t]{Input Modeling}{Q-Q and P-P diagnostics for all regions}
-
-  \centering
-  \includegraphics[width=\textwidth,height=0.76\textheight,keepaspectratio]{assets/qq_pp_plots.png}
-
-  \vspace{0.05cm}
-  \small
-  Q-Q plots expose tail mismatch; P-P plots show whether the fitted CDF tracks
-  the empirical CDF over the full probability range.
-
-\end{frame}
-
 \begin{frame}[t]{Input Modeling}{Implications for our Simulation}
 
   \begin{enumerate}
-    \item Use historical traces for evaluation, because temporal dependence is
-      strong.
+    \item Use historical traces for evaluation, because temporal
+      dependence is strong.
     \item Calibrate pause and resume thresholds per region, not globally.
     \item Compare policies on both CO$_2$ savings and wall-clock overhead.
-    \item Treat clean regions differently: low baseline emissions reduce the
-      benefit of aggressive pausing.
-    \item Use fitted distributions as compact input-model summaries, but keep
-      trace replay as the primary validation path.
+    \item Treat clean regions differently: low baseline emissions
+      reduce the benefit of aggressive pausing.
   \end{enumerate}
 
   \vspace{0.35cm}
   \begin{block}{Most important finding}
     Carbon-aware scheduling potential is driven by both the average grid mix
-    and the temporal variability around that average.
+    \textbf{and} the temporal variability around that average.
   \end{block}
 
 \end{frame}

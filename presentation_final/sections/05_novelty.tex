@@ -1,8 +1,24 @@
-\begin{frame}[t]{Scientific Novelity}{What is are my contributions?}
+\begin{frame}[t]{Contributions}{What is new in this work?}
 
-  At one point during the section before or latest in this section,
-  you should try to clearly state the novelty of your work and your
-  contribution to the reseach community.
-  Why is it relevant to close a gap in the current state of the art?
+  \begin{enumerate}
+    \item \textbf{Simulation framework} for carbon-aware LLM training with
+      hysteresis-based pausing, validated against ground-truth energy models
+      and cross-model scaling expectations.
+
+    \vspace{0.2cm}
+    \item \textbf{Adaptive grid-search optimizer} that efficiently explores the
+      $(\theta_p, \theta_r, t_s)$ policy space, converging within
+      $\leq$10 iterations.
+
+    \vspace{0.2cm}
+    \item \textbf{Comprehensive empirical study} covering 2~SOTA models
+      (DeepSeek~V3, Kimi~K2) $\times$ 5~grid regions $\times$ 4~years of replay data
+      --- the first systematic Pareto frontiers for carbon-aware LLM training.
+
+    \vspace{0.2cm}
+    \item \textbf{Actionable design rule:} the optimal hysteresis policy uses a
+      narrow margin ($\theta_p - \theta_r < 16$~gCO$_2$eq/kWh).
+      Wide hysteresis is never Pareto-optimal.
+  \end{enumerate}
 
 \end{frame}

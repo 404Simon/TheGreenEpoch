@@ -1,1 +1,36 @@
-TODO: Add slides to the optimization algorithm
+\begin{frame}[t]{Adaptive Grid-Search Optimization}{Efficiently exploring the policy space}
+
+  \textbf{Challenge:} Exhaustive 3D grid over $(\theta_p, \theta_r, t_s)$ costs $O(N^2 \times D \times Y)$ ---
+  prohibitive for $N=100$, $D=52$, $Y=4$ ($>2$M simulations).
+
+  \vspace{0.3cm}
+  \textbf{Solution:} Iterative zoom refinement (trust-region style)\\
+  \begin{enumerate}
+    \item \textbf{Coarse grid} over full bounds: $\theta_p \in [0, \theta_p^{\max}]$,
+      $\theta_r \in [0, \theta_p]$, $t_s$ at $D$ uniform intervals.
+    \item \textbf{Evaluate} all points; discard those exceeding overhead budget $B$.
+      Select feasible point with highest score.
+    \item \textbf{Zoom:} contract bounds by $s = 0.45$ around best point.
+      Re-sample at same resolution $N=10$.
+    \item \textbf{Repeat} until min step $< 3$ gCO$_2$eq/kWh or $K=10$ iterations.
+  \end{enumerate}
+
+  \vspace{0.2cm}
+  Complexity: $O(K \times N^2 \times D \times Y)$ --- with our settings,
+  $\approx$ 7,000--49,000 simulations per optimization run.
+
+\end{frame}
+
+\begin{frame}[t]{Optimization Convergence}{Rapid convergence within 5--6 iterations}
+
+  \centering
+  \includegraphics[width=0.75\textwidth,height=0.62\textheight,keepaspectratio]{assets/avg_score_vs_iteration_all.png}
+
+  \vspace{0.1cm}
+  \begin{itemize}
+    \item Score improves substantially between iterations 1--5, plateaus by 6--7.
+    \item Remaining iterations provide only marginal refinement ($<$2\%).
+    \item Consistent behavior across all 10 (model, region) combinations.
+  \end{itemize}
+
+\end{frame}

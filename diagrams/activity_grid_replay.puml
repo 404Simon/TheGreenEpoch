@@ -1,0 +1,55 @@
+@startuml
+' Core Grid Replay Loop
+
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam activity {
+  BorderColor #2E3A46
+  BackgroundColor #F7F9FB
+  BarColor #5B8FF9
+  StartColor #2FB344
+  EndColor #D6336C
+  DiamondBackgroundColor #FFF3BF
+  DiamondBorderColor #B08900
+}
+
+start
+
+:Initialize sim state;
+:Compute baseline (never-pause);
+partition "Grid Replay Loop" {
+  repeat
+    :Read co2_intensity(t);
+
+    if (co2(t) > theta_pause?) then (pause)
+      if (not already paused?) then (yes)
+        :Checkpoint save;
+        :Enter paused state;
+      endif
+    else (continue)
+      if (paused and co2(t) < theta_resume?) then (resume)
+        :Load checkpoint;
+        :Enter training state;
+      endif
+    endif
+
+    if (is_paused?) then (yes)
+      :Accumulate idle wall time;
+      :Add idle energy (gpu_power_pause);
+    else (no)
+      :Advance training progress;
+      :Add active energy (gpu_power_train);
+      :Accumulate emissions;
+    endif
+
+    :Advance wall time by dt;
+    :Advance to next timestep t+1;
+
+  repeat while (tokens_remaining > 0) is (yes) not (no)
+}
+
+:Compute KPIs (savings, overhead, score);
+
+stop
+
+@enduml

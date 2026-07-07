@@ -1,5 +1,147 @@
-\begin{frame}[t]{Results}{What did we get?}
+\subsection{Pareto Frontier Analysis}
 
-  TODO: Add slides for the results section
+\begin{frame}[t]{Results}{Pareto frontiers: DeepSeek V3 across all regions}
+
+  \centering
+  \includegraphics[width=0.82\textwidth,height=0.72\textheight,keepaspectratio]{assets/pareto_combined_DeepSeek_V3.png}
+
+\end{frame}
+
+\begin{frame}[t]{Results}{Pareto frontiers: Kimi K2 across all regions}
+
+  \centering
+  \includegraphics[width=0.82\textwidth,height=0.72\textheight,keepaspectratio]{assets/pareto_combined_Kimi_K2.png}
+
+\end{frame}
+
+\begin{frame}[t]{Results}{Best-score summary: DeepSeek V3 \& Kimi K2}
+
+  \centering
+  \small
+  \begin{tabular}{l|c|c|c|c}
+    \toprule
+    \textbf{Model} & \textbf{Region} & \textbf{Savings} & \textbf{Overhead} & \textbf{Score} \\
+    \midrule
+    DeepSeek & DE & \textbf{43.4\%} & 174.3\% & \textbf{0.717} \\
+    DeepSeek & IT & \textbf{32.7\%} & 194.7\% & 0.663 \\
+    DeepSeek & SE & \textbf{23.2\%} & 106.3\% & 0.616 \\
+    DeepSeek & US & 9.5\% & 115.7\% & 0.547 \\
+    DeepSeek & CN & 6.2\% & 72.5\% & 0.531 \\
+    \midrule
+    Kimi K2 & DE & \textbf{27.5\%} & 199.4\% & \textbf{0.637} \\
+    Kimi K2 & IT & 16.6\% & 129.1\% & 0.583 \\
+    Kimi K2 & SE & 12.8\% & 115.4\% & 0.564 \\
+    Kimi K2 & US & 3.1\% & 22.2\% & 0.516 \\
+    Kimi K2 & CN & 2.4\% & 40.1\% & 0.512 \\
+    \bottomrule
+  \end{tabular}
+
+  \vspace{0.2cm}
+  \begin{block}{Key insight}
+    Grid \textbf{variability} --- not mean intensity --- determines savings.
+    DE (variable) outperforms SE (clean but less variable) in \emph{relative} savings.
+  \end{block}
+
+\end{frame}
+
+\subsection{Threshold Space Analysis}
+
+\begin{frame}[t]{Results}{Threshold space: $\theta_p$ vs $\theta_r$ colored by score}
+
+  \centering
+  \includegraphics[width=0.85\textwidth,height=0.72\textheight,keepaspectratio]{assets/threshold_space_overview.png}
+
+\end{frame}
+
+\begin{frame}[t]{Results}{Optimal hysteresis margin is consistently narrow}
+
+  \centering
+  \small
+  \begin{tabular}{l|c|c|c|c}
+    \toprule
+    \textbf{Model} & \textbf{Region} & $\theta_p$ & $\theta_r$ & \textbf{Margin} \\
+    \midrule
+    DeepSeek & DE & 272 & 268 & \textbf{4} \\
+    DeepSeek & IT & 246 & 231 & \textbf{15} \\
+    DeepSeek & SE & 19 & 18 & \textbf{1} \\
+    DeepSeek & US & 396 & 386 & \textbf{10} \\
+    DeepSeek & CN & 528 & 512 & \textbf{16} \\
+    \midrule
+    Kimi K2 & DE & 267 & 262 & \textbf{5} \\
+    Kimi K2 & IT & 283 & 271 & \textbf{12} \\
+    Kimi K2 & SE & 22 & 21 & \textbf{1} \\
+    Kimi K2 & US & 453 & 447 & \textbf{6} \\
+    Kimi K2 & CN & 537 & 522 & \textbf{15} \\
+    \bottomrule
+  \end{tabular}
+
+  \vspace{0.2cm}
+  \begin{alertblock}{Central finding}
+    $\theta_p - \theta_r < 16$~gCO$_2$eq/kWh \textbf{in every region and model}.
+    Wide hysteresis degrades the savings-to-overhead ratio.
+  \end{alertblock}
+
+\end{frame}
+
+\subsection{Regional Comparison}
+
+\begin{frame}[t]{Results}{Regional comparison: savings, score, overhead}
+
+  \centering
+  \includegraphics[width=0.82\textwidth,height=0.72\textheight,keepaspectratio]{assets/carbon_reduction_comparison.png}
+
+\end{frame}
+
+\subsection{Start Date Sensitivity}
+
+\begin{frame}[t]{Results}{Best start dates cluster in winter months}
+
+  \centering
+  \includegraphics[width=0.70\textwidth,height=0.58\textheight,keepaspectratio]{assets/best_startdate_histogram.png}
+
+  \begin{itemize}
+    \item Winter starts (Nov--Feb) consistently outperform summer starts.
+    \item Effect is \textbf{secondary} to the hysteresis policy choice.
+    \item Difference between best/worst start: $\sim$5pp (SE), $<$2pp (CN).
+  \end{itemize}
+
+\end{frame}
+
+\subsection{Multi-Year Stability}
+
+\begin{frame}[t]{Results}{Multi-year averaging attenuates peak savings}
+
+  \centering
+  \includegraphics[width=0.75\textwidth,height=0.62\textheight,keepaspectratio]{assets/multiyear_avg_score.png}
+
+  \vspace{0.1cm}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \textbf{DE:} 43.4\% $\to$ 19.7\% \\
+      \textbf{IT:} 32.7\% $\to$ 18.7\%
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \textbf{SE:} 23.2\% $\to$ 22.3\% \\
+      \textbf{CN:} 6.2\% $\to$ 2.6\%
+    \end{column}
+  \end{columns}
+
+  \vspace{0.1cm}
+  \begin{block}{Practical implication}
+    Optimize on $\ge$3 years of data. Single-year optima may overestimate savings by $2\times$.
+  \end{block}
+
+\end{frame}
+
+\begin{frame}[t]{Results}{Hysteresis margin analysis: diminishing returns}
+
+  \centering
+  \includegraphics[width=0.78\textwidth,height=0.68\textheight,keepaspectratio]{assets/margin_vs_best_overview.png}
+
+  \vspace{0.05cm}
+  \begin{itemize}
+    \item Beyond $\theta_p - \theta_r \approx 50$~gCO$_2$eq/kWh: score plateaus or declines.
+    \item Higher margins $\Rightarrow$ more idle time without proportional savings.
+  \end{itemize}
 
 \end{frame}

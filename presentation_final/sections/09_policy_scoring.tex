@@ -22,27 +22,30 @@
       \vspace{0.2cm}
     \item \textbf{Composite score for ranking policies:}
       \[
-        \text{score} =
-        \frac{\text{CO2\_savings\_pct}}
-        {\max(\text{time\_overhead\_pct}, \,\epsilon)}
-        \quad\text{with very small}\quad \epsilon > 0
+        \text{score} = \frac{
+          \alpha \cdot \frac{\text{CO2\_savings\_pct}}{100}
+          + 1 - (1-\alpha) \cdot \frac{\text{time\_overhead\_pct}}{B}
+        }{2}
       \]
+      where $B$ = overhead budget (200\%), $\alpha \in [0,1]$ controls
+      the trade-off.
       \begin{itemize}
-        \item High CO$_2$ savings and small time overhead
-          $\Rightarrow$ high score.
+        \item $\alpha = 1$ (used in all experiments): score simplifies to
+          $\frac{1}{2} + \frac{\text{CO2\_savings\_pct}}{200}$.
+          Savings maximization subject to overhead budget.
+        \item $\alpha = 0$: score penalizes overhead alone.
       \end{itemize}
 
       \vspace{0.2cm}
-    \item \textbf{Practical constraint (optional):}
+    \item \textbf{Hard constraint:}
       \[
-        \text{time\_overhead\_pct} \leq \text{overhead\_budget\_pct}
+        \text{time\_overhead\_pct} \leq B
       \]
       \begin{itemize}
-        \item Only consider policies whose time overhead stays within
-          a given budget.
+        \item Only policies within the budget are considered.
+        \item Among budget-feasible policies, the one with the
+          highest score is selected.
       \end{itemize}
   \end{itemize}
-
-  TODO: Adjust the formulas to the current implementation
 
 \end{frame}

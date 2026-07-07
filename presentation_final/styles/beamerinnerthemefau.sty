@@ -1,0 +1,284 @@
+% ..............................................................................
+% The inner beamer theme accoridng to the FAU corporate style guide 2021, see 
+%
+% https://www.intern.fau.de/kommunikation-marketing-und-corporate-identity/corporate-identity/
+%
+%
+% Copyright 2022 by Tim Roith <tim.roith@fau.de>
+%
+% This program can be redistributed and/or modified under the terms
+% of the GNU Public License, version 2.
+%
+% ------------------------------------------------------------------------------
+
+\ProvidesPackage{styles/beamerinnerthemefau}
+\RequirePackage{fp}
+
+\newdimen\fau@inner@WordMarkTitleHeight
+\newdimen\fau@inner@WordMarkTitleWidth
+\newdimen\fau@inner@TitleTitleSkip
+\newdimen\fau@inner@HeaderHeight
+\newdimen\fau@inner@TitleHeight
+\newdimen\fau@inner@TitleLineHeight
+\newdimen\fau@inner@RightMargin
+
+% ------------------------------------------------------------------------------
+% Dimensions
+\def\fau@inner@XScale{1.}
+\def\fau@inner@YScale{1.}
+\DeclareOptionBeamer{XScale}{\def\fau@inner@XScale{#1}} % scale factor for x dimension
+\DeclareOptionBeamer{YScale}{\def\fau@inner@YScale{#1}} % scale factor for y dimension
+
+
+\DeclareOptionBeamer{WordMarkTitleHeight}{\fau@inner@WordMarkTitleHeight=#1}
+\DeclareOptionBeamer{WordMarkTitleWidth}{\fau@inner@WordMarkTitleWidth=#1}
+\DeclareOptionBeamer{TitleTitleSkip}{\fau@inner@TitleTitleSkip=#1}
+\DeclareOptionBeamer{HeaderHeight}{\fau@inner@HeaderHeight=#1}
+\DeclareOptionBeamer{TitleHeight}{\fau@inner@TitleHeight=#1}
+\DeclareOptionBeamer{TitleLineHeight}{\fau@inner@TitleLineHeight=#1}
+\DeclareOptionBeamer{RightMargin}{\fau@inner@RightMargin=#1}
+
+\DeclareOptionBeamer{WordMarkTitle}{\def\fau@inner@WordMarkTitle{#1}}
+\DeclareOptionBeamer{TitleArt}{\def\fau@inner@TitleArt{#1}}
+
+% ..............................................................................
+\ProcessOptionsBeamer
+\RequirePackage{tikz}
+\RequirePackage{graphicx}
+\mode<presentation>
+% ------------------------------------------------------------------------------
+% Scale the dimensions
+\fau@inner@WordMarkTitleHeight=\fau@inner@YScale\dimexpr\fau@inner@WordMarkTitleHeight
+\fau@inner@WordMarkTitleWidth=\fau@inner@XScale\dimexpr\fau@inner@WordMarkTitleWidth
+\fau@inner@TitleTitleSkip=\fau@inner@YScale\dimexpr\fau@inner@TitleTitleSkip
+\fau@inner@HeaderHeight=\fau@inner@YScale\dimexpr\fau@inner@HeaderHeight
+\fau@inner@TitleHeight=\fau@inner@YScale\dimexpr\fau@inner@TitleHeight
+\fau@inner@TitleLineHeight=\fau@inner@YScale\dimexpr\fau@inner@TitleLineHeight
+\fau@inner@RightMargin=\fau@inner@YScale\dimexpr\fau@inner@RightMargin
+
+% ..............................................................................
+% Title page
+% ------------------------------------------------------------------------------
+\define@key{beamerframe}{titleimage}[true]{%
+  \setbeamertemplate{background}{
+  	\vbox to \paperheight{%
+  	\vfill%
+    \includegraphics[%
+    	width=\paperwidth,%
+    	height=\dimexpr\paperheight-%
+    		   \fau@inner@HeaderHeight-%
+    		   \fau@inner@TitleHeight-%
+    		   \fau@inner@TitleLineHeight]{\fau@inner@TitleArt}%
+    }%
+  }%
+  \setbeamertemplate{headline}[headline title]
+  %\setbeamertemplate{sidebar left}[sidebar title theme]
+  \setbeamertemplate{sidebar left}{}
+  \setbeamertemplate{frametitle}[frametitle title]
+  \setbeamertemplate{footline}[footline title]
+  \setbeamercolor{background canvas}{bg=BaseColor}%
+  \setbeamercolor{section in toc}{fg=TitleFont}%
+  \setbeamercolor{subsection in toc}{fg=TitleFont}%
+  \hypersetup{linkcolor=TitleFont}%
+  \usebeamerfont{title}%
+  \setbeamercolor{footnote}{fg=white}%
+  \setbeamercolor{footnote mark}{fg=white}%
+  \usebeamercolor[fg]{title page}%
+}
+
+\define@key{beamerframe}{titleimagenofooter}[true]{%
+  \setbeamertemplate{background}{
+  	\vbox to \paperheight{%
+  	\vfill%
+    \includegraphics[%
+    	width=\paperwidth,%
+    	height=\dimexpr\paperheight-%
+    		   \fau@inner@HeaderHeight-%
+    		   \fau@inner@TitleHeight-%
+    		   \fau@inner@TitleLineHeight]{\fau@inner@TitleArt}%
+    }%
+  }%
+  \setbeamertemplate{headline}[headline title]
+  %\setbeamertemplate{sidebar left}[sidebar title theme]
+  \setbeamertemplate{sidebar left}{}
+  \setbeamertemplate{frametitle}[frametitle title]
+  \setbeamertemplate{footline}[footline off]
+  \setbeamercolor{background canvas}{bg=BaseColor}%
+  \setbeamercolor{section in toc}{fg=TitleFont}%
+  \setbeamercolor{subsection in toc}{fg=TitleFont}%
+  \hypersetup{linkcolor=TitleFont}%
+  \usebeamerfont{title}%
+  \setbeamercolor{footnote}{fg=TitleFont}%
+  \setbeamercolor{footnote mark}{fg=TitleFont}%
+  \usebeamercolor[fg]{title page}%
+}
+
+\define@key{beamerframe}{title}[true]{%
+  \setbeamertemplate{headline}[headline title]
+  \setbeamertemplate{sidebar left}[sidebar title theme]
+  \setbeamertemplate{frametitle}[frametitle title]
+  \setbeamertemplate{footline}[footline title]
+  \setbeamercolor{background canvas}{bg=BaseColor}%
+  \setbeamercolor{section in toc}{fg=TitleFont}%
+  \setbeamercolor{subsection in toc}{fg=TitleFont}%
+  \hypersetup{linkcolor=TitleFont}%
+  \usebeamerfont{title}%
+  \setbeamercolor{footnote}{fg=TitleFont}%
+  \setbeamercolor{footnote mark}{fg=TitleFont}%
+  \usebeamercolor[fg]{title page}%
+}
+
+\define@key{beamerframe}{titlenofooter}[true]{%
+  \setbeamertemplate{headline}[headline title]
+  \setbeamertemplate{sidebar left}[sidebar title theme]
+  \setbeamertemplate{frametitle}[frametitle title]
+  \setbeamertemplate{footline}[footline off]
+  \setbeamercolor{background canvas}{bg=BaseColor}%
+  \setbeamercolor{section in toc}{fg=TitleFont}%
+  \setbeamercolor{subsection in toc}{fg=TitleFont}%
+  \hypersetup{linkcolor=TitleFont}%
+  \usebeamerfont{title}%
+  \setbeamercolor{footnote}{fg=TitleFont}%
+  \setbeamercolor{footnote mark}{fg=TitleFont}%
+  \usebeamercolor[fg]{title page}%
+}
+% ..............................................................................
+% Actual plain environment
+% This removes the left sidbar of a plain frame
+% ------------------------------------------------------------------------------
+\providebool{fau@blank}
+\define@key{beamerframe}{blank}[true]{%
+	\booltrue{fau@blank}
+	\begingroup
+	\beamer@plainframetrue%
+	\def\beamer@frametemplate{\beamer@frametemplate@plain}
+	\setlength{\hoffset}{-\beamer@leftsidebar}
+	\addtolength{\textwidth}{\beamer@leftsidebar}
+	\addtolength{\textwidth}{\beamer@rightmargin}
+	\setlength{\hsize}{\textwidth}
+	\setlength{\columnwidth}{\textwidth}
+}
+
+\apptocmd{\beamer@reseteecodes}{%
+  \ifbool{fau@blank}{
+    \endgroup
+    \boolfalse{fau@blank}}{}
+}
+
+
+\setbeamertemplate{title page}{%
+\usebeamerfont{title}\inserttitle\\
+% if a subtitle is given insert it here
+\ifx\insertsubtitle\empty\else%
+    \usebeamerfont{subtitle}\insertsubtitle\\
+\fi%
+\vspace*{1em}
+% insert authors
+\ifx\insertauthor\empty\else%
+    \usebeamerfont{default}\textbf{\insertauthor}\\[1em]
+\fi%
+% insert institute name
+\ifx\insertinstitute\empty\else%
+    \small\insertinstitute\\[1em]
+\fi%
+%
+% insert date
+\ifx\insertdate\empty\else%
+    \usebeamerfont{default}\insertdate%
+\fi%
+%}%
+}%
+
+
+
+
+
+% ..............................................................................
+% Section page
+% ------------------------------------------------------------------------------
+
+\AtBeginSection{%
+{%
+%\usebeamercolor[fg]{normal text}
+\begin{frame}[title]{-}
+\usebeamerfont{title}%
+\hypersetup{linkcolor=TitleFont}%
+\tableofcontents[currentsection]%
+\end{frame}
+}%
+}%
+% --------------------------------------------------------------------------
+
+% ..............................................................................
+% Boxes and list
+% -------
+%
+% We define the bullet points for list and box behaviour.
+% ------------------------------------------------------------------------------
+
+\setbeamertemplate{itemize items}[triangle] % adapt height of itemize rectangles
+\setbeamertemplate{itemize item}{\raisebox{0.22ex}{$\bullet$}\hskip0.1em}
+\setbeamertemplate{itemize subitem}{\raisebox{0.22ex}{$\circ$}\hskip0.1em}
+\setbeamertemplate{navigation symbols}{}  % no navigation symbols
+% ------------------------------------------------------------------------------
+
+% ..............................................................................
+% Text alignemnt
+% -------
+%
+% Adjust the space that is justed in a frame.
+% ------------------------------------------------------------------------------
+
+\setbeamersize
+{
+    text margin left=0cm,
+    text margin right=\fau@inner@RightMargin
+}
+% ------------------------------------------------------------------------------
+
+
+\setbeamertemplate{block begin}{%
+	\vspace*{\fau@inner@YScale\dimexpr1ex}%
+	\begin{beamercolorbox}[sep=\fau@inner@YScale\dimexpr5pt]{block title}
+	\usebeamerfont*{block title}\insertblocktitle%
+	\end{beamercolorbox}%
+	\nointerlineskip%
+	\usebeamerfont{block body}%
+	\begin{beamercolorbox}[%
+	sep=\fau@inner@YScale\dimexpr5pt
+	]{block body}%
+}%
+
+\setbeamertemplate{block end}{%
+\end{beamercolorbox}
+\vspace*{\fau@inner@YScale\dimexpr0.2ex}
+}
+
+
+
+
+% ..............................................................................
+% ToC
+% -------
+%
+% We want numbered sections in Toc. Additionally we specify of shaded toc.
+% ------------------------------------------------------------------------------
+\setbeamertemplate{section in toc}[sections numbered]
+\setbeamertemplate{subsection in toc}[subsections numbered]
+
+\setbeamertemplate{section in toc shaded}{%
+\begin{colormixin}{0!BaseColorA}%
+\usebeamertemplate{section in toc}%
+\end{colormixin}%
+\unskip%
+}
+
+\setbeamertemplate{subsection in toc shaded}{%
+\begin{colormixin}{0!BaseColorA}%
+\usebeamertemplate{subsection in toc}%
+\end{colormixin}%
+\unskip%
+}
+% ..............................................................................
+% Reset mode to all
+\mode<all>

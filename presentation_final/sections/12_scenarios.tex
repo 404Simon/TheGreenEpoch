@@ -1,0 +1,25 @@
+\subsection{Scenarios}
+
+\begin{frame}[t]{Scenarios}{}
+
+  \centering
+  \resizebox{\textwidth}{!}{%
+    \pgfplotstabletypeset[
+      col sep=comma,
+      text indicator=",
+      string type,
+      columns={description,model,threshold,hysteresis,region,start_times_set,historical,overhead_budget_pct},
+      columns/description/.style={column name=Description},
+      columns/model/.style={column name=Model},
+      columns/threshold/.style={column name=Threshold},
+      columns/hysteresis/.style={column name=Hysteresis},
+      columns/region/.style={column name=Regions},
+      columns/start_times_set/.style={column name=Start times},
+      columns/historical/.style={column name=Historical},
+      columns/overhead_budget_pct/.style={column name=Overhead},
+      every head row/.style={before row=\toprule, after row=\midrule},
+      every last row/.style={after row=\bottomrule},
+    ]{../data/scenarios.csv}%
+  }
+
+\end{frame}

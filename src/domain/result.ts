@@ -1,5 +1,6 @@
 import type { FullProfile, SimConfig, SimProgress, SimResult } from "./types";
 import { tokensPerSecond } from "./physics";
+import { round2 } from "./utils";
 
 export function computeOverheadPct(
   pausedS: number,
@@ -96,7 +97,7 @@ export function buildSimResult(
     completed: lastProgress.tokensRemaining <= 0,
     numPauses: lastProgress.numPauses,
     overheadBudgetPct: simConfig.overheadBudgetPct,
-    actualOverheadPct: round(actualOverheadPct),
+    actualOverheadPct: round2(actualOverheadPct),
     withinOverheadBudget: overheadS / (lastProgress.tokensTotal / tps || 1) <= simConfig.overheadBudgetPct / 100,
     timestamps: overrides.timestamps,
     carbonIntensitySeries: overrides.carbonIntensitySeries,
@@ -107,8 +108,8 @@ export function buildSimResult(
     stopReason: lastProgress.stopReason,
     baselineEmissionsKgco2: baselineEm,
     baselineTimeH: baselineProgress.totalWallS / 3600,
-    co2SavingsPct: round(co2SavingsPct),
-    score: round(score),
+    co2SavingsPct: round2(co2SavingsPct),
+    score: round2(score),
     idleTimeH: computeIdleTimeH(pausedTimeH, checkpointOverheadH),
     completionPct: computeCompletionPct(tokensProcessed, lastProgress.tokensTotal),
     ok: computeIsOk(lastProgress.tokensRemaining, actualOverheadPct, simConfig.overheadBudgetPct, lastProgress.issues),
@@ -123,6 +124,4 @@ function computeCompletionPct(tokensProcessed: number, tokensTotal: number): num
   return tokensTotal > 0 ? 100 * tokensProcessed / tokensTotal : 0;
 }
 
-function round(n: number): number {
-  return Math.round(n * 100) / 100;
-}
+

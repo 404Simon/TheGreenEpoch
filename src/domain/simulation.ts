@@ -1,6 +1,7 @@
 import type { FullProfile, SimConfig, CO2Timeline, SimProgress, Policy } from "./types";
 import { SimState } from "./types";
 import { tokensPerSecond, energyWh, emissionsG } from "./physics";
+import { round2 } from "./utils";
 
 export function* simulateStepwise(
   profile: FullProfile,
@@ -83,15 +84,15 @@ export function* simulateStepwise(
       state,
       tokensRemaining,
       tokensTotal,
-      totalWallS: round(totalWallS),
-      trainingS: round(trainingS),
-      pausedS: round(pausedS),
-      checkpointS: round(checkpointS),
-      totalEnergyWh: round(totalEnergyWh_),
-      trainingEnergyWh: round(trainingEnergyWh_),
-      pausedEnergyWh: round(pausedEnergyWh_),
-      checkpointEnergyWh: round(checkpointEnergyWh_),
-      totalEmissionsG: round(totalEmissionsG_),
+      totalWallS: round2(totalWallS),
+      trainingS: round2(trainingS),
+      pausedS: round2(pausedS),
+      checkpointS: round2(checkpointS),
+      totalEnergyWh: round2(totalEnergyWh_),
+      trainingEnergyWh: round2(trainingEnergyWh_),
+      pausedEnergyWh: round2(pausedEnergyWh_),
+      checkpointEnergyWh: round2(checkpointEnergyWh_),
+      totalEmissionsG: round2(totalEmissionsG_),
       numPauses,
       done: done || false,
       stopReason: stopReason || "",
@@ -239,6 +240,4 @@ export function findStartIndex(timestamps: string[], startTime: string): number 
   return Math.min(lo, timestamps.length - 1);
 }
 
-function round(n: number): number {
-  return Math.round(n * 100) / 100;
-}
+

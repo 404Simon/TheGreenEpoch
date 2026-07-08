@@ -1,8 +1,9 @@
-import type { SweepPoint, FullProfile, CO2Timeline, SimConfig } from "./types";
+import type { SweepPoint, FullProfile, CO2Timeline, SimConfig, SimProgress, Bounds } from "./types";
 import { simulateStepwise } from "./simulation";
 import { neverPausePolicy, hysteresisPolicy } from "./policy";
 import { tokensPerSecond } from "./physics";
 import { computeOverheadPct, computeSavingsPct, computeScore } from "./result";
+import { round2 } from "./utils";
 
 export interface AdaptiveOptions {
   thetaPauseMax: number;
@@ -33,6 +34,7 @@ export function runOptimization(
   const allPoints: SweepPoint[] = [];
   let best: SweepPoint | null = null;
   let bounds = initialBounds(options.thetaPauseMax);
+  const baselineCache = new Map<string, number>();
 
   for (let iter = 0; iter < options.maxIterations; iter++) {
     const dateSamples = options.fixedStartTime
@@ -47,16 +49,23 @@ export function runOptimization(
       const startTime = dayToDate(day);
       const dateSimConfig: SimConfig = { ...baseSimConfig, startTime };
 
-      let baselineLast: import("./types").SimProgress | null = null;
-      for (const p of simulateStepwise(profile, neverPausePolicy(), timeline, dateSimConfig)) {
-        baselineLast = p;
+      let baselineEm: number;
+      const cached = baselineCache.get(startTime);
+      if (cached !== undefined) {
+        baselineEm = cached;
+      } else {
+        let baselineLast: SimProgress | null = null;
+        for (const p of simulateStepwise(profile, neverPausePolicy(), timeline, dateSimConfig)) {
+          baselineLast = p;
+        }
+        if (!baselineLast) continue;
+        baselineEm = baselineLast.totalEmissionsG / 1000;
+        baselineCache.set(startTime, baselineEm);
       }
-      if (!baselineLast) continue;
-      const baselineEm = baselineLast.totalEmissionsG / 1000;
 
       for (const pt of grid) {
         const policy = hysteresisPolicy(pt.thetaPause, pt.thetaResume);
-        let last = null;
+        let last: SimProgress | null = null;
         for (const p of simulateStepwise(profile, policy, timeline, dateSimConfig)) {
           last = p;
         }
@@ -97,7 +106,7 @@ export function runOptimization(
     if (iter >= options.maxIterations - 1) break;
 
     if (!best) {
-      bounds = expandBounds(bounds);
+      bounds = expandBounds(bounds, options.thetaPauseMax);
     } else {
       bounds = refineBounds(
         { thetaPause: best.thetaPause, thetaResume: best.thetaResume, startDay: dateToDay(best.startTime) },
@@ -109,15 +118,6 @@ export function runOptimization(
   }
 
   return { points: allPoints, best };
-}
-
-export interface Bounds {
-  tpMin: number;
-  tpMax: number;
-  trMin: number;
-  trMax: number;
-  dayMin: number;
-  dayMax: number;
 }
 
 const DAYS_IN_MONTH = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
@@ -172,13 +172,13 @@ export function generateGrid(bounds: Bounds, resolution: number): Array<{ thetaP
   const points: Array<{ thetaPause: number; thetaResume: number }> = [];
 
   for (let tpi = 0; tpi < resolution; tpi++) {
-    const tp = round(tpMin + tpi * stepTp);
-    if (tp > tpMax) break;
+    const tp = round2(tpMin + tpi * stepTp);
+    if (tp > tpMax + 0.01) break;
 
     const trCount = Math.max(2, Math.round(((tp - trMin) / (trMax - trMin)) * resolution));
     for (let tri = 0; tri < trCount; tri++) {
-      const tr = round(trMin + tri * (tp - trMin) / Math.max(trCount - 1, 1));
-      if (tr > tp) break;
+      const tr = round2(trMin + tri * (tp - trMin) / Math.max(trCount - 1, 1));
+      if (tr > tp + 0.01) break;
       points.push({ thetaPause: tp, thetaResume: tr });
     }
   }
@@ -196,10 +196,10 @@ export function refineBounds(
   const newMin = Math.max(10, best.thetaPause - span * shrinkFactor / 2);
   const newMax = Math.min(currentBounds.tpMax, best.thetaPause + span * shrinkFactor / 2);
 
-  const tpMin = round(newMin);
-  const tpMax = round(newMax);
-  let trMin = round(Math.max(0, best.thetaResume - span * shrinkFactor / 2));
-  let trMax = round(Math.min(tpMax, best.thetaResume + span * shrinkFactor / 2));
+  const tpMin = round2(newMin);
+  const tpMax = round2(newMax);
+  let trMin = round2(Math.max(0, best.thetaResume - span * shrinkFactor / 2));
+  let trMax = round2(Math.min(tpMax, best.thetaResume + span * shrinkFactor / 2));
   trMin = Math.max(0, trMin);
   trMax = Math.max(trMin + minStep, trMax);
 
@@ -211,12 +211,13 @@ export function refineBounds(
   return { tpMin, tpMax, trMin, trMax, dayMin, dayMax };
 }
 
-export function expandBounds(bounds: Bounds): Bounds {
+export function expandBounds(bounds: Bounds, maxThetaPause: number = 500): Bounds {
+  const span = bounds.tpMax - bounds.tpMin;
   return {
-    tpMin: Math.max(10, round(bounds.tpMin * 0.8)),
-    tpMax: Math.min(bounds.tpMax, round(bounds.tpMax * 0.9)),
+    tpMin: Math.max(10, round2(bounds.tpMin - span * 0.25)),
+    tpMax: Math.min(maxThetaPause, round2(bounds.tpMax + span * 0.25)),
     trMin: 0,
-    trMax: bounds.tpMax,
+    trMax: round2(bounds.tpMax + span * 0.25),
     dayMin: 0,
     dayMax: 364,
   };
@@ -228,6 +229,4 @@ export function findBest(points: SweepPoint[], budget: number): SweepPoint | nul
   return valid.reduce((a, b) => (a.score > b.score ? a : b));
 }
 
-function round(n: number): number {
-  return Math.round(n * 100) / 100;
-}
+

@@ -1,8 +1,5 @@
 import type { Constants, TrainingProfile, CO2Timeline, Scenario, SimResult } from "../domain/types";
-
-function stripProxies<T>(data: T): T {
-  return JSON.parse(JSON.stringify(data));
-}
+import { stripProxies } from "../domain/utils";
 
 export function runAllInWorker(
   constants: Constants,

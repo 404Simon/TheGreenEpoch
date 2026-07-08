@@ -131,6 +131,15 @@ export interface Policy {
   evaluate(co2: number, isPaused: boolean): "pause" | "resume" | "continue";
 }
 
+export interface Bounds {
+  tpMin: number;
+  tpMax: number;
+  trMin: number;
+  trMax: number;
+  dayMin: number;
+  dayMax: number;
+}
+
 export interface SweepPoint {
   thetaPause: number;
   thetaResume: number;

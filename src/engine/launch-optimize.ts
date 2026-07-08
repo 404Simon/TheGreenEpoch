@@ -1,9 +1,6 @@
 import type { FullProfile, CO2Timeline, SweepPoint } from "../domain/types";
 import type { AdaptiveOptions } from "../domain/optimize";
-
-function stripProxies<T>(data: T): T {
-  return JSON.parse(JSON.stringify(data));
-}
+import { stripProxies } from "../domain/utils";
 
 export function runOptimizationInWorker(
   profile: FullProfile,

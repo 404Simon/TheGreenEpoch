@@ -2045,6 +2045,255 @@ def plot_multiyear_comparison(df: pd.DataFrame, output_dir: Path):
     print(f"  ✓ {filename}")
 
 
+BUDGET_PCT = 200
+
+
+def _compute_score(savings_pct, overhead_pct, alpha, budget=BUDGET_PCT):
+    """Compute score using the project's scoring function."""
+    savings_norm = savings_pct / 100
+    overhead_norm = overhead_pct / budget
+    return (alpha * savings_norm + 1 - (1 - alpha) * overhead_norm) / 2
+
+
+def plot_score_heatmaps(output_dir: Path):
+    """2D heatmaps showing score distribution across savings (y) and overhead (x).
+
+    One heatmap per alpha (1.0, 0.8, 0.5, 0.0). Green = high score, red = low.
+    """
+    alphas = [1.0, 0.8, 0.5, 0.0]
+
+    savings_range = np.linspace(0, 50, 200)
+    overhead_range = np.linspace(0, 200, 200)
+    savings_grid, overhead_grid = np.meshgrid(savings_range, overhead_range)
+
+    fig, axes = plt.subplots(2, 2, figsize=(16, 14))
+
+    for ax, alpha in zip(axes.flat, alphas):
+        scores = _compute_score(savings_grid, overhead_grid, alpha)
+
+        im = ax.imshow(
+            scores,
+            extent=[0, 200, 0, 50],
+            origin="lower",
+            aspect="auto",
+            cmap="RdYlGn",
+            vmin=0,
+            vmax=1,
+        )
+
+        # Contour lines at key thresholds
+        contour_levels = [0.3, 0.4, 0.5, 0.6, 0.7]
+        cs = ax.contour(
+            overhead_range, savings_range,
+            scores.T,
+            levels=contour_levels,
+            colors="black",
+            linewidths=0.8,
+            linestyles="--",
+        )
+        ax.clabel(cs, fmt="%.1f", fontsize=8)
+
+        ax.set_xlabel("Time Overhead (%)")
+        ax.set_ylabel("CO₂ Savings (%)")
+        ax.set_title(f"α = {alpha}", fontsize=14, fontweight="bold")
+
+        cbar = fig.colorbar(im, ax=ax, shrink=0.8)
+        cbar.set_label("Score")
+
+    fig.suptitle(
+        "Score Heatmap: Savings vs Overhead (budget = 200%)",
+        fontsize=16,
+        fontweight="bold",
+        y=1.02,
+    )
+    fig.tight_layout()
+    filename = "score_heatmaps.png"
+    fig.savefig(output_dir / filename)
+    plt.close(fig)
+    print(f"  ✓ {filename}")
+
+
+def plot_score_example_comparison(output_dir: Path):
+    """Bar chart comparing example runs across different alpha values.
+
+    Examples chosen so that different alphas produce different winners.
+    """
+    examples = [
+        {"name": "A: Aggressive", "savings": 43, "overhead": 190},
+        {"name": "B: Conservative", "savings": 3, "overhead": 5},
+        {"name": "C: Efficient", "savings": 30, "overhead": 80},
+        {"name": "D: Cautious", "savings": 15, "overhead": 30},
+        {"name": "E: Extreme", "savings": 50, "overhead": 200},
+    ]
+
+    alphas = [1.0, 0.8, 0.5, 0.0]
+    alpha_colors = {1.0: "#2563eb", 0.8: "#059669", 0.5: "#d97706", 0.0: "#dc2626"}
+
+    fig, ax = plt.subplots(figsize=(14, 8))
+
+    x = np.arange(len(examples))
+    bar_width = 0.2
+
+    for i, alpha in enumerate(alphas):
+        scores = [
+            _compute_score(ex["savings"], ex["overhead"], alpha)
+            for ex in examples
+        ]
+        offset = (i - 1.5) * bar_width
+        bars = ax.bar(
+            x + offset, scores, bar_width,
+            label=f"α = {alpha}",
+            color=alpha_colors[alpha],
+            edgecolor="black",
+            linewidth=0.5,
+        )
+        for bar, score in zip(bars, scores):
+            ax.annotate(
+                f"{score:.3f}",
+                (bar.get_x() + bar.get_width() / 2, bar.get_height()),
+                textcoords="offset points",
+                xytext=(0, 3),
+                ha="center",
+                fontsize=7,
+            )
+
+    # Add savings/overhead annotations below x-axis
+    xlabels = []
+    for ex in examples:
+        xlabels.append(f"{ex['name']}\n({ex['savings']}% save, {ex['overhead']}% OH)")
+
+    ax.set_xticks(x)
+    ax.set_xticklabels(xlabels, fontsize=9)
+    ax.set_ylabel("Score")
+    ax.set_title("Score Comparison: Example Runs Across Alpha Values", fontsize=14, fontweight="bold")
+    ax.legend(title="Alpha")
+    ax.grid(True, alpha=0.3, axis="y")
+
+    # Highlight winner per example
+    for j, ex in enumerate(examples):
+        best_alpha = max(alphas, key=lambda a: _compute_score(ex["savings"], ex["overhead"], a))
+        best_score = _compute_score(ex["savings"], ex["overhead"], best_alpha)
+        ax.annotate(
+            f"★ α={best_alpha}",
+            (j, best_score + 0.02),
+            ha="center",
+            fontsize=8,
+            fontweight="bold",
+            color=alpha_colors[best_alpha],
+        )
+
+    fig.tight_layout()
+    filename = "score_example_comparison.png"
+    fig.savefig(output_dir / filename)
+    plt.close(fig)
+    print(f"  ✓ {filename}")
+
+
+def plot_absolute_relative_savings(output_dir: Path):
+    """Compare absolute and relative savings from optimization JSON files.
+
+    Reads opt_*.json files, finds best completed run per file, and plots
+    absolute (tCO₂) vs relative (%) savings side by side.
+    """
+    import json as _json
+
+    opt_dir = Path("output")
+    opt_files = sorted(opt_dir.glob("opt_*.json"))
+    if not opt_files:
+        print("  No opt_*.json files found, skipping absolute/relative savings plot.")
+        return
+
+    labels = []
+    rel_savings = []
+    abs_savings = []
+
+    for fpath in opt_files:
+        with open(fpath) as f:
+            data = _json.load(f)
+
+        completed = [
+            p for p in data["points"]
+            if p.get("stopReason") == "completed" and p.get("completed") is True
+        ]
+        if not completed:
+            continue
+
+        best = max(completed, key=lambda p: p["score"])
+        model_code = "DS" if "Deepseek" in data.get("model", "") else "KM"
+        region = data.get("region", "?")
+        labels.append(f"{region}\n({model_code})")
+        rel_savings.append(best["co2SavingsPct"])
+        abs_savings.append(
+            (best["baselineEmissionsKgco2"] - best["totalEmissionsKgco2"]) / 1000
+        )
+
+    if not labels:
+        print("  No completed runs found, skipping absolute/relative savings plot.")
+        return
+
+    fig, ax1 = plt.subplots(figsize=(14, 7))
+
+    x = np.arange(len(labels))
+    bar_width = 0.35
+
+    # Relative savings (left axis)
+    bars1 = ax1.bar(
+        x - bar_width / 2, rel_savings, bar_width,
+        color="#2563eb", alpha=0.8, edgecolor="black", linewidth=0.5,
+        label="Relative Savings (%)",
+    )
+    ax1.set_ylabel("Relative Savings (%)", color="#2563eb")
+    ax1.tick_params(axis="y", labelcolor="#2563eb")
+
+    # Absolute savings (right axis)
+    ax2 = ax1.twinx()
+    bars2 = ax2.bar(
+        x + bar_width / 2, abs_savings, bar_width,
+        color="#059669", alpha=0.8, edgecolor="black", linewidth=0.5,
+        label="Absolute Savings (tCO₂)",
+    )
+    ax2.set_ylabel("Absolute Savings (tCO₂)", color="#059669")
+    ax2.tick_params(axis="y", labelcolor="#059669")
+
+    # Annotations
+    for bar, val in zip(bars1, rel_savings):
+        if val > 0:
+            ax1.annotate(
+                f"{val:.1f}%",
+                (bar.get_x() + bar.get_width() / 2, bar.get_height()),
+                textcoords="offset points", xytext=(0, 3),
+                ha="center", fontsize=8, color="#2563eb",
+            )
+    for bar, val in zip(bars2, abs_savings):
+        if val > 0:
+            ax2.annotate(
+                f"{val:.0f}",
+                (bar.get_x() + bar.get_width() / 2, bar.get_height()),
+                textcoords="offset points", xytext=(0, 3),
+                ha="center", fontsize=8, color="#059669",
+            )
+
+    ax1.set_xticks(x)
+    ax1.set_xticklabels(labels, fontsize=9)
+    ax1.set_title(
+        "Absolute vs Relative CO₂ Savings (Best Completed Run per Scenario)",
+        fontsize=14, fontweight="bold",
+    )
+
+    # Combined legend
+    lines1, labels1 = ax1.get_legend_handles_labels()
+    lines2, labels2 = ax2.get_legend_handles_labels()
+    ax1.legend(lines1 + lines2, labels1 + labels2, loc="upper left")
+
+    ax1.grid(True, alpha=0.3, axis="y")
+
+    fig.tight_layout()
+    filename = "absolute_relative_savings.png"
+    fig.savefig(output_dir / filename)
+    plt.close(fig)
+    print(f"  ✓ {filename}")
+
+
 def plot_best_run_comparison(df: pd.DataFrame, output_dir: Path):
     """Compare savings and overhead of the best run of each model per country.
 
@@ -2175,6 +2424,9 @@ def main():
     plot_score_vs_overhead_combined(df, FIGURES_DIR)
     plot_alpha_comparison(df, FIGURES_DIR)
     plot_multiyear_comparison(df, FIGURES_DIR)
+    plot_score_heatmaps(FIGURES_DIR)
+    plot_score_example_comparison(FIGURES_DIR)
+    plot_absolute_relative_savings(FIGURES_DIR)
     plot_best_run_comparison(df, FIGURES_DIR)
 
     print(f"\n✓ All figures saved to {FIGURES_DIR}/")

@@ -1186,6 +1186,116 @@ def plot_best_startdate_histogram(df: pd.DataFrame, output_dir: Path):
     print(f"  ✓ {filename}")
 
 
+def plot_best_abs_startdate_histogram(output_dir: Path):
+    """Histogram of best absolute-savings start dates with monthly bins.
+
+    Reads opt_*.json files. For each file, finds the completed run with
+    the highest absolute savings (baseline - total emissions), extracts
+    its start date, and plots which month it falls in.
+    """
+    import json as _json
+
+    opt_dir = Path("output")
+    opt_files = sorted(opt_dir.glob("opt_*.json"))
+    if not opt_files:
+        print("  No opt_*.json files found, skipping abs savings histogram.")
+        return
+
+    MODEL_MAP = {"Deepseek": "DeepSeek V3", "Kimi": "Kimi K2"}
+
+    best_rows = []
+    for fpath in opt_files:
+        with open(fpath) as f:
+            data = _json.load(f)
+
+        completed = [
+            p for p in data["points"]
+            if p.get("stopReason") == "completed" and p.get("completed") is True
+        ]
+        if not completed:
+            continue
+
+        # Find run with highest absolute savings
+        best = max(
+            completed,
+            key=lambda p: p["baselineEmissionsKgco2"] - p["totalEmissionsKgco2"],
+        )
+
+        model = MODEL_MAP.get(data.get("model", ""), data.get("model", "?"))
+        region = data.get("region", "?")
+        start_date = best.get("startTime", "?")
+        abs_save = (best["baselineEmissionsKgco2"] - best["totalEmissionsKgco2"]) / 1000
+
+        best_rows.append({
+            "model": model,
+            "region": region,
+            "month": _month_from_date(start_date),
+            "abs_save_tco2": abs_save,
+        })
+
+    if not best_rows:
+        print("  No completed runs found in opt files, skipping histogram.")
+        return
+
+    best_df = pd.DataFrame(best_rows)
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    bar_width = 0.35
+    x = np.arange(len(MONTH_ORDER))
+
+    for i, model in enumerate(MODEL_ORDER):
+        model_df = best_df[best_df["model"] == model]
+        counts = (
+            model_df["month"]
+            .value_counts()
+            .reindex(MONTH_ORDER, fill_value=0)
+        )
+        offset = (i - 0.5) * bar_width
+        bars = ax.bar(
+            x + offset,
+            counts.values,
+            bar_width,
+            label=model,
+            color=COLORS_MODEL.get(model, "gray"),
+            edgecolor="black",
+            linewidth=0.5,
+            alpha=0.85,
+        )
+        # Annotate region names on bars
+        for month_idx, month in enumerate(MONTH_ORDER):
+            region_hits = model_df[model_df["month"] == month]["region"].tolist()
+            if region_hits:
+                ax.annotate(
+                    ",".join(region_hits),
+                    (x[month_idx] + offset, counts.values[month_idx]),
+                    textcoords="offset points",
+                    xytext=(0, 4),
+                    ha="center",
+                    fontsize=6,
+                    rotation=45,
+                )
+
+    ax.set_xticks(x)
+    ax.set_xticklabels(MONTH_ORDER, rotation=45, ha="right")
+    ax.set_ylabel("Count (best abs. savings run per model & region)")
+    ax.set_xlabel("Month")
+    ax.set_title(
+        "Best Absolute Savings Start Date Distribution",
+        fontsize=14,
+        fontweight="bold",
+    )
+    ax.legend(title="Model")
+    ax.grid(True, alpha=0.3, axis="y")
+    ax.set_ylim(0, 6)
+
+    fig.tight_layout()
+    filename = "best_abs_startdate_histogram.png"
+    fig.savefig(output_dir / filename)
+    plt.close(fig)
+    print(f"  ✓ {filename}")
+
+
 def plot_savings_vs_overhead_all(df: pd.DataFrame, output_dir: Path):
     """Pareto frontiers: CO₂ Savings vs Time Overhead for _all_ files.
 
@@ -2416,6 +2526,7 @@ def main():
     print("\nGenerating start-date optimization plots (#68)...")
     print_best_startdate_table(df, FIGURES_DIR)
     plot_best_startdate_histogram(df, FIGURES_DIR)
+    plot_best_abs_startdate_histogram(FIGURES_DIR)
     plot_score_vs_iteration(df, FIGURES_DIR)
     plot_avg_score_vs_iteration(df, FIGURES_DIR)
     plot_savings_vs_overhead_all(df, FIGURES_DIR)

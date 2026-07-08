@@ -1,3 +1,34 @@
+\subsection{Scoring Analysis}
+
+\begin{frame}[t]{Results}{Score heatmaps: savings vs.\ overhead trade-off}
+
+  \centering
+  \includegraphics[width=0.82\textwidth,height=0.72\textheight,keepaspectratio]{assets/score_heatmaps.png}
+
+\end{frame}
+
+\begin{frame}[t]{Results}{Example runs: different $\alpha$ values pick different winners}
+
+  \centering
+  \includegraphics[width=0.82\textwidth,height=0.72\textheight,keepaspectratio]{assets/score_example_comparison.png}
+
+\end{frame}
+
+\begin{frame}[t]{Results}{Absolute vs.\ relative CO$_2$ savings}
+
+  \centering
+  \includegraphics[width=0.82\textwidth,height=0.72\textheight,keepaspectratio]{assets/absolute_relative_savings.png}
+
+  \vspace{0.1cm}
+  \begin{itemize}
+    \item Regions with higher baseline emissions can achieve larger
+      absolute reductions even at modest relative savings.
+    \item Both metrics should be reported: relative savings show policy
+      effectiveness, absolute savings quantify real-world impact.
+  \end{itemize}
+
+\end{frame}
+
 \subsection{Pareto Frontier Analysis}
 
 \begin{frame}[t]{Results}{Pareto frontiers: DeepSeek V3 across all regions}
@@ -97,7 +128,19 @@
 \begin{frame}[t]{Results}{Best start dates cluster in winter months}
 
   \centering
-  \includegraphics[width=0.70\textwidth,height=0.58\textheight,keepaspectratio]{assets/best_startdate_histogram.png}
+  % split into 2 columns and put each histogram in one column
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \centering
+      \textbf{Relative savings} \\
+      \includegraphics[width=0.95\textwidth,height=0.58\textheight,keepaspectratio]{assets/best_startdate_histogram.png}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \centering
+      \textbf{Absolute savings} \\
+      \includegraphics[width=0.95\textwidth,height=0.58\textheight,keepaspectratio]{assets/best_abs_startdate_histogram.png}
+    \end{column}
+  \end{columns}
 
   \begin{itemize}
     \item Winter starts (Nov--Feb) consistently outperform summer starts.

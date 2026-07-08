@@ -751,10 +751,17 @@ def plot_threshold_space_per_scenario(df: pd.DataFrame, output_dir: Path):
 
 
 def plot_margin_vs_best(df: pd.DataFrame, output_dir: Path):
-    """For each hysteresis margin, plot the best score / savings / overhead.
+    """For each hysteresis margin, plot score / savings / overhead of the best-scoring run.
 
-    2×5 grid (models × regions), with three y-axes per subplot.
+    2×5 grid (models × regions). Uses _all_ data (optimized over start dates).
+    For each hysteresis margin, finds the run with the highest score and plots
+    that run's score, savings, and overhead.
     """
+    df_all = df[df["file_type"] == "all"]
+    if df_all.empty:
+        print("  No _all_ data found, skipping margin vs best overview.")
+        return
+
     fig, axes = plt.subplots(
         len(MODEL_ORDER),
         len(REGION_ORDER),
@@ -763,69 +770,52 @@ def plot_margin_vs_best(df: pd.DataFrame, output_dir: Path):
         sharey=False,
     )
 
-    line_styles = {"01-01": "-", "07-01": "--"}
-
     for col_idx, region in enumerate(REGION_ORDER):
         for row_idx, model in enumerate(MODEL_ORDER):
             ax = axes[row_idx, col_idx]
             ax2 = ax.twinx()
-            subset = df[(df["model"] == model) & (df["region"] == region)]
+            subset = df_all[(df_all["model"] == model) & (df_all["region"] == region)]
 
             if subset.empty:
                 ax.set_visible(False)
                 ax2.set_visible(False)
                 continue
 
-            for start_date, start_group in subset.groupby("start_date"):
-                if start_group.empty:
-                    continue
-                ls = line_styles.get(start_date, "-")
-                label_suffix = START_LABELS.get(start_date, start_date)
+            # For each hysteresis margin, find the run with highest score
+            best_per_margin = subset.loc[
+                subset.groupby("hysteresis_margin")["score"].idxmax()
+            ].sort_values("hysteresis_margin")
 
-                agg = (
-                    start_group.groupby("hysteresis_margin")
-                    .agg(
-                        best_score=("score", "max"),
-                        best_savings=("co2_save_pct", "max"),
-                        best_overhead=("overhead_pct", "min"),
-                    )
-                    .reset_index()
-                    .sort_values("hysteresis_margin")
-                )
+            if len(best_per_margin) < 2:
+                continue
 
-                if len(agg) < 2:
-                    continue
-
-                ax.plot(
-                    agg["hysteresis_margin"],
-                    agg["best_score"],
-                    color="#2563eb",
-                    linestyle=ls,
-                    linewidth=2,
-                    marker="o",
-                    markersize=4,
-                    label=f"Score ({label_suffix})",
-                )
-                ax.plot(
-                    agg["hysteresis_margin"],
-                    agg["best_savings"] / 100,
-                    color="#059669",
-                    linestyle=ls,
-                    linewidth=2,
-                    marker="s",
-                    markersize=4,
-                    label=f"Savings/100 ({label_suffix})",
-                )
-                ax2.plot(
-                    agg["hysteresis_margin"],
-                    agg["best_overhead"],
-                    color="#dc2626",
-                    linestyle=ls,
-                    linewidth=2,
-                    marker="^",
-                    markersize=4,
-                    label=f"Overhead ({label_suffix})",
-                )
+            ax.plot(
+                best_per_margin["hysteresis_margin"],
+                best_per_margin["score"],
+                color="#2563eb",
+                linewidth=2,
+                marker="o",
+                markersize=4,
+                label="Score",
+            )
+            ax.plot(
+                best_per_margin["hysteresis_margin"],
+                best_per_margin["co2_save_pct"] / 100,
+                color="#059669",
+                linewidth=2,
+                marker="s",
+                markersize=4,
+                label="Savings/100",
+            )
+            ax2.plot(
+                best_per_margin["hysteresis_margin"],
+                best_per_margin["overhead_pct"],
+                color="#dc2626",
+                linewidth=2,
+                marker="^",
+                markersize=4,
+                label="Overhead",
+            )
 
             if row_idx == 0:
                 ax.set_title(region, fontsize=14, fontweight="bold")
@@ -842,15 +832,16 @@ def plot_margin_vs_best(df: pd.DataFrame, output_dir: Path):
 
             if col_idx == len(REGION_ORDER) - 1:
                 lines1, labels1 = ax.get_legend_handles_labels()
+                lines2, labels2 = ax2.get_legend_handles_labels()
                 ax.legend(
-                    lines1, labels1,
-                    fontsize=6,
+                    lines1 + lines2, labels1 + labels2,
+                    fontsize=7,
                     loc="upper left",
                     ncol=1,
                 )
 
     fig.suptitle(
-        "Hysteresis Margin vs Best Score / Savings / Overhead",
+        "Hysteresis Margin vs Best Score / Savings / Overhead (All Start Dates)",
         fontsize=16,
         fontweight="bold",
         y=1.0,
@@ -863,13 +854,19 @@ def plot_margin_vs_best(df: pd.DataFrame, output_dir: Path):
 
 
 def plot_margin_vs_best_per_model(df: pd.DataFrame, output_dir: Path):
-    """Per (model, region): margin on x, best score/savings/overhead on y.
+    """Per (model, region): margin on x, score/savings/overhead of best-scoring run on y.
 
-    Two start dates overlaid with different line styles.
+    Uses _all_ data (optimized over start dates). For each hysteresis margin,
+    finds the run with the highest score and plots that run's metrics.
     """
+    df_all = df[df["file_type"] == "all"]
+    if df_all.empty:
+        print("  No _all_ data found, skipping margin vs best per model.")
+        return
+
     for model in MODEL_ORDER:
         fig, axes = plt.subplots(1, len(REGION_ORDER), figsize=(24, 5), sharey=False)
-        model_df = df[df["model"] == model]
+        model_df = df_all[df_all["model"] == model]
 
         for col_idx, region in enumerate(REGION_ORDER):
             ax = axes[col_idx]
@@ -880,55 +877,41 @@ def plot_margin_vs_best_per_model(df: pd.DataFrame, output_dir: Path):
                 ax.set_visible(False)
                 continue
 
-            for start_date, start_group in region_df.groupby("start_date"):
-                if start_group.empty:
-                    continue
-                label_suffix = START_LABELS.get(start_date, start_date)
-                ls = "-" if start_date == "01-01" else "--"
+            # For each hysteresis margin, find the run with highest score
+            best_per_margin = region_df.loc[
+                region_df.groupby("hysteresis_margin")["score"].idxmax()
+            ].sort_values("hysteresis_margin")
 
-                agg = (
-                    start_group.groupby("hysteresis_margin")
-                    .agg(
-                        best_score=("score", "max"),
-                        best_savings=("co2_save_pct", "max"),
-                        best_overhead=("overhead_pct", "min"),
-                    )
-                    .reset_index()
-                    .sort_values("hysteresis_margin")
-                )
-                if len(agg) < 2:
-                    continue
+            if len(best_per_margin) < 2:
+                continue
 
-                ax.plot(
-                    agg["hysteresis_margin"],
-                    agg["best_score"],
-                    color="#2563eb",
-                    linestyle=ls,
-                    linewidth=2,
-                    marker="o",
-                    markersize=4,
-                    label=f"Score ({label_suffix})",
-                )
-                ax.plot(
-                    agg["hysteresis_margin"],
-                    agg["best_savings"] / 100,
-                    color="#059669",
-                    linestyle=ls,
-                    linewidth=2,
-                    marker="s",
-                    markersize=4,
-                    label=f"Savings/100 ({label_suffix})",
-                )
-                ax2.plot(
-                    agg["hysteresis_margin"],
-                    agg["best_overhead"],
-                    color="#dc2626",
-                    linestyle=ls,
-                    linewidth=2,
-                    marker="^",
-                    markersize=4,
-                    label=f"Overhead ({label_suffix})",
-                )
+            ax.plot(
+                best_per_margin["hysteresis_margin"],
+                best_per_margin["score"],
+                color="#2563eb",
+                linewidth=2,
+                marker="o",
+                markersize=4,
+                label="Score",
+            )
+            ax.plot(
+                best_per_margin["hysteresis_margin"],
+                best_per_margin["co2_save_pct"] / 100,
+                color="#059669",
+                linewidth=2,
+                marker="s",
+                markersize=4,
+                label="Savings/100",
+            )
+            ax2.plot(
+                best_per_margin["hysteresis_margin"],
+                best_per_margin["overhead_pct"],
+                color="#dc2626",
+                linewidth=2,
+                marker="^",
+                markersize=4,
+                label="Overhead",
+            )
 
             ax.set_title(region, fontsize=12, fontweight="bold")
             if col_idx == 0:
@@ -942,10 +925,11 @@ def plot_margin_vs_best_per_model(df: pd.DataFrame, output_dir: Path):
             ax.grid(True, alpha=0.3)
             if col_idx == len(REGION_ORDER) - 1:
                 lines1, labels1 = ax.get_legend_handles_labels()
-                ax.legend(lines1, labels1, fontsize=7, loc="upper left")
+                lines2, labels2 = ax2.get_legend_handles_labels()
+                ax.legend(lines1 + lines2, labels1 + labels2, fontsize=7, loc="upper left")
 
         fig.suptitle(
-            f"Margin vs Best Metrics: {model}",
+            f"Margin vs Best Metrics: {model} (All Start Dates)",
             fontsize=14,
             fontweight="bold",
             y=1.02,
@@ -2182,7 +2166,7 @@ def plot_score_heatmaps(output_dir: Path):
         scores = _compute_score(savings_grid, overhead_grid, alpha)
 
         im = ax.imshow(
-            scores,
+            scores.T,
             extent=[0, 200, 0, 50],
             origin="lower",
             aspect="auto",
@@ -2518,8 +2502,8 @@ def main():
     print("\nGenerating hysteresis comparison plots (#67)...")
     plot_threshold_space_overview(df_fixed, FIGURES_DIR)
     plot_threshold_space_per_scenario(df_fixed, FIGURES_DIR)
-    plot_margin_vs_best(df_fixed, FIGURES_DIR)
-    plot_margin_vs_best_per_model(df_fixed, FIGURES_DIR)
+    plot_margin_vs_best(df, FIGURES_DIR)
+    plot_margin_vs_best_per_model(df, FIGURES_DIR)
 
     print_summary_table(df_fixed)
 

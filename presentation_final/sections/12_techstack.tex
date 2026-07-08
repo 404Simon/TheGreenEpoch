@@ -1,0 +1,43 @@
+\begin{frame}[t]{Tech Stack}{All client-side, zero backend}
+
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \textbf{Frontend \& Simulation Engine:}
+      \begin{itemize}
+        \item \textbf{SolidJS} + TypeScript (UI)
+        \item \textbf{Vite} (build tool)
+        \item \textbf{Tailwind CSS} (styling)
+      \end{itemize}
+
+      \vspace{0.3cm}
+      \textbf{Charts:}
+      \begin{itemize}
+        \item Chart.js, Plotly, Vega{-}Lite
+      \end{itemize}
+
+      \vspace{0.3cm}
+      \textbf{Testing \& Tooling:}
+      \begin{itemize}
+        \item Vitest, pnpm, tsx
+      \end{itemize}
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+      \textbf{Key architectural property:}
+
+      \vspace{0.2cm}
+      \begin{block}{Runs entirely in the browser}
+        The server only serves static files.
+        No backend, no database, no API calls
+        during simulation.
+      \end{block}
+
+      \vspace{0.2cm}
+      \begin{exampleblock}{Even on an iPhone}
+        The simulation is lightweight enough to
+        run smoothly on five year old mobile hardware.
+      \end{exampleblock}
+    \end{column}
+  \end{columns}
+
+\end{frame}

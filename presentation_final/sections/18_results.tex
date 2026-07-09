@@ -27,22 +27,6 @@
 
 \end{frame}
 
-\subsection{Pareto Frontier Analysis}
-
-\begin{frame}[t]{Results}{Pareto frontiers: DeepSeek V3 across all regions}
-
-  \centering
-  \includegraphics[width=0.82\textwidth,height=0.72\textheight,keepaspectratio]{assets/pareto_combined_DeepSeek_V3.png}
-
-\end{frame}
-
-\begin{frame}[t]{Results}{Pareto frontiers: Kimi K2 across all regions}
-
-  \centering
-  \includegraphics[width=0.82\textwidth,height=0.72\textheight,keepaspectratio]{assets/pareto_combined_Kimi_K2.png}
-
-\end{frame}
-
 \begin{frame}[t]{Results}{Best-score summary: DeepSeek V3 \& Kimi K2}
 
   \centering
@@ -70,6 +54,13 @@
     Grid \textbf{variability} --- not mean intensity --- determines savings.
     DE (variable) outperforms SE (clean but less variable) in \emph{relative} savings.
   \end{block}
+
+\end{frame}
+
+\begin{frame}[t]{Results}{Savings vs.\ overhead: Pareto frontiers forall regions and models}
+
+  \centering
+  \includegraphics[width=0.82\textwidth,height=0.72\textheight,keepaspectratio]{assets/savings_vs_overhead_all.png}
 
 \end{frame}
 
@@ -111,13 +102,16 @@
   \end{alertblock}
 
 \end{frame}
-
-\subsection{Regional Comparison}
-
-\begin{frame}[t]{Results}{Regional comparison: savings, score, overhead}
+\begin{frame}[t]{Results}{Hysteresis margin analysis: diminishing returns}
 
   \centering
-  \includegraphics[width=0.82\textwidth,height=0.72\textheight,keepaspectratio]{assets/carbon_reduction_comparison.png}
+  \includegraphics[width=0.78\textwidth,height=0.68\textheight,keepaspectratio]{assets/margin_vs_best_overview.png}
+
+  \vspace{0.05cm}
+  \begin{itemize}
+    \item Beyond $\theta_p - \theta_r \approx 50$~gCO$_2$eq/kWh: score plateaus or declines.
+    \item Higher margins $\Rightarrow$ more idle time without proportional savings.
+  \end{itemize}
 
 \end{frame}
 
@@ -171,18 +165,5 @@
   \begin{block}{Practical implication}
     Multi-year optima may underestimate savings by up to $54\%$ due to smoothing.
   \end{block}
-
-\end{frame}
-
-\begin{frame}[t]{Results}{Hysteresis margin analysis: diminishing returns}
-
-  \centering
-  \includegraphics[width=0.78\textwidth,height=0.68\textheight,keepaspectratio]{assets/margin_vs_best_overview.png}
-
-  \vspace{0.05cm}
-  \begin{itemize}
-    \item Beyond $\theta_p - \theta_r \approx 50$~gCO$_2$eq/kWh: score plateaus or declines.
-    \item Higher margins $\Rightarrow$ more idle time without proportional savings.
-  \end{itemize}
 
 \end{frame}

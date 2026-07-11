@@ -13,7 +13,7 @@ importers:
         version: 0.16.1(solid-js@1.9.14)
       baseline-browser-mapping:
         specifier: ^2.10.42
-        version: 2.10.42
+        version: 2.10.43
       chart.js:
         specifier: ^4.5.1
         version: 4.5.1
@@ -875,6 +875,11 @@ packages:
 
   baseline-browser-mapping@2.10.42:
     resolution: {integrity: sha512-c/jurFrDLyui7o1J86yLkRu4LMsTYcBohveus7/I2Hzdn9KIP2bdJPTue/lR1KH46enoPbD77GKeSYNdyPoD3Q==}
+    engines: {node: '>=6.0.0'}
+    hasBin: true
+
+  baseline-browser-mapping@2.10.43:
+    resolution: {integrity: sha512-AjYpR78kDWAY3Efj+cDTFH9t9SCoL7OoTp1BOb0mQV7S+6CiLwnWM3FyxhJtdPufDFKzmCSFoUncKjWgJEZTCQ==}
     engines: {node: '>=6.0.0'}
     hasBin: true
 
@@ -2362,6 +2367,8 @@ snapshots:
       solid-js: 1.9.14
 
   baseline-browser-mapping@2.10.42: {}
+
+  baseline-browser-mapping@2.10.43: {}
 
   bidi-js@1.0.3:
     dependencies:

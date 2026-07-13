@@ -1,14 +1,10 @@
 """Generate publication-quality figures from optimization result CSVs.
 
-Reads CSV files from output/results/ and generates PNG figures to output/figures/
-for the paper draft. Covers three analysis goals:
-
-  #63  Pareto trade-off frontiers per model/region/start-time
-  #64  Absolute and relative carbon reduction comparison across models
-  #67  Hysteresis-margin analysis
+Reads CSV files from output/results/ and generates SVG figures to output/figures/
+for the paper draft.
 
 Usage:
-    python src/visualize_results.py
+    uv run scripts/visualize_results.py
 """
 
 from __future__ import annotations
@@ -21,8 +17,8 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-RESULTS_DIR = Path("output/results")
-FIGURES_DIR = Path("output/figures")
+RESULTS_DIR = Path("publication/output/results")
+FIGURES_DIR = Path("publication/output/figures")
 
 MODEL_LABELS = {"DS": "DeepSeek V3", "KM": "Kimi K2"}
 REGION_ORDER = ["SE", "DE", "IT", "US", "CN"]
@@ -281,7 +277,7 @@ def plot_pareto_per_scenario(df: pd.DataFrame, output_dir: Path):
         ax.grid(True, alpha=0.3)
 
         safe_start = start.replace("-", "")
-        filename = f"pareto_{model.replace(' ', '_')}_{region}_{safe_start}.png"
+        filename = f"pareto_{model.replace(' ', '_')}_{region}_{safe_start}.svg"
         fig.savefig(output_dir / filename)
         plt.close(fig)
         print(f"  ✓ {filename}")
@@ -350,7 +346,7 @@ def plot_pareto_overview(df: pd.DataFrame, output_dir: Path):
         y=1.02,
     )
     fig.tight_layout()
-    filename = "pareto_overview.png"
+    filename = "pareto_overview.svg"
     fig.savefig(output_dir / filename)
     plt.close(fig)
     print(f"  ✓ {filename}")
@@ -396,7 +392,7 @@ def plot_pareto_combined_start(df: pd.DataFrame, output_dir: Path):
         ax.grid(True, alpha=0.3)
 
         safe_model = model.replace(" ", "_")
-        filename = f"pareto_combined_{safe_model}.png"
+        filename = f"pareto_combined_{safe_model}.svg"
         fig.savefig(output_dir / filename)
         plt.close(fig)
         print(f"  ✓ {filename}")
@@ -497,7 +493,7 @@ def plot_carbon_reduction_comparison(df: pd.DataFrame, output_dir: Path):
         y=1.02,
     )
     fig.tight_layout()
-    filename = "carbon_reduction_comparison.png"
+    filename = "carbon_reduction_comparison.svg"
     fig.savefig(output_dir / filename)
     plt.close(fig)
     print(f"  ✓ {filename}")
@@ -569,7 +565,7 @@ def plot_carbon_reduction_by_start(df: pd.DataFrame, output_dir: Path):
 
         fig.tight_layout()
         safe_start = start_date.replace("-", "")
-        filename = f"carbon_reduction_{safe_start}.png"
+        filename = f"carbon_reduction_{safe_start}.svg"
         fig.savefig(output_dir / filename)
         plt.close(fig)
         print(f"  ✓ {filename}")
@@ -671,7 +667,7 @@ def plot_threshold_space_overview(df: pd.DataFrame, output_dir: Path):
         y=1.0,
     )
     fig.subplots_adjust(hspace=0.3, wspace=0.3, right=0.9)
-    filename = "threshold_space_overview.png"
+    filename = "threshold_space_overview.svg"
     fig.savefig(output_dir / filename)
     plt.close(fig)
     print(f"  ✓ {filename}")
@@ -743,7 +739,7 @@ def plot_threshold_space_per_scenario(df: pd.DataFrame, output_dir: Path):
 
         safe_start = start.replace("-", "")
         filename = (
-            f"threshold_space_{model.replace(' ', '_')}_{region}_{safe_start}.png"
+            f"threshold_space_{model.replace(' ', '_')}_{region}_{safe_start}.svg"
         )
         fig.savefig(output_dir / filename)
         plt.close(fig)
@@ -847,7 +843,7 @@ def plot_margin_vs_best(df: pd.DataFrame, output_dir: Path):
         y=1.0,
     )
     fig.subplots_adjust(hspace=0.35, wspace=0.4)
-    filename = "margin_vs_best_overview.png"
+    filename = "margin_vs_best_overview.svg"
     fig.savefig(output_dir / filename)
     plt.close(fig)
     print(f"  ✓ {filename}")
@@ -936,7 +932,7 @@ def plot_margin_vs_best_per_model(df: pd.DataFrame, output_dir: Path):
         )
         fig.subplots_adjust(wspace=0.4)
         safe_model = model.replace(" ", "_")
-        filename = f"margin_vs_best_{safe_model}.png"
+        filename = f"margin_vs_best_{safe_model}.svg"
         fig.savefig(output_dir / filename)
         plt.close(fig)
         print(f"  ✓ {filename}")
@@ -1164,7 +1160,7 @@ def plot_best_startdate_histogram(df: pd.DataFrame, output_dir: Path):
     ax.set_ylim(0, 6)
 
     fig.tight_layout()
-    filename = "best_startdate_histogram.png"
+    filename = "best_startdate_histogram.svg"
     fig.savefig(output_dir / filename)
     plt.close(fig)
     print(f"  ✓ {filename}")
@@ -1274,7 +1270,7 @@ def plot_best_abs_startdate_histogram(output_dir: Path):
     ax.set_ylim(0, 6)
 
     fig.tight_layout()
-    filename = "best_abs_startdate_histogram.png"
+    filename = "best_abs_startdate_histogram.svg"
     fig.savefig(output_dir / filename)
     plt.close(fig)
     print(f"  ✓ {filename}")
@@ -1342,7 +1338,7 @@ def plot_savings_vs_overhead_all(df: pd.DataFrame, output_dir: Path):
         ax.grid(True, alpha=0.3)
 
         safe_region = region
-        filename = f"savings_vs_overhead_{safe_region}.png"
+        filename = f"savings_vs_overhead_{safe_region}.svg"
         fig.savefig(output_dir / filename)
         plt.close(fig)
         print(f"  ✓ {filename}")
@@ -1424,7 +1420,7 @@ def plot_score_vs_overhead_all(df: pd.DataFrame, output_dir: Path):
         ax.grid(True, alpha=0.3)
 
         safe_region = region
-        filename = f"score_vs_overhead_{safe_region}.png"
+        filename = f"score_vs_overhead_{safe_region}.svg"
         fig.savefig(output_dir / filename)
         plt.close(fig)
         print(f"  ✓ {filename}")
@@ -1489,7 +1485,7 @@ def plot_savings_vs_overhead_combined(df: pd.DataFrame, output_dir: Path):
     ax.legend(fontsize=8, loc="lower right", ncol=2)
     ax.grid(True, alpha=0.3)
 
-    filename = "savings_vs_overhead_all.png"
+    filename = "savings_vs_overhead_all.svg"
     fig.savefig(output_dir / filename)
     plt.close(fig)
     print(f"  ✓ {filename}")
@@ -1567,7 +1563,7 @@ def plot_score_vs_overhead_combined(df: pd.DataFrame, output_dir: Path):
     ax.legend(fontsize=8, loc="lower right", ncol=2)
     ax.grid(True, alpha=0.3)
 
-    filename = "score_vs_overhead_all.png"
+    filename = "score_vs_overhead_all.svg"
     fig.savefig(output_dir / filename)
     plt.close(fig)
     print(f"  ✓ {filename}")
@@ -1619,7 +1615,7 @@ def plot_score_vs_iteration(df: pd.DataFrame, output_dir: Path):
         ax.grid(True, alpha=0.3)
         ax.set_xticks(range(10))
 
-        filename = f"score_vs_iteration_{region}.png"
+        filename = f"score_vs_iteration_{region}.svg"
         fig.savefig(output_dir / filename)
         plt.close(fig)
         print(f"  ✓ {filename}")
@@ -1659,7 +1655,7 @@ def plot_score_vs_iteration(df: pd.DataFrame, output_dir: Path):
     ax.grid(True, alpha=0.3)
     ax.set_xticks(range(10))
 
-    filename = "score_vs_iteration_all.png"
+    filename = "score_vs_iteration_all.svg"
     fig.savefig(output_dir / filename)
     plt.close(fig)
     print(f"  ✓ {filename}")
@@ -1712,7 +1708,7 @@ def plot_avg_score_vs_iteration(df: pd.DataFrame, output_dir: Path):
         ax.grid(True, alpha=0.3)
         ax.set_xticks(range(10))
 
-        filename = f"avg_score_vs_iteration_{region}.png"
+        filename = f"avg_score_vs_iteration_{region}.svg"
         fig.savefig(output_dir / filename)
         plt.close(fig)
         print(f"  ✓ {filename}")
@@ -1752,7 +1748,7 @@ def plot_avg_score_vs_iteration(df: pd.DataFrame, output_dir: Path):
     ax.grid(True, alpha=0.3)
     ax.set_xticks(range(10))
 
-    filename = "avg_score_vs_iteration_all.png"
+    filename = "avg_score_vs_iteration_all.svg"
     fig.savefig(output_dir / filename)
     plt.close(fig)
     print(f"  ✓ {filename}")
@@ -1838,7 +1834,7 @@ def plot_alpha_comparison(df: pd.DataFrame, output_dir: Path):
     ax.grid(True, alpha=0.3, axis="y")
 
     fig.tight_layout()
-    filename = "alpha_comparison_metrics.png"
+    filename = "alpha_comparison_metrics.svg"
     fig.savefig(output_dir / filename)
     plt.close(fig)
     print(f"  ✓ {filename}")
@@ -1882,7 +1878,7 @@ def plot_alpha_comparison(df: pd.DataFrame, output_dir: Path):
     ax.grid(True, alpha=0.3, axis="y")
 
     fig.tight_layout()
-    filename = "alpha_comparison_thresholds.png"
+    filename = "alpha_comparison_thresholds.svg"
     fig.savefig(output_dir / filename)
     plt.close(fig)
     print(f"  ✓ {filename}")
@@ -1932,7 +1928,7 @@ def plot_alpha_comparison(df: pd.DataFrame, output_dir: Path):
     ax.grid(True, alpha=0.3)
 
     fig.tight_layout()
-    filename = "alpha_comparison_pareto.png"
+    filename = "alpha_comparison_pareto.svg"
     fig.savefig(output_dir / filename)
     plt.close(fig)
     print(f"  ✓ {filename}")
@@ -2024,7 +2020,7 @@ def plot_multiyear_comparison(df: pd.DataFrame, output_dir: Path):
     ax.grid(True, alpha=0.3, axis="y")
 
     fig.tight_layout()
-    filename = "multiyear_comparison_best.png"
+    filename = "multiyear_comparison_best.svg"
     fig.savefig(output_dir / filename)
     plt.close(fig)
     print(f"  ✓ {filename}")
@@ -2092,7 +2088,7 @@ def plot_multiyear_comparison(df: pd.DataFrame, output_dir: Path):
         ax.grid(True, alpha=0.3, axis="y")
 
     fig.tight_layout()
-    filename = "multiyear_comparison_metrics.png"
+    filename = "multiyear_comparison_metrics.svg"
     fig.savefig(output_dir / filename)
     plt.close(fig)
     print(f"  ✓ {filename}")
@@ -2133,7 +2129,7 @@ def plot_multiyear_comparison(df: pd.DataFrame, output_dir: Path):
     ax.grid(True, alpha=0.3, axis="y")
 
     fig.tight_layout()
-    filename = "multiyear_avg_score.png"
+    filename = "multiyear_avg_score.svg"
     fig.savefig(output_dir / filename)
     plt.close(fig)
     print(f"  ✓ {filename}")
@@ -2201,7 +2197,7 @@ def plot_score_heatmaps(output_dir: Path):
         y=1.02,
     )
     fig.tight_layout()
-    filename = "score_heatmaps.png"
+    filename = "score_heatmaps.svg"
     fig.savefig(output_dir / filename)
     plt.close(fig)
     print(f"  ✓ {filename}")
@@ -2277,7 +2273,7 @@ def plot_score_example_comparison(output_dir: Path):
         )
 
     fig.tight_layout()
-    filename = "score_example_comparison.png"
+    filename = "score_example_comparison.svg"
     fig.savefig(output_dir / filename)
     plt.close(fig)
     print(f"  ✓ {filename}")
@@ -2382,7 +2378,7 @@ def plot_absolute_relative_savings(output_dir: Path):
     ax1.grid(True, alpha=0.3, axis="y")
 
     fig.tight_layout()
-    filename = "absolute_relative_savings.png"
+    filename = "absolute_relative_savings.svg"
     fig.savefig(output_dir / filename)
     plt.close(fig)
     print(f"  ✓ {filename}")
@@ -2465,7 +2461,7 @@ def plot_best_run_comparison(df: pd.DataFrame, output_dir: Path):
         y=1.02,
     )
     fig.tight_layout()
-    filename = "best_run_comparison.png"
+    filename = "best_run_comparison.svg"
     fig.savefig(output_dir / filename)
     plt.close(fig)
     print(f"  ✓ {filename}")

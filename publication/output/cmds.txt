@@ -1,0 +1,56 @@
+# Commands for each model, zone, and year combination
+
+# US Zone - tp-max 800
+pnpm cli optimize -m Kimi -r US -y 2022 --tp-max 800 --budget 800 --resolution 10 --date-res 7 --max-iter 10 -o output/opt_KM_US_2022.json
+pnpm cli optimize -m Kimi -r US -y 2023 --tp-max 800 --budget 800 --resolution 10 --date-res 7 --max-iter 10 -o output/opt_KM_US_2023.json
+pnpm cli optimize -m Kimi -r US -y 2024 --tp-max 800 --budget 800 --resolution 10 --date-res 7 --max-iter 10 -o output/opt_KM_US_2024.json
+# pnpm cli optimize -m Kimi -r US -y 2025 --tp-max 800 --budget 800 --resolution 10 --date-res 7 --max-iter 10 -o output/opt_KM_US_2025.json
+
+pnpm cli optimize -m Deepseek -r US -y 2022 --tp-max 800 --budget 800 --resolution 10 --date-res 7 --max-iter 10 -o output/opt_DS_US_2022.json
+pnpm cli optimize -m Deepseek -r US -y 2023 --tp-max 800 --budget 800 --resolution 10 --date-res 7 --max-iter 10 -o output/opt_DS_US_2023.json
+pnpm cli optimize -m Deepseek -r US -y 2024 --tp-max 800 --budget 800 --resolution 10 --date-res 7 --max-iter 10 -o output/opt_DS_US_2024.json
+# pnpm cli optimize -m Deepseek -r US -y 2025 --tp-max 800 --budget 800 --resolution 10 --date-res 7 --max-iter 10 -o output/opt_DS_US_2025.json
+
+# DE Zone - tp-max 800
+pnpm cli optimize -m Kimi -r DE -y 2022 --tp-max 800 --budget 800 --resolution 10 --date-res 7 --max-iter 10 -o output/opt_KM_DE_2022.json
+pnpm cli optimize -m Kimi -r DE -y 2023 --tp-max 800 --budget 800 --resolution 10 --date-res 7 --max-iter 10 -o output/opt_KM_DE_2023.json
+pnpm cli optimize -m Kimi -r DE -y 2024 --tp-max 800 --budget 800 --resolution 10 --date-res 7 --max-iter 10 -o output/opt_KM_DE_2024.json
+# pnpm cli optimize -m Kimi -r DE -y 2025 --tp-max 800 --budget 800 --resolution 10 --date-res 7 --max-iter 10 -o output/opt_KM_DE_2025.json
+
+pnpm cli optimize -m Deepseek -r DE -y 2022 --tp-max 800 --budget 800 --resolution 10 --date-res 7 --max-iter 10 -o output/opt_DS_DE_2022.json
+pnpm cli optimize -m Deepseek -r DE -y 2023 --tp-max 800 --budget 800 --resolution 10 --date-res 7 --max-iter 10 -o output/opt_DS_DE_2023.json
+pnpm cli optimize -m Deepseek -r DE -y 2024 --tp-max 800 --budget 800 --resolution 10 --date-res 7 --max-iter 10 -o output/opt_DS_DE_2024.json
+# pnpm cli optimize -m Deepseek -r DE -y 2025 --tp-max 800 --budget 800 --resolution 10 --date-res 7 --max-iter 10 -o output/opt_DS_DE_2025.json
+
+# CN Zone - tp-max 800
+pnpm cli optimize -m Kimi -r CN -y 2022 --tp-max 800 --budget 800 --resolution 10 --date-res 7 --max-iter 10 -o output/opt_KM_CN_2022.json
+pnpm cli optimize -m Kimi -r CN -y 2023 --tp-max 800 --budget 800 --resolution 10 --date-res 7 --max-iter 10 -o output/opt_KM_CN_2023.json
+pnpm cli optimize -m Kimi -r CN -y 2024 --tp-max 800 --budget 800 --resolution 10 --date-res 7 --max-iter 10 -o output/opt_KM_CN_2024.json
+# pnpm cli optimize -m Kimi -r CN -y 2025 --tp-max 800 --budget 800 --resolution 10 --date-res 7 --max-iter 10 -o output/opt_KM_CN_2025.json
+
+pnpm cli optimize -m Deepseek -r CN -y 2022 --tp-max 800 --budget 800 --resolution 10 --date-res 7 --max-iter 10 -o output/opt_DS_CN_2022.json
+pnpm cli optimize -m Deepseek -r CN -y 2023 --tp-max 800 --budget 800 --resolution 10 --date-res 7 --max-iter 10 -o output/opt_DS_CN_2023.json
+pnpm cli optimize -m Deepseek -r CN -y 2024 --tp-max 800 --budget 800 --resolution 10 --date-res 7 --max-iter 10 -o output/opt_DS_CN_2024.json
+# pnpm cli optimize -m Deepseek -r CN -y 2025 --tp-max 800 --budget 800 --resolution 10 --date-res 7 --max-iter 10 -o output/opt_DS_CN_2025.json
+
+# IT Zone - tp-max 800
+pnpm cli optimize -m Kimi -r IT -y 2022 --tp-max 800 --budget 800 --resolution 10 --date-res 7 --max-iter 10 -o output/opt_KM_IT_2022.json
+pnpm cli optimize -m Kimi -r IT -y 2023 --tp-max 800 --budget 800 --resolution 10 --date-res 7 --max-iter 10 -o output/opt_KM_IT_2023.json
+pnpm cli optimize -m Kimi -r IT -y 2024 --tp-max 800 --budget 800 --resolution 10 --date-res 7 --max-iter 10 -o output/opt_KM_IT_2024.json
+# pnpm cli optimize -m Kimi -r IT -y 2025 --tp-max 800 --budget 800 --resolution 10 --date-res 7 --max-iter 10 -o output/opt_KM_IT_2025.json
+
+pnpm cli optimize -m Deepseek -r IT -y 2022 --tp-max 800 --budget 800 --resolution 10 --date-res 7 --max-iter 10 -o output/opt_DS_IT_2022.json
+pnpm cli optimize -m Deepseek -r IT -y 2023 --tp-max 800 --budget 800 --resolution 10 --date-res 7 --max-iter 10 -o output/opt_DS_IT_2023.json
+pnpm cli optimize -m Deepseek -r IT -y 2024 --tp-max 800 --budget 800 --resolution 10 --date-res 7 --max-iter 10 -o output/opt_DS_IT_2024.json
+# pnpm cli optimize -m Deepseek -r IT -y 2025 --tp-max 800 --budget 800 --resolution 10 --date-res 7 --max-iter 10 -o output/opt_DS_IT_2025.json
+
+# SE Zone - tp-max 100 (special case)
+pnpm cli optimize -m Kimi -r SE -y 2022 --tp-max 100 --budget 800 --resolution 10 --date-res 7 --max-iter 10 -o output/opt_KM_SE_2022.json
+pnpm cli optimize -m Kimi -r SE -y 2023 --tp-max 100 --budget 800 --resolution 10 --date-res 7 --max-iter 10 -o output/opt_KM_SE_2023.json
+pnpm cli optimize -m Kimi -r SE -y 2024 --tp-max 100 --budget 800 --resolution 10 --date-res 7 --max-iter 10 -o output/opt_KM_SE_2024.json
+# pnpm cli optimize -m Kimi -r SE -y 2025 --tp-max 100 --budget 800 --resolution 10 --date-res 7 --max-iter 10 -o output/opt_KM_SE_2025.json
+
+pnpm cli optimize -m Deepseek -r SE -y 2022 --tp-max 100 --budget 800 --resolution 10 --date-res 7 --max-iter 10 -o output/opt_DS_SE_2022.json
+pnpm cli optimize -m Deepseek -r SE -y 2023 --tp-max 100 --budget 800 --resolution 10 --date-res 7 --max-iter 10 -o output/opt_DS_SE_2023.json
+pnpm cli optimize -m Deepseek -r SE -y 2024 --tp-max 100 --budget 800 --resolution 10 --date-res 7 --max-iter 10 -o output/opt_DS_SE_2024.json
+# pnpm cli optimize -m Deepseek -r SE -y 2025 --tp-max 100 --budget 800 --resolution 10 --date-res 7 --max-iter 10 -o output/opt_DS_SE_2025.json

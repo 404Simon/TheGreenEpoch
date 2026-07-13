@@ -9,6 +9,7 @@ Usage:
 
 from __future__ import annotations
 
+import json
 import re
 from pathlib import Path
 
@@ -168,7 +169,7 @@ def load_and_parse_results(results_dir: Path) -> pd.DataFrame:
 
 def setup_style():
     """Set publication-quality matplotlib style."""
-    sns.set_theme(style="whitegrid", font_scale=1.1)
+    sns.set_theme(style="whitegrid", font_scale=1.5)
     plt.rcParams.update({
         "figure.dpi": 150,
         "savefig.dpi": 300,
@@ -2282,6 +2283,486 @@ def plot_score_example_comparison(output_dir: Path):
     print(f"  ✓ {filename}")
 
 
+OPT_JSON_DIR = Path("output/results")
+
+
+def _load_opt_json_results():
+    """Load all opt_*.json files and extract best completed run per file."""
+    import json as _json
+
+    records = []
+    for fpath in sorted(OPT_JSON_DIR.glob("opt_*.json")):
+        with open(fpath) as f:
+            data = _json.load(f)
+
+        completed = [
+            p for p in data["points"]
+            if p.get("stopReason") == "completed" and p.get("completed") is True
+        ]
+        if not completed:
+            continue
+
+        best = max(completed, key=lambda p: p["score"])
+        model_raw = data.get("model", "?")
+        model = "DeepSeek V3" if "Deepseek" in model_raw else "Kimi K2"
+        region = data.get("region", "?")
+        year = data.get("historicalYears", [0])[0] if data.get("historicalYears") else 0
+
+        records.append({
+            "model": model,
+            "region": region,
+            "year": year,
+            "theta_p": best["thetaPause"],
+            "theta_r": best["thetaResume"],
+            "margin": best["thetaPause"] - best["thetaResume"],
+            "score": best["score"],
+            "co2_save_pct": best["co2SavingsPct"],
+        })
+
+    return pd.DataFrame(records)
+
+
+def print_thresholds_table(output_dir: Path):
+    """Print table of best thresholds per model, zone, and year.
+
+    Also saves CSV and LaTeX table.
+    """
+    df = _load_opt_json_results()
+    if df.empty:
+        print("  No opt JSON results found, skipping thresholds table.")
+        return
+
+    print("\n" + "=" * 95)
+    print("BEST THRESHOLDS PER MODEL, ZONE, YEAR (from opt JSON files)")
+    print("=" * 95)
+    print(
+        f"{'Model':<14} {'Zone':<6} {'Year':<6} {'θ_p':>8} {'θ_r':>8} "
+        f"{'Margin':>8} {'Score':>8}"
+    )
+    print("-" * 95)
+
+    for (model, region), group in df.groupby(["model", "region"]):
+        for _, row in group.sort_values("year").iterrows():
+            print(
+                f"{model:<14} {region:<6} {row['year']:<6} "
+                f"{row['theta_p']:>8.1f} {row['theta_r']:>8.1f} "
+                f"{row['margin']:>8.1f} {row['score']:>8.4f}"
+            )
+        max_margin = group["margin"].max()
+        print(f"{'':14} {region:<6} {'':6} {'':8} {'':8} "
+              f"{max_margin:>8.1f}  ← max margin")
+        print()
+
+    print("=" * 95)
+
+    # Save CSV
+    csv_path = output_dir / "thresholds_by_year.csv"
+    df.sort_values(["model", "region", "year"]).to_csv(csv_path, index=False)
+    print(f"  ✓ CSV saved to {csv_path}")
+
+    # Save LaTeX
+    latex_path = output_dir / "thresholds_by_year.tex"
+    with open(latex_path, "w") as f:
+        f.write("% Best thresholds per model, zone, year\n")
+        f.write("\\begin{tabular}{lllrrrrr}\n")
+        f.write("\\toprule\n")
+        f.write("Model & Zone & Year & $\\theta_p$ & $\\theta_r$ "
+                "& Margin & Score \\\\\n")
+        f.write("\\midrule\n")
+        for (model, region), group in df.groupby(["model", "region"]):
+            for _, row in group.sort_values("year").iterrows():
+                f.write(
+                    f"{model} & {region} & {int(row['year'])} "
+                    f"& {row['theta_p']:.1f} & {row['theta_r']:.1f} "
+                    f"& {row['margin']:.1f} & {row['score']:.4f} \\\\\n"
+            )
+            max_margin = group["margin"].max()
+            f.write(
+                f" & {region} & \\textbf{{max}} & & "
+                f"& \\textbf{{{max_margin:.1f}}} & \\\\\n"
+            )
+            f.write("\\midrule\n")
+        f.write("\\bottomrule\n")
+        f.write("\\end{tabular}\n")
+    print(f"  ✓ LaTeX saved to {latex_path}")
+
+
+def plot_threshold_generalization(output_dir: Path):
+    """Plot how thresholds generalize across years per zone.
+
+    One subplot per region (1×5 grid). Both models overlaid.
+    Shows θ_p and θ_r as separate lines per model.
+    """
+    df = _load_opt_json_results()
+    if df.empty:
+        print("  No opt JSON results found, skipping threshold generalization plot.")
+        return
+
+    fig, axes = plt.subplots(1, len(REGION_ORDER), figsize=(24, 5), sharey=False)
+
+    line_styles_p = {"DeepSeek V3": "-", "Kimi K2": "-"}
+    line_styles_r = {"DeepSeek V3": "--", "Kimi K2": "--"}
+    markers_p = {"DeepSeek V3": "o", "Kimi K2": "s"}
+    markers_r = {"DeepSeek V3": "o", "Kimi K2": "s"}
+
+    for col_idx, region in enumerate(REGION_ORDER):
+        ax = axes[col_idx]
+        region_df = df[df["region"] == region]
+
+        if region_df.empty:
+            ax.set_visible(False)
+            continue
+
+        for model in MODEL_ORDER:
+            model_df = region_df[region_df["model"] == model].sort_values("year")
+            if model_df.empty:
+                continue
+
+            color = COLORS_MODEL.get(model, "gray")
+
+            # θ_p (solid line)
+            ax.plot(
+                model_df["year"], model_df["theta_p"],
+                linestyle="-", marker="o", markersize=6,
+                color=color, linewidth=2,
+                label=f"{model} θ_p",
+            )
+
+            # θ_r (dashed line)
+            ax.plot(
+                model_df["year"], model_df["theta_r"],
+                linestyle="--", marker="s", markersize=5,
+                color=color, linewidth=1.5, alpha=0.7,
+                label=f"{model} θ_r",
+            )
+
+            # Annotate max margin
+            max_margin_row = model_df.loc[model_df["margin"].idxmax()]
+            ax.annotate(
+                f"margin={max_margin_row['margin']:.1f}",
+                (max_margin_row["year"], max_margin_row["theta_p"]),
+                textcoords="offset points", xytext=(10, 5),
+                fontsize=7, color=color,
+            )
+
+        ax.set_xlabel("Year")
+        ax.set_ylabel("Threshold [gCO₂eq/kWh]")
+        ax.set_title(region, fontsize=14, fontweight="bold")
+        ax.legend(fontsize=7, loc="best")
+        ax.grid(True, alpha=0.3)
+        ax.set_xticks(sorted(df["year"].unique()))
+
+    fig.suptitle(
+        "Threshold Generalization Across Years",
+        fontsize=16, fontweight="bold", y=1.02,
+    )
+    fig.tight_layout()
+    filename = "threshold_generalization.png"
+    fig.savefig(output_dir / filename)
+    plt.close(fig)
+    print(f"  ✓ {filename}")
+
+
+# ── CO2 Intensity Statistics vs Optimization Results ───────────────
+
+
+CO2_DATA_DIR = Path("public/data/co2")
+
+
+def _load_co2_stats():
+    """Load CO2 intensity statistics for all zones/years."""
+    stats = []
+    for fpath in sorted(CO2_DATA_DIR.glob("*.json")):
+        with open(fpath) as f:
+            data = json.load(f)
+        ci = np.array(data["carbonIntensity"])
+        stats.append({
+            "region": data["zone"],
+            "year": data["year"],
+            "co2_mean": ci.mean(),
+            "co2_std": ci.std(),
+            "co2_cv": ci.std() / ci.mean(),
+            "co2_range": ci.max() - ci.min(),
+            "co2_min": ci.min(),
+            "co2_max": ci.max(),
+        })
+    return pd.DataFrame(stats)
+
+
+def plot_co2_stats_vs_optimization(output_dir: Path):
+    """Scatter plots: CO2 mean/σ vs best score/θ_p for each model."""
+    co2_df = _load_co2_stats()
+    opt_df = _load_opt_json_results()
+
+    if co2_df.empty or opt_df.empty:
+        print("  No data for CO2 stats vs optimization plot.")
+        return
+
+    merged = co2_df.merge(opt_df, on=["region", "year"])
+
+    fig, axes = plt.subplots(2, 2, figsize=(16, 12))
+
+    # Plot 1: CO2 mean vs score
+    ax = axes[0, 0]
+    for model in MODEL_ORDER:
+        for region in REGION_ORDER:
+            sub = merged[(merged["model"] == model) & (merged["region"] == region)]
+            if sub.empty:
+                continue
+            ax.scatter(
+                sub["co2_mean"], sub["score"],
+                color=COLORS_REGION.get(region, "gray"),
+                marker="o" if model == "DeepSeek V3" else "s",
+                s=80, alpha=0.7, edgecolors="black", linewidths=0.5,
+            )
+    for region in REGION_ORDER:
+        ax.scatter([], [], color=COLORS_REGION.get(region, "gray"), s=80, label=region)
+    ax.scatter([], [], marker="o", s=80, color="gray", label="DeepSeek V3")
+    ax.scatter([], [], marker="s", s=80, color="gray", label="Kimi K2")
+    ax.set_xlabel("CO₂ Mean [gCO₂eq/kWh]")
+    ax.set_ylabel("Best Score")
+    ax.set_title("CO₂ Mean vs Best Score")
+    ax.legend(fontsize=9, ncol=2, loc="best")
+    ax.grid(True, alpha=0.3)
+
+    # Plot 2: CO2 CV vs score
+    ax = axes[0, 1]
+    for model in MODEL_ORDER:
+        for region in REGION_ORDER:
+            sub = merged[(merged["model"] == model) & (merged["region"] == region)]
+            if sub.empty:
+                continue
+            ax.scatter(
+                sub["co2_cv"], sub["score"],
+                color=COLORS_REGION.get(region, "gray"),
+                marker="o" if model == "DeepSeek V3" else "s",
+                s=80, alpha=0.7, edgecolors="black", linewidths=0.5,
+            )
+    for region in REGION_ORDER:
+        ax.scatter([], [], color=COLORS_REGION.get(region, "gray"), s=80, label=region)
+    ax.scatter([], [], marker="o", s=80, color="gray", label="DeepSeek V3")
+    ax.scatter([], [], marker="s", s=80, color="gray", label="Kimi K2")
+    ax.set_xlabel("CO₂ CV (σ/μ)")
+    ax.set_ylabel("Best Score")
+    ax.set_title("CO₂ Variability vs Best Score")
+    ax.legend(fontsize=9, ncol=2, loc="best")
+    ax.grid(True, alpha=0.3)
+
+    # Plot 3: CO2 mean vs θ_p
+    ax = axes[1, 0]
+    for model in MODEL_ORDER:
+        for region in REGION_ORDER:
+            sub = merged[(merged["model"] == model) & (merged["region"] == region)]
+            if sub.empty:
+                continue
+            ax.scatter(
+                sub["co2_mean"], sub["theta_p"],
+                color=COLORS_REGION.get(region, "gray"),
+                marker="o" if model == "DeepSeek V3" else "s",
+                s=80, alpha=0.7, edgecolors="black", linewidths=0.5,
+            )
+    for region in REGION_ORDER:
+        ax.scatter([], [], color=COLORS_REGION.get(region, "gray"), s=80, label=region)
+    ax.scatter([], [], marker="o", s=80, color="gray", label="DeepSeek V3")
+    ax.scatter([], [], marker="s", s=80, color="gray", label="Kimi K2")
+    ax.set_xlabel("CO₂ Mean [gCO₂eq/kWh]")
+    ax.set_ylabel("Optimal θ_p [gCO₂eq/kWh]")
+    ax.set_title("CO₂ Mean vs Optimal Threshold")
+    ax.legend(fontsize=9, ncol=2, loc="best")
+    ax.grid(True, alpha=0.3)
+
+    # Plot 4: CO2 CV vs θ_p
+    ax = axes[1, 1]
+    for model in MODEL_ORDER:
+        for region in REGION_ORDER:
+            sub = merged[(merged["model"] == model) & (merged["region"] == region)]
+            if sub.empty:
+                continue
+            ax.scatter(
+                sub["co2_cv"], sub["theta_p"],
+                color=COLORS_REGION.get(region, "gray"),
+                marker="o" if model == "DeepSeek V3" else "s",
+                s=80, alpha=0.7, edgecolors="black", linewidths=0.5,
+            )
+    for region in REGION_ORDER:
+        ax.scatter([], [], color=COLORS_REGION.get(region, "gray"), s=80, label=region)
+    ax.scatter([], [], marker="o", s=80, color="gray", label="DeepSeek V3")
+    ax.scatter([], [], marker="s", s=80, color="gray", label="Kimi K2")
+    ax.set_xlabel("CO₂ CV (σ/μ)")
+    ax.set_ylabel("Optimal θ_p [gCO₂eq/kWh]")
+    ax.set_title("CO₂ Variability vs Optimal Threshold")
+    ax.legend(fontsize=9, ncol=2, loc="best")
+    ax.grid(True, alpha=0.3)
+
+    fig.suptitle(
+        "CO₂ Intensity Statistics vs Optimization Results",
+        fontsize=16, fontweight="bold", y=1.02,
+    )
+    fig.tight_layout()
+    filename = "co2_stats_vs_optimization.png"
+    fig.savefig(output_dir / filename)
+    plt.close(fig)
+    print(f"  ✓ {filename}")
+
+
+def plot_co2_timeseries_zones(output_dir: Path):
+    """CO2 intensity time series for each zone (2022-2025 overlaid)."""
+    co2_data = {}
+    for fpath in sorted(CO2_DATA_DIR.glob("*.json")):
+        with open(fpath) as f:
+            data = json.load(f)
+        zone = data["zone"]
+        year = data["year"]
+        if year not in [2022, 2023, 2024, 2025]:
+            continue
+        ci = np.array(data["carbonIntensity"])
+        timestamps = np.arange(len(ci))
+        co2_data[(zone, year)] = {"timestamps": timestamps, "ci": ci}
+
+    fig, axes = plt.subplots(1, len(REGION_ORDER), figsize=(24, 5), sharey=False)
+    colors_year = {2022: "#2563eb", 2023: "#059669", 2024: "#d97706", 2025: "#dc2626"}
+
+    for col_idx, region in enumerate(REGION_ORDER):
+        ax = axes[col_idx]
+        for year in [2022, 2023, 2024, 2025]:
+            key = (region, year)
+            if key not in co2_data:
+                continue
+            ts = co2_data[key]["timestamps"]
+            ci = co2_data[key]["ci"]
+            color = colors_year[year]
+
+            # Sample for faster plotting (every 60th point)
+            ts_sample = ts[::60]
+            ci_sample = ci[::60]
+            ax.plot(ts_sample, ci_sample, color=color, alpha=0.6, linewidth=1, label=str(year))
+
+            # Mean line
+            ax.axhline(y=ci.mean(), color=color, linestyle="--", linewidth=1.5, alpha=0.8)
+
+        ax.set_xlabel("Time (hours)")
+        if col_idx == 0:
+            ax.set_ylabel("CO₂ Intensity [gCO₂eq/kWh]")
+        ax.set_title(region, fontsize=14, fontweight="bold")
+        ax.legend(fontsize=9, loc="upper right")
+        ax.grid(True, alpha=0.3)
+
+    fig.suptitle(
+        "CO₂ Intensity Time Series by Zone (2022–2025)",
+        fontsize=16, fontweight="bold", y=1.02,
+    )
+    fig.tight_layout()
+    filename = "co2_timeseries_zones.png"
+    fig.savefig(output_dir / filename)
+    plt.close(fig)
+    print(f"  ✓ {filename}")
+
+
+def plot_co2_savings_scatter(output_dir: Path):
+    """Scatter: CO2 CV/range vs max savings per zone/year."""
+    co2_df = _load_co2_stats()
+    opt_df = _load_opt_json_results()
+
+    if co2_df.empty or opt_df.empty:
+        print("  No data for CO2 savings scatter plot.")
+        return
+
+    merged = co2_df.merge(opt_df, on=["region", "year"])
+
+    fig, axes = plt.subplots(1, 2, figsize=(16, 7))
+
+    # Plot 1: CV vs savings
+    ax = axes[0]
+    for model in MODEL_ORDER:
+        for region in REGION_ORDER:
+            sub = merged[(merged["model"] == model) & (merged["region"] == region)]
+            if sub.empty:
+                continue
+            ax.scatter(
+                sub["co2_cv"], sub["co2_save_pct"],
+                color=COLORS_REGION.get(region, "gray"),
+                marker="o" if model == "DeepSeek V3" else "s",
+                s=80, alpha=0.7, edgecolors="black", linewidths=0.5,
+            )
+    for region in REGION_ORDER:
+        ax.scatter([], [], color=COLORS_REGION.get(region, "gray"), s=80, label=region)
+    ax.scatter([], [], marker="o", s=80, color="gray", label="DeepSeek V3")
+    ax.scatter([], [], marker="s", s=80, color="gray", label="Kimi K2")
+    ax.set_xlabel("CO₂ CV (σ/μ)")
+    ax.set_ylabel("CO₂ Savings (%)")
+    ax.set_title("CO₂ Variability vs Savings")
+    ax.legend(fontsize=9, ncol=2, loc="best")
+    ax.grid(True, alpha=0.3)
+
+    # Plot 2: Range vs savings
+    ax = axes[1]
+    for model in MODEL_ORDER:
+        for region in REGION_ORDER:
+            sub = merged[(merged["model"] == model) & (merged["region"] == region)]
+            if sub.empty:
+                continue
+            ax.scatter(
+                sub["co2_range"], sub["co2_save_pct"],
+                color=COLORS_REGION.get(region, "gray"),
+                marker="o" if model == "DeepSeek V3" else "s",
+                s=80, alpha=0.7, edgecolors="black", linewidths=0.5,
+            )
+    for region in REGION_ORDER:
+        ax.scatter([], [], color=COLORS_REGION.get(region, "gray"), s=80, label=region)
+    ax.scatter([], [], marker="o", s=80, color="gray", label="DeepSeek V3")
+    ax.scatter([], [], marker="s", s=80, color="gray", label="Kimi K2")
+    ax.set_xlabel("CO₂ Range [gCO₂eq/kWh]")
+    ax.set_ylabel("CO₂ Savings (%)")
+    ax.set_title("CO₂ Range vs Savings")
+    ax.legend(fontsize=9, ncol=2, loc="best")
+    ax.grid(True, alpha=0.3)
+
+    fig.suptitle(
+        "CO₂ Intensity Statistics vs Savings",
+        fontsize=16, fontweight="bold", y=1.02,
+    )
+    fig.tight_layout()
+    filename = "co2_savings_scatter.png"
+    fig.savefig(output_dir / filename)
+    plt.close(fig)
+    print(f"  ✓ {filename}")
+
+
+def plot_co2_threshold_heatmap(output_dir: Path):
+    """Heatmap: optimal θ_p threshold by zone×year, faceted by model."""
+    opt_df = _load_opt_json_results()
+    if opt_df.empty:
+        print("  No opt JSON results found for threshold heatmap.")
+        return
+
+    fig, axes = plt.subplots(1, 2, figsize=(16, 6))
+
+    for ax, model in zip(axes, MODEL_ORDER):
+        model_df = opt_df[opt_df["model"] == model]
+        pivot = model_df.pivot_table(
+            index="region", columns="year", values="theta_p", aggfunc="max"
+        )
+        pivot = pivot.reindex(REGION_ORDER)
+
+        sns.heatmap(
+            pivot, annot=True, fmt=".0f", cmap="RdYlGn_r",
+            linewidths=0.5, linecolor="white", ax=ax, cbar_kws={"label": "θ_p [gCO₂eq/kWh]"},
+        )
+        ax.set_title(model, fontsize=14, fontweight="bold")
+        ax.set_xlabel("Year")
+        ax.set_ylabel("Zone")
+
+    fig.suptitle(
+        "Optimal Pause Threshold (θ_p) by Zone and Year",
+        fontsize=16, fontweight="bold", y=1.02,
+    )
+    fig.tight_layout()
+    filename = "co2_threshold_heatmap.png"
+    fig.savefig(output_dir / filename)
+    plt.close(fig)
+    print(f"  ✓ {filename}")
+
+
 def plot_absolute_relative_savings(output_dir: Path):
     """Compare absolute and relative savings from optimization JSON files.
 
@@ -2520,6 +3001,12 @@ def main():
     plot_multiyear_comparison(df, FIGURES_DIR)
     plot_score_heatmaps(FIGURES_DIR)
     plot_score_example_comparison(FIGURES_DIR)
+    print_thresholds_table(FIGURES_DIR)
+    plot_threshold_generalization(FIGURES_DIR)
+    plot_co2_stats_vs_optimization(FIGURES_DIR)
+    plot_co2_timeseries_zones(FIGURES_DIR)
+    plot_co2_savings_scatter(FIGURES_DIR)
+    plot_co2_threshold_heatmap(FIGURES_DIR)
     plot_absolute_relative_savings(FIGURES_DIR)
     plot_best_run_comparison(df, FIGURES_DIR)
 

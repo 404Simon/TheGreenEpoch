@@ -3,6 +3,11 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - 'publication/**'
+      - 'legacy/**'
+      - '**/*.md'
+      - 'renovate.json'
   workflow_dispatch:
 
 permissions:

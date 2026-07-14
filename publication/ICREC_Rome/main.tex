@@ -55,7 +55,7 @@ Wiesner\inst{1}}
   Pareto-optimal configurations. The framework combines a
   discrete-event simulator replaying 5-minute-resolution Electricity
   Maps data (2022--2025) with an adaptive grid-search optimizer that
-  converges within ten iterations. We evaluate across two frontier
+  converges within five to six iterations. We evaluate across two frontier
   models---DeepSeek~V3 (2048~GPUs) and Kimi~K2 (minimum 256~GPU
   model-parallel group)---spanning five regions with diverse grid
   variability spectrum. Our central finding is that the optimal
@@ -63,15 +63,16 @@ Wiesner\inst{1}}
   16$~gCO$_2$eq/kWh across every region and model: wide hysteresis
   degrades the savings-to-overhead ratio, making pausing effectively
   a binary clean/dirty decision. In high-variability grids (Germany,
-  Italy), single-year savings reach 43.4\% and 32.7\% at 174--199\%
+  Italy), single-year savings reach 43.4\% and 32.7\% at 174 and 199\% time
   overhead; multi-year averaging attenuates these to 19.7\% and
-  18.7\%, underscoring the need for multi-year optimization.
+  18.7\%, indicating that averaging across multiple years provides no
+  benefit and should therefore be avoided.
   Low-variance grids (China, United States) yield under 10\% savings
   regardless of policy. Our results provide practitioners with
   actionable, region-specific policies for carbon-aware LLM training.
 
   \keywords{Carbon-aware computing \and LLM training \and Hysteresis policy \and
-  Grid carbon intensity \and Temporal workload shifting.}
+  Grid carbon intensity \and Temporal workload shifting \and Simulation \and Sustainable AI.}
 \end{abstract}
 
 % ============================================================
@@ -85,8 +86,9 @@ millions of GPU-hours across thousands of accelerators: DeepSeek~V3
 consumed approximately 2.79 million GPU-hours on
 2048~H800~GPUs~\cite{deepseek-ai_deepseek-v3_2024}, and Kimi~K2 was
 trained on 15.5 trillion tokens (minimum 256~GPU model-parallel
-group)~\cite{kimi_team_kimi_2025}. At a per-GPU power draw of 700~W
-during training and a power usage effectiveness (PUE) of 1.27, a
+group)~\cite{kimi_team_kimi_2025}. %TODO: Add a note that we estimate the GPU Hours for Kimi
+At a per-GPU power draw of 700~W for an NVIDIA H800 GPU
+during training \cite{h800_specs} and a power usage effectiveness (PUE) of 1.27 \cite{jegham_hungry_2025}, a
 single run can emit hundreds of tonnes of CO$_2$ depending on the
 local grid mix. As LLM deployment scales, managing this environmental
 cost becomes essential for sustainable AI infrastructure.
@@ -125,9 +127,9 @@ carbon intensity time series at 5-minute resolution, models the
 energy consumption of training, checkpointing, and idle phases, and
 evaluates candidate policies against a never-pause baseline. The
 optimizer uses iterative zoom refinement to concentrate evaluations
-in promising regions, converging within ten iterations. Together,
+in promising regions, converging within five to six iterations. Together,
 they enable comprehensive policy space exploration without the
-$O(N^2)$ cost of brute-force enumeration.
+$O(N^2 \cdot D)$ cost of brute-force enumeration.
 
 We evaluate across two state-of-the-art models (DeepSeek~V3 on 2048
   GPUs and Kimi~K2 (minimum 256~GPU model-parallel group), five
@@ -148,7 +150,7 @@ We evaluate across two state-of-the-art models (DeepSeek~V3 on 2048
       checks and cross-model scaling consistency.
     \item An adaptive grid-search optimizer that efficiently explores the
       $(\theta_p, \theta_r, t_s)$ policy space, converging within at most ten
-      iterations.
+      iterations. %TODO: At most 10 or 6?
     \item A comprehensive empirical study covering two state-of-the-art models
       across five grid regions and multi-year replay, establishing systematic
       Pareto frontiers, to the best of our knowledge, for
@@ -234,7 +236,7 @@ We evaluate across two state-of-the-art models (DeepSeek~V3 on 2048
       \multicolumn{3}{@{}p{\textwidth}@{}}{\small
         $^\ddagger$Multi-site spatial shifting exploits
         near-zero-carbon curtailment energy. Residual emissions:
-      5--12\% of baselines.} \\
+      5--12\% of baselines.} \\ %TODO: Why is there 5-12% and 88-95%? Should n't it just be one of them?
       \multicolumn{3}{@{}p{\textwidth}@{}}{\small $^\S$Single-site;
       checkpoint/idle overhead caps savings (multi-year avg.: 3--20\%).} \\
     \end{tabular}
@@ -283,10 +285,10 @@ We evaluate across two state-of-the-art models (DeepSeek~V3 on 2048
   \begin{equation}
     Q = \frac{\alpha \cdot S / 100 + 1 - (1 - \alpha) \cdot O / B}{2}
   \end{equation}
-  The score is defined only for $O \le B$. With $\alpha = 1$ (used in all
+  The score is defined only for $O \le B$. With $\alpha = 1$ (used in all of our
   experiments), this simplifies to $Q = 1/2 + S/200$, making savings the sole
   objective while $B$ acts as a hard constraint. The never-pause baseline has
-  $S = 0, O = 0, Q = 0.5$.
+  $S = 0, O = 0, Q = 0.5$. %TODO: Why is Q=0.5? When alpha is 1 it should be 0
 
   % ============================================================
   % 4. Simulation Framework
@@ -457,7 +459,7 @@ We evaluate across two state-of-the-art models (DeepSeek~V3 on 2048
       43.4\% savings; CN (CV=0.11) yields under 10\%.
     }
     \label{fig:pareto}
-  \end{figure}
+  \end{figure} %TODO: Legend should be bigger
 
   Figure~\ref{fig:pareto} presents the combined Pareto frontiers. The
   regional hierarchy is consistent across models: Germany achieves the highest
@@ -587,9 +589,9 @@ We evaluate across two state-of-the-art models (DeepSeek~V3 on 2048
       peak savings substantially in high-variability grids (DE: 0.717
         $\to$ 0.599, 55\% attenuation; IT: 0.663 $\to$ 0.594, 43\%
       attenuation) but minimally in stable grids (SE: 0.616 $\to$
-      0.612, 4\% attenuation). This shows single-year optima may
-      overestimate savings by up to $2.4\times$ and that multi-year
-      evaluation is essential for robust policy design.
+      0.612, 4\% attenuation). This shows multi-year optima smoothes
+      the grid data and underestimates achievable savings, highlighting
+      the importance of single-year optimization for realistic policy design. %TODO: Again, maybe formulate the argument for single year better
     }
     \label{fig:multiyear}
   \end{figure}
@@ -607,8 +609,8 @@ We evaluate across two state-of-the-art models (DeepSeek~V3 on 2048
   European grids due to high renewable generation, creating favorable pausing
   conditions not representative of the longer-term average. Second, multi-year
   averaging smooths extreme events that make hysteresis-based pausing most
-  effective. The practical implication is clear: policies should be optimized
-  on multi-year data to avoid overestimating savings.
+  effective. The practical implication is clear: policies should not be optimized
+  on multi-year data to avoid the smoothing effect and ensure more realistic policies. %TODO: Maybe formulate the argument for single year better
 
   \begin{table}
     \centering
@@ -667,8 +669,8 @@ We evaluate across two state-of-the-art models (DeepSeek~V3 on 2048
   with near-zero hysteresis. Expect 12--23\% savings at 35--106\% overhead.
   For low-variance grids (CN, US): carbon-aware pausing yields under 10\%
   savings; consider geo-distributed training or embodied carbon trade-offs.
-  Always optimize on at least three years of data; single-year optima may
-  overestimate savings by up to 2.4$\times$.
+  Always optimize on at a single years of data; multi-year optimization may
+  smooth the grid and result in less effective policies.
 
   \paragraph{Limitations.}
   Our simulation assumes perfect foresight: policies are evaluated on
@@ -707,7 +709,7 @@ We evaluate across two state-of-the-art models (DeepSeek~V3 on 2048
   the framework to use forecasted rather than historical carbon intensity for
   real-time deployment; (2) combining temporal shifting with geo-distributed
   training; and (3) incorporating embodied carbon awareness to ensure
-  operational savings are not outweighed by manufacturing emissions.
+  operational savings are not outweighed by manufacturing emissions. %TODO: Is the third point really a direction for us?
 
   All simulation code and data are available; our interactive
   browser-based simulator and optimizer can be tried at

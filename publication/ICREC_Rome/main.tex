@@ -165,7 +165,9 @@ We evaluate across two state-of-the-art models (DeepSeek~V3 on 2048
   \paragraph{Carbon-aware temporal workload shifting.}
   Wiesner~et~al.~\cite{wiesner_lets_2021} demonstrated that delaying cloud
   batch jobs by a few hours to align with periods of low carbon intensity can
-  reduce operational emissions by 10--40\%, depending on job duration and
+  reduce operational emissions by 3--34\%\footnote{Experimental range
+  in~\cite{wiesner_lets_2021}: nightly jobs 3--34\%, ML project scenarios
+  3--19\%.}, depending on job duration and
   regional grid profile. Their ``let's wait awhile'' approach uses a
   pause-resume semantics similar to ours but targets generic cloud workloads
   rather than LLM training. Their findings establish a reference range against
@@ -176,7 +178,8 @@ We evaluate across two state-of-the-art models (DeepSeek~V3 on 2048
   Wiesner~et~al.~\cite{wiesner_distributed_2026}
   trained a 561M-parameter transformer during renewable curtailment windows
   across multiple data center sites, reducing operational emissions to 5--12\%
-  of single-site baselines. Our work is complementary: we focus on single-site
+  of single-site baselines (i.e., 88--95\% savings). Our work is
+  complementary: we focus on single-site
   policy optimization for frontier-scale models (671B+ parameters), where
   geo-distribution may be infeasible due to inter-node bandwidth constraints.
 
@@ -203,6 +206,31 @@ We evaluate across two state-of-the-art models (DeepSeek~V3 on 2048
   \theta_r, t_s)$ design space, the first quantification of the hysteresis
   margin trade-off, and a practical optimization method applicable to any
   training configuration.
+
+  \begin{table}[t]
+    \centering
+    \caption{Comparison of carbon savings with prior workload shifting approaches.}
+    \label{tab:comparison}
+    \small
+    \begin{tabular}{lcc}
+      \toprule
+      Study & Approach & Savings \\
+      \midrule
+      Wiesner et al.~\cite{wiesner_lets_2021}
+        & Temporal shifting, generic cloud jobs
+        & 3--34\%$^\dagger$ \\
+      Wiesner et al.~\cite{wiesner_distributed_2026}
+        & Geo-distributed, curtailment windows
+        & 88--95\%$^\ddagger$ \\
+      This work
+        & Temporal hysteresis, frontier LLMs
+        & 2--43\%$^\S$ \\
+      \bottomrule
+      \multicolumn{3}{@{}p{\textwidth}@{}}{\small $^\dagger$Negligible checkpoint overhead enables higher savings across diverse regions.} \\
+      \multicolumn{3}{@{}p{\textwidth}@{}}{\small $^\ddagger$Multi-site spatial shifting exploits near-zero-carbon curtailment energy. Residual emissions: 5--12\% of baselines.} \\
+      \multicolumn{3}{@{}p{\textwidth}@{}}{\small $^\S$Single-site; checkpoint/idle overhead caps savings (multi-year avg.: 3--20\%).} \\
+    \end{tabular}
+  \end{table}
 
   % ============================================================
   % 3. Problem Formulation

@@ -29,7 +29,7 @@ Wiesner\inst{1}}
 \authorrunning{S. Wittmann et al.}
 
 \institute{
-  TODO FAU\"at Erlangen-Nürnberg, Germany\\
+  Friedrich-Alexander-Universit\"at Erlangen-Nürnberg, Germany\\
   \email{\{sim.wittmann,boolean.kraus,bastian.wiesner\}@fau.de}
 }
 
@@ -150,8 +150,9 @@ We evaluate across two state-of-the-art models (DeepSeek~V3 on 2048
       $(\theta_p, \theta_r, t_s)$ policy space, converging within at most ten
       iterations.
     \item A comprehensive empirical study covering two state-of-the-art models
-      across five grid regions and multi-year replay, establishing the first
-      systematic Pareto frontiers for carbon-aware LLM training.
+      across five grid regions and multi-year replay, establishing systematic
+      Pareto frontiers, to the best of our knowledge, for
+      carbon-aware LLM training.
     \item An actionable design rule: the optimal hysteresis policy uses a
       narrow margin ($\theta_p - \theta_r \leq 16$~gCO$_2$eq/kWh). Wide
       hysteresis is never Pareto-optimal.
@@ -166,7 +167,7 @@ We evaluate across two state-of-the-art models (DeepSeek~V3 on 2048
   Wiesner~et~al.~\cite{wiesner_lets_2021} demonstrated that delaying cloud
   batch jobs by a few hours to align with periods of low carbon intensity can
   reduce operational emissions by 3--34\%\footnote{Experimental range
-  in~\cite{wiesner_lets_2021}: nightly jobs 3--34\%, ML project scenarios
+    in~\cite{wiesner_lets_2021}: nightly jobs 3--34\%, ML project scenarios
   3--19\%.}, depending on job duration and
   regional grid profile. Their ``let's wait awhile'' approach uses a
   pause-resume semantics similar to ours but targets generic cloud workloads
@@ -202,14 +203,15 @@ We evaluate across two state-of-the-art models (DeepSeek~V3 on 2048
   \paragraph{Our distinction.}
   While each prior work advances carbon-aware computing, none provides a
   systematic policy parameter optimization framework for single-site LLM
-  training. We contribute the first characterization of the $(\theta_p,
-  \theta_r, t_s)$ design space, the first quantification of the hysteresis
+  training. We contribute a characterization of the $(\theta_p,
+  \theta_r, t_s)$ design space, a quantification of the hysteresis
   margin trade-off, and a practical optimization method applicable to any
   training configuration.
 
   \begin{table}[t]
     \centering
-    \caption{Comparison of carbon savings with prior workload shifting approaches.}
+    \caption{Comparison of carbon savings with prior workload
+    shifting approaches.}
     \label{tab:comparison}
     \small
     \begin{tabular}{lcc}
@@ -217,18 +219,24 @@ We evaluate across two state-of-the-art models (DeepSeek~V3 on 2048
       Study & Approach & Savings \\
       \midrule
       Wiesner et al.~\cite{wiesner_lets_2021}
-        & Temporal shifting, generic cloud jobs
-        & 3--34\%$^\dagger$ \\
+      & Temporal shifting, generic cloud jobs
+      & 3--34\%$^\dagger$ \\
       Wiesner et al.~\cite{wiesner_distributed_2026}
-        & Geo-distributed, curtailment windows
-        & 88--95\%$^\ddagger$ \\
+      & Geo-distributed, curtailment windows
+      & 88--95\%$^\ddagger$ \\
       This work
-        & Temporal hysteresis, frontier LLMs
-        & 2--43\%$^\S$ \\
+      & Temporal hysteresis, frontier LLMs
+      & 2--43\%$^\S$ \\
       \bottomrule
-      \multicolumn{3}{@{}p{\textwidth}@{}}{\small $^\dagger$Negligible checkpoint overhead enables higher savings across diverse regions.} \\
-      \multicolumn{3}{@{}p{\textwidth}@{}}{\small $^\ddagger$Multi-site spatial shifting exploits near-zero-carbon curtailment energy. Residual emissions: 5--12\% of baselines.} \\
-      \multicolumn{3}{@{}p{\textwidth}@{}}{\small $^\S$Single-site; checkpoint/idle overhead caps savings (multi-year avg.: 3--20\%).} \\
+      \multicolumn{3}{@{}p{\textwidth}@{}}{\small
+        $^\dagger$Negligible checkpoint overhead enables higher savings
+      across diverse regions.} \\
+      \multicolumn{3}{@{}p{\textwidth}@{}}{\small
+        $^\ddagger$Multi-site spatial shifting exploits
+        near-zero-carbon curtailment energy. Residual emissions:
+      5--12\% of baselines.} \\
+      \multicolumn{3}{@{}p{\textwidth}@{}}{\small $^\S$Single-site;
+      checkpoint/idle overhead caps savings (multi-year avg.: 3--20\%).} \\
     \end{tabular}
   \end{table}
 
@@ -369,7 +377,9 @@ We evaluate across two state-of-the-art models (DeepSeek~V3 on 2048
       axis per iteration remains fixed. If the contracted interval on any axis
       falls below $3$~gCO$_2$eq/kWh, search on that axis terminates.
     \item {\bf Iteration.} Steps 2--3 repeat for a maximum of $K = 10$
-      iterations, or until all axes reach minimum step size.
+      iterations. The shrink factor $s=0.45$ ensures that after
+      approximately six iterations the search window contracts below
+      the minimum step of $3$~gCO$_2$eq/kWh.
   \end{enumerate}
 
   The algorithm guarantees a feasible point (the initial grid always contains
@@ -378,7 +388,10 @@ We evaluate across two state-of-the-art models (DeepSeek~V3 on 2048
   with our settings ($K=10, N=10, D=7$ for start-date experiments, $D=1$ for
   fixed-date runs), a full optimization evaluates approximately 3,500
   candidate policies (550 for fixed-start runs), completing in under one
-  minute on a single CPU core.
+  minute on a single CPU core. The optimizer converges within 5--6
+  iterations in all (model, region) combinations; subsequent
+  iterations yield no measurable improvement
+  ($\Delta\text{score}\leq2\times10^{-5}$).
 
   % ============================================================
   % 6. Experimental Setup
@@ -394,18 +407,27 @@ We evaluate across two state-of-the-art models (DeepSeek~V3 on 2048
   substantially different scales.
 
   \paragraph{Hardware constants.}
-  GPU training power: 700~W. GPU idle power: 60~W. PUE: 1.27. Checkpoint
-  pause: 148.8~s. Checkpoint resume: 0~s (asynchronous).
+  GPU training power: 700~W (NVIDIA H800 TDP~\cite{h800_specs}). GPU idle
+  power: 60~W (estimated). PUE: 1.27 (DeepSeek DGX H800 infrastructure
+  data~\cite{jegham_hungry_2025}). Checkpoint pause: 148.8~s (PyTorch
+  Distributed synchronous checkpoint, 7B model~\cite{pytorch_checkpoint}).
+  Checkpoint resume: 0~s (asynchronous checkpoint I/O).
 
   \paragraph{Regions and data.}
   Five regions per Table~\ref{tab:grid}. Four complete years (2022--2025) of
   5-minute-resolution marginal carbon intensity from Electricity Maps.
 
   \paragraph{Optimizer settings.}
-  Resolution $N=10$, iterations $K=10$, budget $B=200\%$, shrink factor
+  Resolution $N=10$, iterations $K=10$, budget $B=800\%$ ($200\%$ for
+  DeepSeek-US), shrink factor
   $s=0.45$, minimum step $3$~gCO$_2$eq/kWh, $\alpha=1.0$ (pure savings
-  objective within budget). Start-date resolution: 1 sample (Jan~1) for
+  objective within budget).   Start-date resolution: 1 sample (Jan~1) for
   fixed-date runs, 7 samples per year for start-date optimization.
+
+  Most experiments use an overhead budget of $B=800\%$ to ensure feasible
+  policies exist across all (model, region) combinations; DeepSeek-US uses
+  $B=200\%$ reflecting different initial bounds. The composite score (Eq.~3)
+  normalizes by budget, keeping scores comparable.
 
   % ============================================================
   % 7. Results
@@ -430,9 +452,15 @@ We evaluate across two state-of-the-art models (DeepSeek~V3 on 2048
     \centering
     \includegraphics[width=\textwidth]{savings_vs_overhead_all}
     \caption{
-      Combined Pareto frontiers for DeepSeek~V3 and Kimi~K2 across five
-      regions. Each point represents a feasible policy. Best-score points
-      within the 200\% overhead budget are highlighted.
+      Combined Pareto frontiers for DeepSeek~V3 (2048 GPUs) and
+      Kimi~K2 (min.~256 GPU group) across five grid regions (DE, IT,
+      SE, US, CN). Each point represents one feasible policy
+      configuration $(\theta_p, \theta_r, t_s)$ evaluated via
+      discrete-event simulation replaying 2025 carbon intensity data
+      at 5-minute resolution. Best-score points within the 200\%
+      overhead budget are highlighted as stars. Regional ranking
+      follows grid variability (CV): DE (CV=0.37) achieves up to
+      43.4\% savings; CN (CV=0.11) yields under 10\%.
     }
     \label{fig:pareto}
   \end{figure}
@@ -493,10 +521,14 @@ We evaluate across two state-of-the-art models (DeepSeek~V3 on 2048
     \centering
     \includegraphics[width=\textwidth]{threshold_space_overview}
     \caption{
-      Threshold space: $\theta_p$ vs.\ $\theta_r$ for all evaluated policies,
-      colored by score. The diagonal $\theta_r = \theta_p$ represents
-      zero-hysteresis policies. High-scoring configurations cluster near the
-      diagonal across all regions and models.
+      Threshold space: pause threshold $\theta_p$ vs.\ resume
+      threshold $\theta_r$ for all evaluated policies across both
+      models and five regions. Color encodes composite score (white =
+      low, dark = high). The diagonal $\theta_r = \theta_p$ marks
+      zero-hysteresis policies. High-scoring configurations cluster
+      within $\Delta\theta \leq 16$~gCO$_2$eq/kWh of the diagonal in
+      every region, demonstrating that wide hysteresis margins are
+      never Pareto-optimal.
     }
     \label{fig:threshold}
   \end{figure}
@@ -513,10 +545,13 @@ We evaluate across two state-of-the-art models (DeepSeek~V3 on 2048
     \centering
     \includegraphics[width=\textwidth]{margin_vs_best_overview}
     \caption{
-      Hysteresis margin analysis: score vs.\ margin for all evaluated
-      policies. Beyond $\Delta_\theta \approx 50$~gCO$_2$eq/kWh, the score
-      plateaus or declines, demonstrating diminishing returns from wide
-      hysteresis.
+      Hysteresis margin analysis: composite score vs.\ margin
+      $\Delta\theta = \theta_p - \theta_r$ for all feasible policies.
+      Scores peak at $\Delta\theta < 16$~gCO$_2$eq/kWh and plateau or
+      decline beyond $\Delta\theta \approx 50$~gCO$_2$eq/kWh,
+      confirming diminishing returns. Zero-margin policies ($\theta_r
+      = \theta_p$) achieve scores within 1--3\% of the optimum,
+      making hysteresis effectively a binary clean/dirty decision.
     }
     \label{fig:margin}
   \end{figure}
@@ -544,13 +579,23 @@ We evaluate across two state-of-the-art models (DeepSeek~V3 on 2048
 
   \subsection{Multi-Year Stability}
 
+  Single-year results are point estimates reflecting that specific
+  year's weather and grid conditions; multi-year analysis provides
+  the expected range under typical conditions.
+
   \begin{figure}
     \centering
     \includegraphics[width=\textwidth]{multiyear_avg_score}
     \caption{
-      Multi-year score comparison: single-year best (2025) vs.\ multi-year
-      average (2022--2025). Multi-year averaging attenuates peak savings,
-      most dramatically in DE and IT where 2025 was anomalously clean.
+      Multi-year stability analysis: best single-year score (2025,
+      blue) vs.\ multi-year average (2022--2025, orange) for
+      DeepSeek~V3 across all regions. Multi-year averaging attenuates
+      peak savings substantially in high-variability grids (DE: 0.717
+        $\to$ 0.599, 55\% attenuation; IT: 0.663 $\to$ 0.594, 43\%
+      attenuation) but minimally in stable grids (SE: 0.616 $\to$
+      0.612, 4\% attenuation). This shows single-year optima may
+      overestimate savings by up to $2.4\times$ and that multi-year
+      evaluation is essential for robust policy design.
     }
     \label{fig:multiyear}
   \end{figure}
@@ -650,8 +695,9 @@ We evaluate across two state-of-the-art models (DeepSeek~V3 on 2048
   discrete-event simulator with an adaptive grid-search optimizer to
   efficiently explore the three-dimensional policy space $(\theta_p,
   \theta_r, t_s)$. Applied to two state-of-the-art models across five grid
-  regions and four years of data, it establishes the first systematic Pareto
-  frontiers for this problem.
+  regions and four years of data, it establishes systematic Pareto
+  frontiers, to the best of our knowledge,
+  for this problem.
 
   The central finding is that hysteresis provides diminishing returns: the
   optimal policy uses a narrow or zero margin ($\Delta_\theta \leq
@@ -672,13 +718,20 @@ We evaluate across two state-of-the-art models (DeepSeek~V3 on 2048
   All simulation code and data are available as part of the GreenEpoch
   project at \url{https://github.com/404simon/TheGreenEpoch}.
 
+  \paragraph{Broader impact.}
+  As LLM training scales, carbon-aware scheduling can serve as
+  demand-side flexibility for renewable energy grid integration:
+  pausing during high-carbon periods reduces reliance on fossil-fuel
+  peaker plants and aligns compute demand with renewable supply. This
+  synergy is particularly relevant for grid operators managing
+  increasing penetrations of variable renewable generation.
+
   % ============================================================
   % Acknowledgments
   % ============================================================
   \paragraph{Acknowledgments.}
   We thank the Electricity Maps team for providing access to their carbon
-  intensity API. This work was partially supported by the German Research
-  Foundation (DFG) as part of the GreenEpoch project.
+  intensity API.
 
   % ============================================================
   % References

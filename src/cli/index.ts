@@ -42,6 +42,7 @@ program.command("optimize")
   .option("--alpha <number>", "CO₂ weight in score (α=1 pure CO₂, α=0 pure overhead, default 1)")
   .option("--start <date>", "Fixed start date MM-DD (skip date sweep)")
   .option("-o, --output <path>", "Write results as JSON")
+  .option("--csv <path>", "Export results as CSV (matching WebUI export format)")
   .action(async (opts) => {
     const { optimizeCli } = await import("./optimize");
     await optimizeCli(opts);

@@ -137,6 +137,9 @@ def load_and_parse_results(results_dir: Path) -> pd.DataFrame:
     other_mask = (combined["region"] != "SE") & (combined["max_threshold"] == 800)
     combined = combined[se_mask | other_mask].reset_index(drop=True)
 
+    # Keep only points within overhead budget
+    combined = combined[combined["budget"] == "\u2713 Yes"].reset_index(drop=True)
+
     combined["overhead_pct"] = (
         combined["overhead_raw"]
         .astype(str)

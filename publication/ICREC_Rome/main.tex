@@ -279,7 +279,7 @@ We evaluate across two state-of-the-art models (DeepSeek~V3 on 2048
   \end{equation}
   where $E_b, T_b$ are baseline energy and time, and $E_p, T_p$ are policy
   energy and time. We use a composite score that rewards carbon savings while
-  enforcing an overhead budget $B = 200\%$:
+  enforcing an overhead budget $B$:
   \begin{equation}
     Q = \frac{\alpha \cdot S / 100 + 1 - (1 - \alpha) \cdot O / B}{2}
   \end{equation}
@@ -370,7 +370,7 @@ We evaluate across two state-of-the-art models (DeepSeek~V3 on 2048
       $t_s$ at $D$ uniform intervals. The maximum $\theta_p^{\max}$ is
       region-dependent: 100~gCO$_2$eq/kWh for Sweden, 800 for all others.
     \item {\bf Evaluation and selection.} Every grid point is simulated. Points
-      exceeding the overhead budget $B = 200\%$ are discarded. From feasible
+      exceeding the overhead budget $B$ are discarded. From feasible
       points, the highest-scoring is selected.
     \item {\bf Zoom refinement.} Bounds contract around the best point by
       shrink factor $s = 0.45$ per axis. Grid resolution $N = 10$ points per
@@ -418,16 +418,10 @@ We evaluate across two state-of-the-art models (DeepSeek~V3 on 2048
   5-minute-resolution marginal carbon intensity from Electricity Maps.
 
   \paragraph{Optimizer settings.}
-  Resolution $N=10$, iterations $K=10$, budget $B=800\%$ ($200\%$ for
-  DeepSeek-US), shrink factor
+  Resolution $N=10$, iterations $K=10$, budget $B=200\%$, shrink factor
   $s=0.45$, minimum step $3$~gCO$_2$eq/kWh, $\alpha=1.0$ (pure savings
-  objective within budget).   Start-date resolution: 1 sample (Jan~1) for
+  objective within budget). Start-date resolution: 1 sample (Jan~1) for
   fixed-date runs, 7 samples per year for start-date optimization.
-
-  Most experiments use an overhead budget of $B=800\%$ to ensure feasible
-  policies exist across all (model, region) combinations; DeepSeek-US uses
-  $B=200\%$ reflecting different initial bounds. The composite score (Eq.~3)
-  normalizes by budget, keeping scores comparable.
 
   % ============================================================
   % 7. Results

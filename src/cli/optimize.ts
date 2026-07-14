@@ -1,7 +1,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import type { Constants, TrainingProfile, CO2Timeline, YearCO2, FullProfile } from "../domain/types";
+import type { Constants, TrainingProfile, CO2Timeline, YearCO2, FullProfile, SweepPoint } from "../domain/types";
 import { runOptimization } from "../domain/optimize";
 import type { AdaptiveOptions } from "../domain/optimize";
 import { averageYears } from "../data/co2-loader";
@@ -20,13 +20,74 @@ function loadCO2Timeline(zone: string, years: number[]): CO2Timeline {
   return averageYears(allData);
 }
 
+// ── CSV export (matches WebUI OptimizePage format) ────────────────
+
+const CSV_HEADERS = [
+  "Iter",
+  "\u03B8_p",
+  "\u03B8_r",
+  "Start",
+  "Overhead %",
+  "CO\u2082 Save %",
+  "Score",
+  "Pauses",
+  "Budget",
+  "Stop",
+] as const;
+
+function fmtCell(value: unknown): string {
+  if (value == null || value === "") return "\u2014";
+  if (typeof value === "number" && isNaN(value)) return "\u2014";
+  return String(value);
+}
+
+function fmtNum(value: number, decimals = 0): string {
+  if (isNaN(value)) return "\u2014";
+  return value.toFixed(decimals);
+}
+
+function fmtPct(value: number, decimals = 1): string {
+  if (isNaN(value)) return "\u2014";
+  return (value >= 0 ? "+" : "") + value.toFixed(decimals) + "%";
+}
+
+function escapeCsv(value: string): string {
+  return /[,"\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
+}
+
+function toCsvRow(point: SweepPoint): string[] {
+  return [
+    fmtNum(point.iteration, 0),
+    fmtNum(point.thetaPause, 0),
+    fmtNum(point.thetaResume, 0),
+    escapeCsv(point.startTime),
+    fmtPct(point.actualOverheadPct, 1),
+    fmtPct(point.co2SavingsPct, 2),
+    fmtCell(point.score.toFixed(4)),
+    fmtNum(point.numPauses, 0),
+    point.withinBudget ? "\u2713 Yes" : "\u2717 No",
+    escapeCsv(point.stopReason),
+  ];
+}
+
+function exportCsv(points: SweepPoint[], filePath: string): void {
+  const bom = "\uFEFF";
+  const header = CSV_HEADERS.join(",");
+  const rows = points.map((p) => toCsvRow(p).join(","));
+  const content = bom + header + "\n" + rows.join("\n") + "\n";
+  writeFileSync(filePath, content, "utf-8");
+}
+
+// ── CLI handler ──────────────────────────────────────────────────
+
 export async function optimizeCli(raw: {
   model: string; region: string; years: string;
   tpMax?: string; budget?: string; resolution?: string;
   dateRes?: string; maxIter?: string; alpha?: string;
-  start?: string; output?: string;
+  start?: string; output?: string; csv?: string;
 }): Promise<void> {
   const output = raw.output ?? null;
+  const csv = raw.csv ?? null;
   const historicalYears = raw.years.split(",").map(Number);
   const cliOpts = {
     thetaPauseMax: raw.tpMax ? parseFloat(raw.tpMax) : undefined,
@@ -71,12 +132,12 @@ export async function optimizeCli(raw: {
 
   console.log(`\n  TheGreenEpoch Optimize`);
   console.log(`  Model: ${raw.model}, Region: ${raw.region}, Years: ${raw.years}`);
-  console.log(`  Grid: ${options.resolution}×${options.startDateResolution}, ${options.maxIterations} iter(s)`);
-  console.log(`  Budget: ${options.overheadBudgetPct}%, α=${options.alpha}\n`);
+  console.log(`  Grid: ${options.resolution}\u00D7${options.startDateResolution}, ${options.maxIterations} iter(s)`);
+  console.log(`  Budget: ${options.overheadBudgetPct}%, \u03B1=${options.alpha}\n`);
 
   const { points, best } = runOptimization(fullProfile, timeline, historicalYears, options, (iter, iterPts, iterBest) => {
     const msg = iterBest
-      ? `iter ${iter + 1}: ${iterPts.length} pts, best score=${iterBest.score.toFixed(4)} (θₚ=${iterBest.thetaPause}, θᵣ=${iterBest.thetaResume})`
+      ? `iter ${iter + 1}: ${iterPts.length} pts, best score=${iterBest.score.toFixed(4)} (\u03B8\u209A=${iterBest.thetaPause}, \u03B8\u209B=${iterBest.thetaResume})`
       : `iter ${iter + 1}: ${iterPts.length} pts, no valid point`;
     console.log(`  ${msg}`);
   });
@@ -84,14 +145,14 @@ export async function optimizeCli(raw: {
   const withinBudget = points.filter((p) => p.withinBudget);
   const valid = points.filter((p) => p.withinBudget && p.co2SavingsPct > 0);
 
-  console.log(`\n  ─────────────────────────────────────────────`);
+  console.log(`\n  \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500`);
   console.log(`  Total points: ${points.length}`);
   console.log(`  Within budget: ${withinBudget.length}`);
   console.log(`  Valid (budget + savings>0): ${valid.length}`);
 
   if (best) {
-    console.log(`  Best: θₚ=${best.thetaPause}, θᵣ=${best.thetaResume}`);
-    console.log(`        start=${best.startTime}, CO₂ savings=${best.co2SavingsPct.toFixed(2)}%`);
+    console.log(`  Best: \u03B8\u209A=${best.thetaPause}, \u03B8\u209B=${best.thetaResume}`);
+    console.log(`        start=${best.startTime}, CO\u2082 savings=${best.co2SavingsPct.toFixed(2)}%`);
     console.log(`        overhead=${best.actualOverheadPct.toFixed(1)}%, score=${best.score.toFixed(4)}`);
   } else {
     console.log(`  No valid best point found`);
@@ -101,7 +162,12 @@ export async function optimizeCli(raw: {
 
   if (output) {
     writeFileSync(output, JSON.stringify(result, null, 2), "utf-8");
-    console.log(`\n  Output: ${output} (${points.length} points)`);
+    console.log(`\n  JSON: ${output} (${points.length} points)`);
+  }
+
+  if (csv) {
+    exportCsv(points, csv);
+    console.log(`  CSV:  ${csv} (${points.length} rows)`);
   }
 
   console.log(`  Done.\n`);

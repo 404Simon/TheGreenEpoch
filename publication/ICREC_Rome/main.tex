@@ -86,7 +86,7 @@ millions of GPU-hours across thousands of accelerators: DeepSeek~V3
 consumed approximately 2.79 million GPU-hours on
 2048~H800~GPUs~\cite{deepseek-ai_deepseek-v3_2024}, and Kimi~K2 was
 trained on 15.5 trillion tokens (minimum 256~GPU model-parallel
-group)~\cite{kimi_team_kimi_2025}. %TODO: Add a note that we estimate the GPU Hours for Kimi
+group)~\cite{kimi_team_kimi_2025}.
 At a per-GPU power draw of 700~W for an NVIDIA H800 GPU
 during training \cite{h800_specs} and a power usage effectiveness (PUE) of 1.27 \cite{jegham_hungry_2025}, a
 single run can emit hundreds of tonnes of CO$_2$ depending on the
@@ -149,8 +149,8 @@ We evaluate across two state-of-the-art models (DeepSeek~V3 on 2048
       hysteresis-based pausing, validated through structural monotonicity
       checks and cross-model scaling consistency.
     \item An adaptive grid-search optimizer that efficiently explores the
-      $(\theta_p, \theta_r, t_s)$ policy space, converging within at most ten
-      iterations. %TODO: At most 10 or 6?
+      $(\theta_p, \theta_r, t_s)$ policy space, converging within at most six
+      iterations.
     \item A comprehensive empirical study covering two state-of-the-art models
       across five grid regions and multi-year replay, establishing systematic
       Pareto frontiers, to the best of our knowledge, for
@@ -236,7 +236,7 @@ We evaluate across two state-of-the-art models (DeepSeek~V3 on 2048
       \multicolumn{3}{@{}p{\textwidth}@{}}{\small
         $^\ddagger$Multi-site spatial shifting exploits
         near-zero-carbon curtailment energy. Residual emissions:
-      5--12\% of baselines.} \\ %TODO: Why is there 5-12% and 88-95%? Should n't it just be one of them?
+      5--12\% of baselines.} \\
       \multicolumn{3}{@{}p{\textwidth}@{}}{\small $^\S$Single-site;
       checkpoint/idle overhead caps savings (multi-year avg.: 3--20\%).} \\
     \end{tabular}
@@ -288,7 +288,7 @@ We evaluate across two state-of-the-art models (DeepSeek~V3 on 2048
   The score is defined only for $O \le B$. With $\alpha = 1$ (used in all of our
   experiments), this simplifies to $Q = 1/2 + S/200$, making savings the sole
   objective while $B$ acts as a hard constraint. The never-pause baseline has
-  $S = 0, O = 0, Q = 0.5$. %TODO: Why is Q=0.5? When alpha is 1 it should be 0
+  $S = 0, O = 0, Q = 0.5$.
 
   % ============================================================
   % 4. Simulation Framework
@@ -404,8 +404,9 @@ We evaluate across two state-of-the-art models (DeepSeek~V3 on 2048
   We evaluate DeepSeek~V3 (671B total parameters, 37B active with MoE,
   trained on 14.8T tokens using 2048~H800~GPUs, 2.79M~GPU-hours) and
   Kimi~K2 (1T parameters, 32B active with MoE, trained on 15.5T tokens,
-  minimum 256~GPU model-parallel group). These represent the current
-  frontier of LLM pretraining at
+  minimum 256~GPU model-parallel group). The GPU-hours for Kimi were
+  estimated based on the GPU-hours per trillion tokens given by Deepseek.
+  These represent the current frontier of LLM pretraining at
   substantially different scales.
 
   \paragraph{Hardware constants.}
@@ -591,7 +592,7 @@ We evaluate across two state-of-the-art models (DeepSeek~V3 on 2048
       attenuation) but minimally in stable grids (SE: 0.616 $\to$
       0.612, 4\% attenuation). This shows multi-year optima smoothes
       the grid data and underestimates achievable savings, highlighting
-      the importance of single-year optimization for realistic policy design. %TODO: Again, maybe formulate the argument for single year better
+      the importance of single-year optimization for realistic policy design.
     }
     \label{fig:multiyear}
   \end{figure}
@@ -610,7 +611,7 @@ We evaluate across two state-of-the-art models (DeepSeek~V3 on 2048
   conditions not representative of the longer-term average. Second, multi-year
   averaging smooths extreme events that make hysteresis-based pausing most
   effective. The practical implication is clear: policies should not be optimized
-  on multi-year data to avoid the smoothing effect and ensure more realistic policies. %TODO: Maybe formulate the argument for single year better
+  on multi-year data to avoid the smoothing effect and ensure more realistic policies.
 
   \begin{table}
     \centering
@@ -709,7 +710,7 @@ We evaluate across two state-of-the-art models (DeepSeek~V3 on 2048
   the framework to use forecasted rather than historical carbon intensity for
   real-time deployment; (2) combining temporal shifting with geo-distributed
   training; and (3) incorporating embodied carbon awareness to ensure
-  operational savings are not outweighed by manufacturing emissions. %TODO: Is the third point really a direction for us?
+  operational savings are not outweighed by manufacturing emissions.
 
   All simulation code and data are available; our interactive
   browser-based simulator and optimizer can be tried at

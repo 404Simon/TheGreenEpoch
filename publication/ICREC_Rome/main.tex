@@ -39,7 +39,6 @@ Wiesner\inst{1}}
 % Abstract
 % ============================================================
 \begin{abstract}
-
   The carbon footprint of large language model (LLM) training has
   become a critical environmental concern, with single runs consuming
   millions of GPU-hours and emitting hundreds of tonnes of CO$_2$.
@@ -55,24 +54,25 @@ Wiesner\inst{1}}
   Pareto-optimal configurations. The framework combines a
   discrete-event simulator replaying 5-minute-resolution Electricity
   Maps data (2022--2025) with an adaptive grid-search optimizer that
-  converges within five to six iterations. We evaluate across two frontier
-  models---DeepSeek~V3 (2048~GPUs) and Kimi~K2 (minimum 256~GPU
-  model-parallel group)---spanning five regions with diverse grid
-  variability spectrum. Our central finding is that the optimal
+  converges within five to six iterations. We evaluate across two
+  frontier models---DeepSeek~V3 (2048~GPUs) and Kimi~K2 (minimum
+  256~GPU model-parallel group)---spanning five regions with diverse
+  grid variability spectrum. Our central finding is that the optimal
   hysteresis margin ($\theta_p - \theta_r$) is consistently $\leq
   16$~gCO$_2$eq/kWh across every region and model: wide hysteresis
   degrades the savings-to-overhead ratio, making pausing effectively
   a binary clean/dirty decision. In high-variability grids (Germany,
-  Italy), single-year savings reach 43.4\% and 32.7\% at 174 and 199\% time
-  overhead; multi-year averaging attenuates these to 19.7\% and
-  18.7\%, indicating that averaging across multiple years provides no
-  benefit and should therefore be avoided.
-  Low-variance grids (China, United States) yield under 10\% savings
-  regardless of policy. Our results provide practitioners with
-  actionable, region-specific policies for carbon-aware LLM training.
+  Italy), single-year savings reach 43.4\% and 32.7\% at 174 and
+  199\% time overhead; multi-year averaging attenuates these to
+  19.7\% and 18.7\%, indicating that averaging across multiple years
+  provides no benefit and should therefore be avoided. Low-variance
+  grids (China, United States) yield under 10\% savings regardless of
+  policy. Our results provide practitioners with actionable,
+  region-specific policies for carbon-aware LLM training.
 
   \keywords{Carbon-aware computing \and LLM training \and Hysteresis policy \and
-  Grid carbon intensity \and Temporal workload shifting \and Simulation \and Sustainable AI.}
+    Grid carbon intensity \and Temporal workload shifting \and
+  Simulation \and Sustainable AI.}
 \end{abstract}
 
 % ============================================================
@@ -86,12 +86,12 @@ millions of GPU-hours across thousands of accelerators: DeepSeek~V3
 consumed approximately 2.79 million GPU-hours on
 2048~H800~GPUs~\cite{deepseek-ai_deepseek-v3_2024}, and Kimi~K2 was
 trained on 15.5 trillion tokens (minimum 256~GPU model-parallel
-group)~\cite{kimi_team_kimi_2025}.
-At a per-GPU power draw of 700~W for an NVIDIA H800 GPU
-during training \cite{h800_specs} and a power usage effectiveness (PUE) of 1.27 \cite{jegham_hungry_2025}, a
-single run can emit hundreds of tonnes of CO$_2$ depending on the
-local grid mix. As LLM deployment scales, managing this environmental
-cost becomes essential for sustainable AI infrastructure.
+group)~\cite{kimi_team_kimi_2025}. At a per-GPU power draw of 700~W
+for an NVIDIA H800 GPU during training \cite{h800_specs} and a power
+usage effectiveness (PUE) of 1.27 \cite{jegham_hungry_2025}, a single
+run can emit hundreds of tonnes of CO$_2$ depending on the local grid
+mix. As LLM deployment scales, managing this environmental cost
+becomes essential for sustainable AI infrastructure.
 
 Carbon-aware temporal workload shifting offers a promising mitigation
 strategy. Grid carbon intensity fluctuates on timescales of minutes
@@ -127,9 +127,9 @@ carbon intensity time series at 5-minute resolution, models the
 energy consumption of training, checkpointing, and idle phases, and
 evaluates candidate policies against a never-pause baseline. The
 optimizer uses iterative zoom refinement to concentrate evaluations
-in promising regions, converging within five to six iterations. Together,
-they enable comprehensive policy space exploration without the
-$O(N^2 \cdot D)$ cost of brute-force enumeration.
+in promising regions, converging within five to six iterations.
+Together, they enable comprehensive policy space exploration without
+the $O(N^2 \cdot D)$ cost of brute-force enumeration.
 
 We evaluate across two state-of-the-art models (DeepSeek~V3 on 2048
   GPUs and Kimi~K2 (minimum 256~GPU model-parallel group), five
@@ -166,49 +166,49 @@ We evaluate across two state-of-the-art models (DeepSeek~V3 on 2048
   \section{Background and Related Work}
 
   \paragraph{Carbon-aware temporal workload shifting.}
-  Wiesner~et~al.~\cite{wiesner_lets_2021} demonstrated that delaying cloud
-  batch jobs by a few hours to align with periods of low carbon intensity can
-  reduce operational emissions by 3--34\%\footnote{Experimental range
-    in~\cite{wiesner_lets_2021}: nightly jobs 3--34\%, ML project scenarios
-  3--19\%.}, depending on job duration and
-  regional grid profile. Their ``let's wait awhile'' approach uses a
-  pause-resume semantics similar to ours but targets generic cloud workloads
-  rather than LLM training. Their findings establish a reference range against
-  which our results can be validated.
+  Wiesner~et~al.~\cite{wiesner_lets_2021} demonstrated that delaying
+  cloud batch jobs by a few hours to align with periods of low carbon
+  intensity can reduce operational emissions by
+  3--34\%\footnote{Experimental range in~\cite{wiesner_lets_2021}:
+  nightly jobs 3--34\%, ML project scenarios 3--19\%.}, depending on
+  job duration and regional grid profile. Their ``let's wait awhile''
+  approach uses a pause-resume semantics similar to ours but targets
+  generic cloud workloads rather than LLM training. Their findings
+  establish a reference range against which our results can be validated.
 
   \paragraph{Carbon-aware distributed LLM training.}
   Extending temporal shifting to geo-distributed clusters,
-  Wiesner~et~al.~\cite{wiesner_distributed_2026}
-  trained a 561M-parameter transformer during renewable curtailment windows
-  across multiple data center sites, reducing operational emissions to 5--12\%
-  of single-site baselines (i.e., 88--95\% savings). Our work is
-  complementary: we focus on single-site
-  policy optimization for frontier-scale models (671B+ parameters), where
+  Wiesner~et~al.~\cite{wiesner_distributed_2026} trained a
+  561M-parameter transformer during renewable curtailment windows
+  across multiple data center sites, reducing operational emissions
+  to 5--12\% of single-site baselines (i.e., 88--95\% savings). Our
+  work is complementary: we focus on single-site policy optimization
+  for frontier-scale models (671B+ parameters), where
   geo-distribution may be infeasible due to inter-node bandwidth constraints.
 
   \paragraph{Datacenter-scale carbon frameworks.}
-  Acun~et~al.~\cite{acun_carbon_2023} developed Carbon Explorer, a holistic
-  framework balancing operational and embodied carbon across hardware
-  procurement and deployment. Their work operates at the datacenter planning
-  timescale (years) rather than the per-training-run timescale (hours to days)
-  that we target.
+  Acun~et~al.~\cite{acun_carbon_2023} developed Carbon Explorer, a
+  holistic framework balancing operational and embodied carbon across
+  hardware procurement and deployment. Their work operates at the
+  datacenter planning timescale (years) rather than the
+  per-training-run timescale (hours to days) that we target.
 
   \paragraph{Emissions accounting and measurement.}
-  Patterson~et~al.~\cite{patterson_carbon_nodate} established the standard
-  formula for attributing carbon emissions to ML training: GPU-hours
-  multiplied by TDP, PUE, and regional grid carbon intensity.
-  Dodge~et~al.~\cite{dodge_measuring_2022} extended this to cloud instances,
-  showing that marginal rather than average grid intensity better captures
-  emissions impact. Our simulation follows their methodology, using
-  5-minute-resolution marginal intensity data.
+  Patterson~et~al.~\cite{patterson_carbon_nodate} established the
+  standard formula for attributing carbon emissions to ML training:
+  GPU-hours multiplied by TDP, PUE, and regional grid carbon
+  intensity. Dodge~et~al.~\cite{dodge_measuring_2022} extended this
+  to cloud instances, showing that marginal rather than average grid
+  intensity better captures emissions impact. Our simulation follows
+  their methodology, using 5-minute-resolution marginal intensity data.
 
   \paragraph{Our distinction.}
-  While each prior work advances carbon-aware computing, none provides a
-  systematic policy parameter optimization framework for single-site LLM
-  training. We contribute a characterization of the $(\theta_p,
-  \theta_r, t_s)$ design space, a quantification of the hysteresis
-  margin trade-off, and a practical optimization method applicable to any
-  training configuration.
+  While each prior work advances carbon-aware computing, none
+  provides a systematic policy parameter optimization framework for
+  single-site LLM training. We contribute a characterization of the
+  $(\theta_p, \theta_r, t_s)$ design space, a quantification of the
+  hysteresis margin trade-off, and a practical optimization method
+  applicable to any training configuration.
 
   \begin{table}[t]
     \centering
@@ -266,11 +266,11 @@ We evaluate across two state-of-the-art models (DeepSeek~V3 on 2048
       training resumes from the last checkpoint.
     \item $t_s$: the date and time at which training begins.
   \end{itemize}
-  The policy is feasible only if $\theta_r \le \theta_p$; the difference
-  $\Delta_\theta = \theta_p - \theta_r$ is the {\em hysteresis margin}. A
-  margin of zero ($\theta_r = \theta_p$) means the job toggles at a single
-  threshold; a positive margin introduces a dead zone where the job remains in
-  its current state.
+  The policy is feasible only if $\theta_r \le \theta_p$; the
+  difference $\Delta_\theta = \theta_p - \theta_r$ is the {\em
+  hysteresis margin}. A margin of zero ($\theta_r = \theta_p$) means
+  the job toggles at a single threshold; a positive margin introduces
+  a dead zone where the job remains in its current state.
 
   \subsection{Objective}
 
@@ -315,11 +315,12 @@ We evaluate across two state-of-the-art models (DeepSeek~V3 on 2048
 
   \subsection{Carbon Intensity Data}
 
-  Carbon intensity data comes from the Electricity Maps API at 5-minute
-  resolution for five regions. Table~\ref{tab:grid} summarizes each region's
-  mean intensity, standard deviation, and coefficient of variation (CV). The
-  regions span a wide range: Sweden (clean, variable), Germany and Italy
-  (moderately dirty, highly variable), and the United States and China
+  Carbon intensity data comes from the Electricity Maps API at
+  5-minute resolution for five regions. Table~\ref{tab:grid}
+  summarizes each region's mean intensity, standard deviation, and
+  coefficient of variation (CV). The regions span a wide range:
+  Sweden (clean, variable), Germany and Italy (moderately dirty,
+  highly variable), and the United States and China
   (moderate-to-dirty, low variability).
 
   \begin{table}
@@ -342,17 +343,17 @@ We evaluate across two state-of-the-art models (DeepSeek~V3 on 2048
     \end{tabular}
   \end{table}
 
-  The time series exhibits strong temporal autocorrelation (lag-1 $= 0.999$,
-  one-day lag $= 0.694$ for Germany), making chronological trace replay
-  essential over independent sampling.
+  The time series exhibits strong temporal autocorrelation (lag-1 $=
+  0.999$, one-day lag $= 0.694$ for Germany), making chronological
+  trace replay essential over independent sampling.
 
   \subsection{Validation}
 
-  The simulator is validated through structural monotonicity checks (higher
-    $\theta_p$ yields lower overhead but lower savings; increasing the margin at
-  fixed $\theta_p$ decreases savings without improving overhead), cross-model
-  scaling consistency, and unit tests covering the pause-resume state machine
-  and energy accounting.
+  The simulator is validated through structural monotonicity checks
+  (higher $\theta_p$ yields lower overhead but lower savings;
+    increasing the margin at fixed $\theta_p$ decreases savings without
+  improving overhead), cross-model scaling consistency, and unit
+  tests covering the pause-resume state machine and energy accounting.
 
   % ============================================================
   % 5. Optimization Method
@@ -590,8 +591,8 @@ We evaluate across two state-of-the-art models (DeepSeek~V3 on 2048
       peak savings substantially in high-variability grids (DE: 0.717
         $\to$ 0.599, 55\% attenuation; IT: 0.663 $\to$ 0.594, 43\%
       attenuation) but minimally in stable grids (SE: 0.616 $\to$
-      0.612, 4\% attenuation). This shows multi-year optima smoothes
-      the grid data and underestimates achievable savings, highlighting
+      0.612, 4\% attenuation). This shows multi-year optima smooth
+      the grid data and underestimate achievable savings, highlighting
       the importance of single-year optimization for realistic policy design.
     }
     \label{fig:multiyear}
@@ -610,8 +611,10 @@ We evaluate across two state-of-the-art models (DeepSeek~V3 on 2048
   European grids due to high renewable generation, creating favorable pausing
   conditions not representative of the longer-term average. Second, multi-year
   averaging smooths extreme events that make hysteresis-based pausing most
-  effective. The practical implication is clear: policies should not be optimized
-  on multi-year data to avoid the smoothing effect and ensure more realistic policies.
+  effective. The practical implication is clear: policies should not
+  be optimized
+  on multi-year data to avoid the smoothing effect and ensure more
+  realistic policies.
 
   \begin{table}
     \centering
@@ -670,8 +673,8 @@ We evaluate across two state-of-the-art models (DeepSeek~V3 on 2048
   with near-zero hysteresis. Expect 12--23\% savings at 35--106\% overhead.
   For low-variance grids (CN, US): carbon-aware pausing yields under 10\%
   savings; consider geo-distributed training or embodied carbon trade-offs.
-  Always optimize on at a single years of data; multi-year optimization may
-  smooth the grid and result in less effective policies.
+  Always optimize on a single year of data; multi-year optimization smooths
+  the grid and yields less effective policies.
 
   \paragraph{Limitations.}
   Our simulation assumes perfect foresight: policies are evaluated on
@@ -703,8 +706,9 @@ We evaluate across two state-of-the-art models (DeepSeek~V3 on 2048
   pausing can reduce operational emissions by up to 43\% in high-variability
   grids at the cost of up to 200\% wall-clock overhead. In low-variance grids,
   savings fall below 10\%, and alternative mitigation strategies should be
-  considered. Multi-year evaluation is essential: single-year optima may
-  overestimate savings by up to 2.4$\times$.
+  considered. Single-year optimization consistently captures higher savings:
+  multi-year averaging attenuates extreme events and underestimates
+  achievable savings by up to 2.4$\times$.
 
   Three directions are particularly promising for future work: (1) extending
   the framework to use forecasted rather than historical carbon intensity for

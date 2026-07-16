@@ -724,7 +724,7 @@ def plot_threshold_space_per_scenario(df: pd.DataFrame, output_dir: Path):
             (best["theta_p"], best["theta_r"]),
             textcoords="offset points",
             xytext=(12, -15),
-            fontsize=9,
+            fontsize=14,
             bbox=dict(boxstyle="round,pad=0.3", facecolor="yellow", alpha=0.7),
         )
 
@@ -734,9 +734,9 @@ def plot_threshold_space_per_scenario(df: pd.DataFrame, output_dir: Path):
         ax.set_xlabel("θ_p (Pause Threshold) [gCO₂eq/kWh]")
         ax.set_ylabel("θ_r (Resume Threshold) [gCO₂eq/kWh]")
         start_label = START_LABELS.get(start, start)
-        ax.set_title(
-            f"Threshold Space: {model} in {region} (Start: {start_label})"
-        )
+        # ax.set_title(
+        #     f"Threshold Space: {model} in {region} (Start: {start_label})"
+        # )
         ax.legend(loc="upper left")
         ax.grid(True, alpha=0.3)
         ax.set_aspect("equal", adjustable="box")
@@ -926,13 +926,13 @@ def plot_margin_vs_best_per_model(df: pd.DataFrame, output_dir: Path):
             
             # Y-label for leftmost plots in each row
             if col_in_row == 0:
-                ax.set_ylabel("Score / Savings/100", fontsize=11, color="#2563eb")
+                ax.set_ylabel("Score & Savings/100", fontsize=16, color="#2563eb")
             
             # Y-label for rightmost plots (for the twin axis)
             if col_in_row == 2:
-                ax2.set_ylabel("Overhead (%)", fontsize=11, color="#dc2626")
+                ax2.set_ylabel("Overhead (%)", fontsize=16, color="#dc2626")
             
-            ax.set_xlabel("Hysteresis Margin (θ_p − θ_r)", fontsize=10)
+            ax.set_xlabel("Hysteresis Margin (θ_p − θ_r)", fontsize=16)
 
             ax.tick_params(axis="y", labelcolor="#2563eb")
             ax2.tick_params(axis="y", labelcolor="#dc2626")
@@ -942,17 +942,17 @@ def plot_margin_vs_best_per_model(df: pd.DataFrame, output_dir: Path):
             if col_idx == len(REGION_ORDER) - 1:
                 lines1, labels1 = ax.get_legend_handles_labels()
                 lines2, labels2 = ax2.get_legend_handles_labels()
-                ax.legend(lines1 + lines2, labels1 + labels2, fontsize=8, loc="upper left")
+                ax.legend(lines1 + lines2, labels1 + labels2, fontsize=15, loc="lower right")
 
         # Hide the unused 6th subplot
         axes_flat[5].set_visible(False)
 
-        fig.suptitle(
-            f"Margin vs Best Metrics: {model} (All Start Dates)",
-            fontsize=14,
-            fontweight="bold",
-            y=1.02,
-        )
+        # fig.suptitle(
+        #     f"Margin vs Best Metrics: {model} (All Start Dates)",
+        #     fontsize=14,
+        #     fontweight="bold",
+        #     y=1.02,
+        # )
         fig.subplots_adjust(wspace=0.4, hspace=0.3)  # Added hspace for vertical spacing
         safe_model = model.replace(" ", "_")
         filename = f"margin_vs_best_{safe_model}.svg"
@@ -1354,10 +1354,10 @@ def plot_savings_vs_overhead_all(df: pd.DataFrame, output_dir: Path):
                 label=f'{model} best ({best["score"]:.3f})',
             )
 
-        ax.set_xlabel("Time Overhead (%)")
-        ax.set_ylabel("CO₂ Savings (%)")
-        ax.set_title(f"Pareto Frontiers: CO₂ Savings vs Overhead — {region}")
-        ax.legend(fontsize=9, loc="lower right")
+        ax.set_xlabel("Time Overhead (%)", fontsize=14)
+        ax.set_ylabel("CO₂ Savings (%)", fontsize=14)
+        # ax.set_title(f"Pareto Frontiers: CO₂ Savings vs Overhead — {region}")
+        ax.legend(fontsize=14, loc="lower right")
         ax.grid(True, alpha=0.3)
 
         safe_region = region
@@ -1504,8 +1504,8 @@ def plot_savings_vs_overhead_combined(df: pd.DataFrame, output_dir: Path):
 
     ax.set_xlabel("Time Overhead (%)")
     ax.set_ylabel("CO₂ Savings (%)")
-    ax.set_title("Pareto Frontiers: CO₂ Savings vs Overhead — All Regions & Models")
-    ax.legend(fontsize=8, loc="lower right", ncol=2)
+    # ax.set_title("Pareto Frontiers: CO₂ Savings vs Overhead — All Regions & Models")
+    ax.legend(fontsize=15, loc="lower right", ncol=2)
     ax.grid(True, alpha=0.3)
 
     filename = "savings_vs_overhead_all.svg"

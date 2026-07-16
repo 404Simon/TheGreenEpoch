@@ -865,11 +865,15 @@ def plot_margin_vs_best_per_model(df: pd.DataFrame, output_dir: Path):
         return
 
     for model in MODEL_ORDER:
-        fig, axes = plt.subplots(1, len(REGION_ORDER), figsize=(24, 5), sharey=False)
+        # Create 2 rows, 3 columns (will hide the 6th subplot)
+        fig, axes = plt.subplots(2, 3, figsize=(18, 10), sharey=False)
         model_df = df_all[df_all["model"] == model]
 
+        # Flatten axes for easier indexing
+        axes_flat = axes.flatten()
+
         for col_idx, region in enumerate(REGION_ORDER):
-            ax = axes[col_idx]
+            ax = axes_flat[col_idx]
             ax2 = ax.twinx()
             region_df = model_df[model_df["region"] == region]
 
@@ -883,6 +887,7 @@ def plot_margin_vs_best_per_model(df: pd.DataFrame, output_dir: Path):
             ].sort_values("hysteresis_margin")
 
             if len(best_per_margin) < 2:
+                ax.set_visible(False)
                 continue
 
             ax.plot(
@@ -913,20 +918,34 @@ def plot_margin_vs_best_per_model(df: pd.DataFrame, output_dir: Path):
                 label="Overhead",
             )
 
+            # Determine row and column position for title/ylabel logic
+            row_idx = col_idx // 3
+            col_in_row = col_idx % 3
+
             ax.set_title(region, fontsize=12, fontweight="bold")
-            if col_idx == 0:
+            
+            # Y-label for leftmost plots in each row
+            if col_in_row == 0:
                 ax.set_ylabel("Score / Savings/100", fontsize=11, color="#2563eb")
-            if col_idx == len(REGION_ORDER) - 1:
+            
+            # Y-label for rightmost plots (for the twin axis)
+            if col_in_row == 2:
                 ax2.set_ylabel("Overhead (%)", fontsize=11, color="#dc2626")
+            
             ax.set_xlabel("Hysteresis Margin (θ_p − θ_r)", fontsize=10)
 
             ax.tick_params(axis="y", labelcolor="#2563eb")
             ax2.tick_params(axis="y", labelcolor="#dc2626")
             ax.grid(True, alpha=0.3)
+            
+            # Add legend to the last plot (bottom right)
             if col_idx == len(REGION_ORDER) - 1:
                 lines1, labels1 = ax.get_legend_handles_labels()
                 lines2, labels2 = ax2.get_legend_handles_labels()
-                ax.legend(lines1 + lines2, labels1 + labels2, fontsize=7, loc="upper left")
+                ax.legend(lines1 + lines2, labels1 + labels2, fontsize=8, loc="upper left")
+
+        # Hide the unused 6th subplot
+        axes_flat[5].set_visible(False)
 
         fig.suptitle(
             f"Margin vs Best Metrics: {model} (All Start Dates)",
@@ -934,10 +953,10 @@ def plot_margin_vs_best_per_model(df: pd.DataFrame, output_dir: Path):
             fontweight="bold",
             y=1.02,
         )
-        fig.subplots_adjust(wspace=0.4)
+        fig.subplots_adjust(wspace=0.4, hspace=0.3)  # Added hspace for vertical spacing
         safe_model = model.replace(" ", "_")
         filename = f"margin_vs_best_{safe_model}.svg"
-        fig.savefig(output_dir / filename)
+        fig.savefig(output_dir / filename, bbox_inches="tight")  # Added bbox_inches to prevent clipping
         plt.close(fig)
         print(f"  ✓ {filename}")
 

@@ -134,7 +134,7 @@ the $O(N^2 \cdot D)$ cost of brute-force enumeration.
 We evaluate across two state-of-the-art models (DeepSeek~V3 on 2048
   GPUs and Kimi~K2 (minimum 256~GPU model-parallel group), five
   electricity grid regions (Sweden, Germany, Italy, the United
-  States, and China), and four historical years (2022--2025) of
+  States, and China), and four years (2022--2025) of
   5-minute-resolution carbon intensity data. Across tens of thousands
   of simulation runs, we establish the first systematic Pareto
   frontiers for carbon-aware LLM training with hysteresis-based
@@ -418,7 +418,7 @@ We evaluate across two state-of-the-art models (DeepSeek~V3 on 2048
   Checkpoint resume: 0~s (asynchronous checkpoint I/O).
 
   \paragraph{Regions and data.}
-  Five regions per Table~\ref{tab:grid}. Four complete years (2022--2025) of
+  Five regions shown in Table~\ref{tab:grid}. Four complete years (2022--2025) of
   5-minute-resolution marginal carbon intensity from Electricity Maps.
 
   \paragraph{Optimizer settings.}
@@ -517,11 +517,10 @@ We evaluate across two state-of-the-art models (DeepSeek~V3 on 2048
 
   \begin{figure}
     \centering
-    \includegraphics[width=\textwidth]{threshold_space_overview}
+    \includegraphics[width=\textwidth]{threshold_space_DeepSeek_V3_DE_0101}
     \caption{
       Threshold space: pause threshold $\theta_p$ vs.\ resume
-      threshold $\theta_r$ for all evaluated policies across both
-      models and five regions. Color encodes composite score (white =
+      threshold $\theta_r$ for the DeepSeek~V3 model in Germany. Color encodes composite score (white =
       low, dark = high). The diagonal $\theta_r = \theta_p$ marks
       zero-hysteresis policies. High-scoring configurations cluster
       within $\Delta\theta \leq 16$~gCO$_2$eq/kWh of the diagonal in
@@ -531,7 +530,7 @@ We evaluate across two state-of-the-art models (DeepSeek~V3 on 2048
     \label{fig:threshold}
   \end{figure}
 
-  The threshold space analysis (Fig.~\ref{fig:threshold}) reveals the central
+  The threshold space analysis (example in Fig.~\ref{fig:threshold}) reveals the central
   finding: optimal hysteresis margins cluster near zero. Across all 10
   (model, region) combinations, the best-score points satisfy $\Delta_\theta
   \leq 16$~gCO$_2$eq/kWh, and in most cases $\Delta_\theta \leq
@@ -541,10 +540,10 @@ We evaluate across two state-of-the-art models (DeepSeek~V3 on 2048
 
   \begin{figure}
     \centering
-    \includegraphics[width=\textwidth]{margin_vs_best_overview}
+    \includegraphics[width=\textwidth]{margin_vs_best_Kimi_K2}
     \caption{
       Hysteresis margin analysis: composite score vs.\ margin
-      $\Delta\theta = \theta_p - \theta_r$ for all feasible policies.
+      $\Delta\theta = \theta_p - \theta_r$ for all evaluated policies and zones for the Kimi~K2 model.
       Scores peak at $\Delta\theta < 16$~gCO$_2$eq/kWh and plateau or
       decline beyond $\Delta\theta \approx 50$~gCO$_2$eq/kWh,
       confirming diminishing returns. Zero-margin policies ($\theta_r
@@ -555,7 +554,7 @@ We evaluate across two state-of-the-art models (DeepSeek~V3 on 2048
   \end{figure}
 
   Figure~\ref{fig:margin} shows the relationship between margin and score
-  across all evaluated policies. Beyond $\Delta_\theta \approx
+  across all policies and zones for the Kimi~K2 model (with nearly identical results for DeepSeek~V3). Beyond $\Delta_\theta \approx
   50$~gCO$_2$eq/kWh, the score consistently plateaus or declines: wider
   margins accumulate idle time and checkpoint overhead without proportional
   additional savings. The intuition is straightforward: a wide margin means

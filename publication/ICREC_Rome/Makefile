@@ -8,7 +8,9 @@ FIGURES = \
 	savings_vs_overhead_all \
 	threshold_space_overview \
 	margin_vs_best_overview \
-	multiyear_avg_score
+	multiyear_avg_score \
+	threshold_space_DeepSeek_V3_DE_0101 \
+	margin_vs_best_Kimi_K2
 
 SVG_TARGETS = $(addprefix $(ASSETS)/, $(addsuffix .svg, $(FIGURES)))
 EPS_TARGETS = $(addprefix $(ASSETS)/, $(addsuffix .eps, $(FIGURES)))

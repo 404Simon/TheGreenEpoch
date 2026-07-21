@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches-ignore: [main]
+    paths-ignore:
+      - 'publication/**'
+      - 'legacy/**'
+      - '**/*.md'
+      - 'renovate.json'
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - 'publication/**'
+      - 'legacy/**'
+      - '**/*.md'
+      - 'renovate.json'
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Run tests
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build

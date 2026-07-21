@@ -1,0 +1,189 @@
+%! TEX root = thesis.tex
+
+\chapter{Methodology}
+\label{sec:methodology}
+
+\section{System Model}
+\label{sec:system-model}
+
+We model a single training job defined by: model parameter count $N$, dataset
+token count $T$, GPU count $G$, per-GPU training power $P_t$, per-GPU idle
+power $P_i$, facility power usage effectiveness $\eta$, checkpoint save duration $\tau_c$, and
+checkpoint resume duration $\tau_r$.  The job runs on a cluster in a single
+region whose grid carbon intensity $c(t)$ is given as a time series at
+5-minute resolution.
+
+The baseline (never-pause) scenario runs the job uninterrupted.  Total
+baseline energy is
+\[
+E_b = G \cdot P_t \cdot \eta \cdot T_b
+\]
+where $T_b$ is the baseline training duration derived from $T$ tokens,
+GPU-hours, and $G$.  Baseline emissions are $E_b \cdot \bar{c}$, where
+$\bar{c}$ is the time-averaged carbon intensity over the training window.
+
+\section{Discrete-Event Simulator}
+\label{sec:simulator}
+
+The core of our framework is a discrete-event simulator that replays a
+training run under a given policy.  At each 5-minute timestep $\Delta t$, the
+simulator:
+\begin{itemize}
+  \item Checks the current state (training or paused).
+  \item Applies the hysteresis policy to determine whether to switch state.
+  \item Computes energy consumption based on the active or idle GPU power.
+  \item Computes emissions as energy multiplied by the current grid carbon
+    intensity.
+  \item Tracks training progress as fraction of total tokens completed.
+\end{itemize}
+
+When a pause is triggered, the simulator adds a checkpoint save duration
+$\tau_c$ at full GPU power before entering idle state.  When a resume is
+triggered, it adds a checkpoint load duration $\tau_r$ (typically negligible
+with asynchronous checkpointing).  The simulation terminates when training
+progress reaches 100\%.
+
+Energy per timestep is
+\[
+E(t) = G \cdot P \cdot \eta \cdot \Delta t
+\]
+where $P = P_t$ when training and $P = P_i$ when paused.  Emissions are
+$E(t) \cdot c(t)$.  Total wall-clock time includes both active training time
+and paused intervals including checkpoint overhead.
+
+Figure~\ref{fig:grid-replay} visualizes this core grid-replay loop as an activity diagram.
+
+\begin{figure}
+  \centering
+  \includegraphics[width=0.6\textwidth]{figures/activity_grid_replay}
+  \caption{Grid-replay loop of the simulation engine. At each timestep the
+  simulator reads the current carbon intensity, evaluates the hysteresis policy
+  to decide whether to pause or resume, and accumulates energy, emissions, and
+  wall-clock time accordingly.}
+  \label{fig:grid-replay}
+\end{figure}
+
+\section{Hysteresis Policy}
+\label{sec:hysteresis-policy}
+
+A policy $\pi$ is defined by the triple $(\theta_p, \theta_r, t_s)$:
+\begin{itemize}
+  \item $\theta_p$ (gCO$_2$eq/kWh): pause threshold.  When training and
+    $c(t) > \theta_p$, training pauses.
+  \item $\theta_r$ (gCO$_2$eq/kWh): resume threshold.  When paused and
+    $c(t) \le \theta_r$, training resumes.
+  \item $t_s$ (datetime): start date and time of the training run.
+\end{itemize}
+
+The policy is feasible only if $\theta_r \le \theta_p$.  The hysteresis margin
+$\Delta_\theta = \theta_p - \theta_r$ controls the width of the dead zone.
+
+\section{Scoring of Policies}
+\label{sec:scoring}
+
+Policies are evaluated against the never-pause baseline using two primary
+key performance indicators:
+\begin{align*}
+  \text{CO2\_savings\_pct} &= \frac{E_b - E_p}{E_b} \times 100, \\
+  \text{time\_overhead\_pct} &= \frac{T_p - T_b}{T_b} \times 100,
+\end{align*}
+where $E_b, T_b$ are baseline energy and time, and $E_p, T_p$ are policy
+energy and time.
+
+For ranking policies, we use a composite score that rewards carbon savings
+while enforcing a hard overhead budget $B$:
+\[
+\text{score} = \frac{
+  \alpha \cdot \frac{\text{CO2\_savings\_pct}}{100}
+  + (1-\alpha) \cdot \left(1 - \frac{\text{time\_overhead\_pct}}{B}\right)
+}{2}
+\]
+with feasibility constraint $\text{time\_overhead\_pct} \le B$.  The
+parameter $\alpha \in [0,1]$ controls the trade-off between savings
+maximization and overhead minimization.  In all experiments reported here, we
+use $\alpha = 1$, which simplifies the score to $\frac{1}{2} +
+\frac{\text{CO2\_savings\_pct}}{200}$---pure savings maximization subject to
+the overhead budget.  The never-pause baseline has score 0.5.
+
+\section{Adaptive Grid-Search Optimization}
+\label{sec:optimization}
+
+Exhaustively enumerating the three-dimensional policy space $(\theta_p,
+\theta_r, t_s)$ is computationally prohibitive.  A naive grid at resolution
+$N$ per axis costs $O(N^2 \cdot D)$ simulations, where $D$ is the number of
+start-date samples.  With $N=100$ and $D=52$, brute-force would require
+approximately 260,000 simulations.
+
+We instead use an adaptive grid-search algorithm inspired by trust-region
+optimization:
+\begin{enumerate}
+  \item \textbf{Initialization.} A coarse grid over full bounds:
+    $\theta_p \in [0, \theta_p^{\max}]$, $\theta_r \in [0, \theta_p]$, and
+    $t_s$ at $D$ uniform intervals.  The maximum $\theta_p^{\max}$ is
+    region-dependent: 100~gCO$_2$eq/kWh for Sweden (whose maximum intensity is
+    low), 800 for all other regions.
+  \item \textbf{Evaluation and selection.} Every grid point is simulated.
+    Points exceeding the overhead budget $B$ are discarded.  From feasible
+    points, the highest-scoring is selected.
+  \item \textbf{Zoom refinement.} Bounds contract around the best point by a
+    shrink factor $s = 0.45$ per axis.  Grid resolution remains fixed at
+    $N = 10$ points per axis per iteration.  If the contracted interval on any
+    axis falls below the minimum step of $3$~gCO$_2$eq/kWh, search on that
+    axis terminates.
+  \item \textbf{Iteration.} Steps 2--3 repeat for a maximum of $K = 10$
+    iterations.  The shrink factor $s = 0.45$ ensures that after approximately
+    six iterations the search window contracts below the minimum step.
+\end{enumerate}
+
+The algorithm guarantees a feasible point: the initial grid always contains the
+zero-hysteresis no-pause policy $\theta_p = \theta_p^{\max}, \theta_r = 0$,
+which yields 0\% overhead.  Total complexity is $O(K \cdot N^2 \cdot D)$.
+With our settings ($K=10, N=10, D=7$ for start-date experiments, $D=1$ for
+fixed-date runs), a full optimization evaluates approximately 3,500 candidate
+policies (550 for fixed-start runs), completing in under one minute on a
+single CPU core.  The optimizer converges within 5--6 iterations in all
+(model, region) combinations; subsequent iterations yield no measurable
+improvement.
+
+\section{Carbon Intensity Data}
+\label{sec:carbon-data}
+
+Carbon intensity data is sourced from the Electricity Maps API at 5-minute
+resolution.  Table~\ref{tab:grid} summarizes the statistical characteristics of
+the five regions used in this study.  The regions span a wide range: Sweden
+(clean, highly variable), Germany and Italy (moderately dirty, highly
+variable), and the United States and China (moderate-to-dirty, low
+variability).
+
+\begin{table}
+    \centering
+    \caption{Grid carbon intensity characteristics (2025).  Regions ordered by
+    coefficient of variation.}
+    \label{tab:grid}
+    \small
+    \begin{tabular}{lrrr}
+      \toprule
+      Region & Mean & Std.\ dev. & Coeff.\ of var.\ \\
+      & (gCO$_2$eq/kWh) & (gCO$_2$eq/kWh) & \\
+      \midrule
+      DE (Germany) & 380 & 141.98 & 0.37 \\
+      SE (Sweden)  &  23 &   8.19 & 0.35 \\
+      IT (Italy)   & 309 &  87.02 & 0.28 \\
+      US (United States) & 412 & 44.68 & 0.11 \\
+      CN (China)   & 519 &  55.68 & 0.11 \\
+      \bottomrule
+    \end{tabular}
+\end{table}
+
+Grid variability, not mean intensity, determines savings potential.  Germany
+(coefficient of variation 0.37) and Italy (coefficient of variation 0.28) offer the greatest temporal arbitrage
+opportunity because their carbon intensity oscillates between near-zero and
+high values on hourly timescales.  Sweden has high relative variability (coefficient of variation
+0.35) but such a low mean (23~gCO$_2$eq/kWh) that the absolute emissions
+available to avoid are limited.  The United States and China (coefficient of variation 0.11) are
+consistently moderate and consistently dirty, respectively, offering few clean
+intervals worth waiting for.
+
+The time series exhibits strong temporal autocorrelation (lag-1 correlation
+0.999, one-day lag 0.694 for Germany), making chronological trace replay
+essential over independent sampling.

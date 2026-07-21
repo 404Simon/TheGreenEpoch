@@ -1,12 +1,101 @@
 %! TEX root = thesis.tex
 
-\chapter{Fundamentals}%
+\chapter{Fundamentals}
 \label{sec:fundamentals}
 
-Fundamentals / environment and related work: 1/3
+\section{LLM Pretraining}
+\label{sec:llm-pretraining}
 
+Large language models are neural networks with hundreds of billions of
+parameters trained on trillions of text tokens.  The pretraining phase
+dominates the total energy budget of an LLM lifecycle: it runs for weeks to
+months on large GPU clusters.  For example, DeepSeek~V3, a 671B-parameter
+mixture-of-experts model, required 2.79M GPU-hours on 2048 NVIDIA H800
+GPUs~\cite{deepseek-ai_deepseek-v3_2024}.  Kimi~K2, a 1T-parameter mixture-of-experts model,
+was trained on 15.5T tokens with a minimum 256-GPU model-parallel
+group~\cite{kimi_team_kimi_2025}.  The effective energy consumption depends on
+the GPU count, per-GPU power draw, and data center power usage effectiveness.
+
+The training process is iterative: each step processes a batch of tokens,
+computes gradients, and updates model weights.  This inherent repetitiveness
+makes training amenable to pausing at natural breakpoints such as epoch
+boundaries or checkpoints.  Modern training frameworks support asynchronous
+checkpointing, which reduces the time overhead of saving and restoring model
+state.
+
+\section{Grid Carbon Intensity}
+\label{sec:grid-carbon-intensity}
+
+The carbon intensity of electricity measures the mass of CO$_2$ emitted per
+unit of electrical energy consumed, typically expressed in
+gCO$_2$eq/kWh.  Grid carbon intensity varies on multiple timescales:
 \begin{itemize}
-    \item comment on employed hardware and software
-    \item describe methods and techniques that build the basis of your work
-    \item review related work(!)
+  \item \textbf{Hourly}: solar generation causes midday dips on sunny days;
+    wind patterns create overnight fluctuations.
+  \item \textbf{Daily}: weekday vs.\ weekend demand patterns shift the generation
+    mix.
+  \item \textbf{Seasonal}: winter heating demand and summer cooling demand
+    alter the marginal generator.
+  \item \textbf{Regional}: grids with high renewable penetration (e.g., Sweden)
+    have low mean intensity; grids reliant on coal (e.g., China) have high
+    mean intensity.
 \end{itemize}
+
+These variations create opportunities for temporal workload shifting.  A
+training job running in Germany in 2025 experiences a mean intensity of
+approximately 380~gCO$_2$eq/kWh with a standard deviation of 142~gCO$_2$eq/kWh
+(coefficient of variation 0.37).  This wide range means periods of
+near-zero-carbon power alternate with fossil-dominated intervals, making
+Germany a promising candidate for carbon-aware scheduling.  In contrast, the
+Chinese grid averages 519~gCO$_2$eq/kWh with low variability (coefficient of variation 0.11),
+offering few clean intervals worth waiting for.
+
+Carbon intensity data is available from services such as Electricity Maps,
+which provides historical and fore-casted marginal intensity at 5-minute
+resolution for most global regions.  Marginal intensity (the intensity of the
+generator on the margin) is more appropriate for assessing the impact of an
+additional load than average intensity~\cite{dodge_measuring_2022}.
+
+\section{Temporal Workload Shifting}
+\label{sec:temporal-workload-shifting}
+
+Temporal workload shifting delays or pauses computational workloads during
+periods of high grid carbon intensity and resumes them when the grid is
+cleaner.  The core trade-off is between carbon savings (reduced operational
+emissions) and time overhead (extended wall-clock duration).  The approach
+requires no hardware modification and is applicable to any interruptible
+workload with checkpointing support.
+
+Prior work has applied temporal shifting to generic cloud batch
+jobs~\cite{wiesner_lets_2021}, achieving 3--34\% operational carbon savings
+depending on the delay tolerance and regional grid characteristics.  For LLM
+training, the savings potential depends on model scale (larger GPU clusters
+consume more power per unit time, increasing the absolute benefit of pausing),
+checkpoint overhead (frequent saving and restoring adds time and energy), and
+grid variability (high-variance grids offer more arbitrage opportunities).
+
+\section{Hysteresis}
+\label{sec:hysteresis}
+
+A hysteresis policy uses separate thresholds for entering and leaving a state
+to prevent rapid toggling.  In the context of carbon-aware training, two
+thresholds define the policy:
+\begin{itemize}
+  \item $\theta_p$: the pause threshold.  When training is active and carbon
+    intensity exceeds $\theta_p$, training pauses.
+  \item $\theta_r$: the resume threshold.  When paused and carbon intensity
+    falls below $\theta_r$, training resumes.
+\end{itemize}
+
+The condition $\theta_r \le \theta_p$ must hold.  The difference $\Delta_\theta
+= \theta_p - \theta_r$ is the hysteresis margin.  A margin of zero
+($\theta_r = \theta_p$) means the job toggles at a single threshold.  For a
+positive margin, intensities in the interval $[\theta_r, \theta_p]$ form a dead
+zone where the job remains in its current state, preventing flutter---rapid
+pause-resume cycles triggered by small fluctuations around a single threshold.
+
+Hysteresis introduces a trade-off: a wider margin reduces the number of
+transitions (saving checkpoint overhead) but also leaves the job paused through
+moderately clean intervals that could have been exploited productively.
+Identifying the optimal margin for a given region and model is the central
+focus of this work.

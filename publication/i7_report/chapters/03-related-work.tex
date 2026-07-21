@@ -1,12 +1,39 @@
 %! TEX root = thesis.tex
 
-\chapter{Related Work}%
+\chapter{Related Work}
 \label{sec:related_work}
 
-Developed architecture / system design / implementation: 1/3
+\section{Temporal Workload Shifting}
 
-\begin{itemize}
-    \item start with a theoretical approach
-    \item describe the developed system/algorithm/method from a high-level point of view
-    \item go ahead in presenting your developments in more detail
-\end{itemize}
+Temporal workload shifting delays computational jobs to align with periods of
+low grid carbon intensity.  Wiesner~et~al.~\cite{wiesner_lets_2021}
+demonstrated that delaying cloud batch jobs by a few hours can reduce
+operational emissions by 3--34\%, with negligible checkpoint overhead enabling
+higher savings.  Their work uses a single threshold for pause decisions and
+does not explore hysteresis.  Carbon Explorer~\cite{acun_carbon_2023} balances
+operational and embodied carbon at the datacenter planning timescale, but
+operates at the level of hardware procurement and deployment decisions rather
+than per-run scheduling.
+
+\section{Carbon-Aware Distributed Training}
+
+Extending temporal shifting to geo-distributed training adds spatial
+flexibility.  Wiesner~et~al.~\cite{wiesner_distributed_2026} trained a
+561M-parameter transformer across multiple sites during renewable curtailment
+windows, reducing emissions to 5--12\% of the baseline.  Their approach
+exploits near-zero-carbon curtailment energy but requires multiple
+geographically distributed data centers.  Our work complements this by
+optimizing the hysteresis policy for single-site training, which is the more
+common deployment scenario.
+
+\section{Emissions Accounting Methodology}
+
+Accurate carbon accounting is essential for evaluating the savings from
+temporal shifting.  Patterson~et~al.~\cite{patterson_carbon_nodate} propose a
+methodology based on GPU-hours, thermal design power, power usage effectiveness, and grid intensity.
+Dodge~et~al.~\cite{dodge_measuring_2022} highlight the importance of using
+marginal rather than average grid intensity, and demonstrate that
+time-specific cloud data yields more accurate estimates.  We follow their
+recommendation by using marginal carbon intensity at 5-minute resolution.
+
+

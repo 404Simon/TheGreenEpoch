@@ -1,0 +1,58 @@
+%! TEX root = thesis.tex
+
+\chapter{Conclusion}
+\label{sec:conclusion}
+
+We have presented a simulation framework and adaptive grid-search optimizer
+for carbon-aware LLM training via hysteresis-based pausing.  The framework
+replays historical grid carbon intensity data through a discrete-event
+simulator, and the optimizer efficiently searches the three-dimensional policy
+space of pause threshold, resume threshold, and start date.  Across two
+state-of-the-art models (DeepSeek~V3 and Kimi~K2) and five grid regions with
+diverse variability profiles, we establish systematic Pareto frontiers for
+this problem.
+
+The central finding is that hysteresis provides diminishing returns: the
+optimal policy uses a narrow or zero margin ($\Delta_\theta \leq
+16$~gCO$_2$eq/kWh) in every region and model.  Wide hysteresis margins waste
+time and checkpoint overhead without proportional savings.  Carbon-aware
+pausing can reduce operational emissions by up to 43\% in high-variability
+grids at the cost of up to 200\% wall-clock overhead.  In low-variance grids,
+savings fall below 10\%, and alternative mitigation strategies such as
+geo-distributed training should be considered.
+
+Our implementation as a fully client-side browser application demonstrates
+that carbon-aware training simulation and optimization can be made accessible
+to researchers and practitioners without specialized infrastructure.  The
+application provides an interactive live simulator, a batch run dashboard,
+and an adaptive optimization page with real-time 3D visualization of the
+policy space.
+
+\section{Limitations}
+
+Our simulation assumes perfect foresight: policies are evaluated on historical
+data rather than forecasted future intensity.  A real deployment would require
+forecasting, introducing prediction error.  We use a fixed checkpoint overhead
+derived from a 7B model; real overhead depends on model size and storage
+bandwidth and may scale with the number of model parameters.  GPU idle power
+is an estimate, and actual values vary across hardware generations and data
+center configurations.  Finally, this work considers single-site training;
+geo-distributed training could compound savings by adding spatial flexibility.
+
+\section{Future Work}
+
+Three directions are particularly promising for future work:
+\begin{enumerate}
+  \item \textbf{Forecast-based policies.}  Replace historical replay with
+    predictive carbon intensity forecasts (e.g.\ using ECMWF or local grid
+    operator data) to enable real-time deployment.
+  \item \textbf{Multi-job scheduling.}  Extend the framework to optimize across
+    multiple training jobs sharing a GPU cluster, balancing carbon savings with
+    fairness and throughput.
+  \item \textbf{Embodied carbon awareness.}  Incorporate manufacturing
+    emissions to ensure that operational savings from pausing are not
+    outweighed by amortized hardware production costs.
+\end{enumerate}
+
+All simulation code and data are available as open source at
+\url{https://github.com/404simon/TheGreenEpoch}.

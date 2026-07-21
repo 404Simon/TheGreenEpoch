@@ -1,0 +1,94 @@
+%! TEX root = thesis.tex
+
+\chapter{Experimental Setup}
+\label{sec:experimental_setup}
+
+\section{Models}
+\label{sec:models}
+
+We evaluate two state-of-the-art LLMs that represent the current frontier of
+large-scale pretraining:
+
+\begin{itemize}
+  \item \textbf{DeepSeek~V3}~\cite{deepseek-ai_deepseek-v3_2024}: a 671B
+    parameter mixture-of-experts model (37B active parameters per
+    token), trained on 14.8T
+    tokens using 2048 NVIDIA H800 GPUs, consuming 2.79M GPU-hours.
+  \item \textbf{Kimi~K2}~\cite{kimi_team_kimi_2025}: a 1T parameter
+    mixture-of-experts model
+    (32B active), trained on 15.5T tokens with a minimum 256-GPU model-parallel
+    group.
+\end{itemize}
+
+These two models differ substantially in scale: DeepSeek~V3 uses 8$\times$ more
+GPUs, allowing us to examine how GPU count affects the savings-overhead
+trade-off.
+
+\section{Hardware Constants}
+\label{sec:hardware-constants}
+
+We use the following hardware parameters for all simulations:
+
+\begin{table}
+  \centering
+  \caption{Hardware constants used in all simulations.}
+  \label{tab:constants}
+  \small
+  \begin{tabular}{lr}
+    \toprule
+    Parameter & Value \\
+    \midrule
+    GPU training power & 700~W (NVIDIA H800) \\
+    GPU idle power & 60~W \\
+    Power usage effectiveness & 1.27 \\
+    Checkpoint pause time & 148.8~s \\
+    Checkpoint resume time & 0~s (async I/O) \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+GPU training power is based on the NVIDIA H800 thermal design power
+thermal design power~\cite{h800_specs}.  GPU idle power is estimated
+from published hardware
+measurements.  Power usage effectiveness is taken from DeepSeek's DGX
+H800 infrastructure
+report~\cite{jegham_hungry_2025}.  Checkpoint overhead is based on PyTorch
+Distributed synchronous checkpoint measurements for a 7B model, with the
+conservative assumption that checkpoint resume is overlapped with asynchronous
+I/O~\cite{pytorch_checkpoint}.
+
+\section{Regions and Data}
+\label{sec:regions-data}
+
+We evaluate five electricity grid regions: Germany (DE), Sweden (SE), Italy
+(IT), the United States (US), and China (CN).  Carbon intensity data is
+obtained from Electricity Maps at 5-minute resolution for the year 2025.
+Table~\ref{tab:grid} in Chapter~\ref{sec:methodology} summarizes the grid
+characteristics of each region.
+
+\section{Optimizer Settings}
+\label{sec:optimizer-settings}
+
+All optimization runs use the following configuration:
+
+\begin{table}
+  \centering
+  \caption{Adaptive optimizer configuration.}
+  \label{tab:optimizer-config}
+  \small
+  \begin{tabular}{lr}
+    \toprule
+    Parameter & Value \\
+    \midrule
+    Grid resolution $N$ & 10 points per axis \\
+    Maximum iterations $K$ & 10 \\
+    Overhead budget $B$ & 200\% \\
+    Shrink factor $s$ & 0.45 \\
+    Trade-off parameter $\alpha$ & 1.0 (pure savings) \\
+    $\theta_p^{\max}$ (Sweden) & 100~gCO$_2$eq/kWh \\
+    $\theta_p^{\max}$ (others) & 800~gCO$_2$eq/kWh \\
+    Start-date samples $D$ (optimized) & every 7th day \\
+    Historical years & 2025 \\
+    \bottomrule
+  \end{tabular}
+\end{table}

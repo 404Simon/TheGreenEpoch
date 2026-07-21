@@ -3,19 +3,44 @@
 \chapter*{Abstract}
 \begin{otherlanguage*}{american}
 
-    about 1/2 page:   \\
-    (1) Motivation (Why do we care?)   \\
-    (2) Problem statement (What problem are we trying to solve?)   \\
-    (3) Approach (How did we go about it)   \\
-    (4) Results (What's the answer?)   \\
-    (5) Conclusion (What are the implications of the answer?)
+The pretraining of large language models (LLMs) consumes millions of GPU-hours
+and emits hundreds of tonnes of CO$_2$ per run.  Since grid carbon intensity
+varies strongly over time and region, training can be paused during dirty
+periods and resumed when the grid is cleaner.  We built a simulation framework
+and an adaptive optimizer that searches over pause thresholds, resume
+thresholds, and start dates to find the best configurations.  Using historical
+electricity data at five-minute resolution, we evaluated two frontier
+models---DeepSeek~V3 and Kimi~K2---across five regions with different grid
+characteristics.  Our main finding is that the gap between pause and resume
+threshold should be small (at most 16~gCO$_2$eq/kWh): a wide gap never pays
+off.  In highly variable grids like Germany and Italy, savings reached 43\%
+and 33\%, but came with up to 200\% longer training time.  In stable grids
+like China and the US, savings stayed below 10\% regardless of the chosen
+policy.  All code is implemented as a browser-based application with an
+interactive simulator and optimizer, available as open source.
 
 \end{otherlanguage*}
-
 
 \chapter*{Kurzfassung}
 \begin{otherlanguage*}{ngerman}
 
-    Gleicher Text in Deutsch
+Das Pretraining gro{\ss}er Sprachmodelle (LLMs) verbraucht Millionen von
+GPU-Stunden und emittiert hunderte Tonnen CO$_2$ pro Durchlauf.  Da die
+CO$_2$-Intensit\"at des Stromnetzes stark \"uber Zeit und Region variiert,
+l\"asst sich das Training in Zeiten hoher Emissionen pausieren und bei
+saubererem Strom fortsetzen.  Wir haben eine Simulationsplattform und einen
+adaptiven Optimierer entwickelt, der Pausenschwellen,
+Fortsetzungsschwellen und Starttermine durchsucht, um die besten
+Konfigurationen zu finden.  Anhand historischer Stromdaten in
+F\"unf-Minuten-Aufl\"osung haben wir zwei Spitzenmodelle---DeepSeek~V3 und
+Kimi~K2---in f\"unf Regionen mit unterschiedlichen Netzeigenschaften
+evaluiert.  Unser wichtigstes Ergebnis: Der Abstand zwischen Pausen- und
+Fortsetzungsschwelle sollte klein sein (maximal 16~gCO$_2$eq/kWh); ein gro{\ss}er
+Abstand zahlt sich nie aus.  In stark variablen Netzen wie Deutschland und
+Italien erreichten wir Einsparungen von 43\% bzw. 33\%, allerdings bei bis zu
+200\% l\"angerer Trainingsdauer.  In stabilen Netzen wie China und den USA
+blieben die Einsparungen unabh\"angig von der gew\"ahlten Strategie unter
+10\%.  Der gesamte Code ist als browserbasierte Anwendung mit interaktivem
+Simulator und Optimierer implementiert und als Open Source verf\"ugbar.
 
 \end{otherlanguage*}

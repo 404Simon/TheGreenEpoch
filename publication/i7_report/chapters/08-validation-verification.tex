@@ -20,17 +20,6 @@ trend in this trade-off and by inspecting the Pareto frontier for reasonable
 shape and absence of pathological cases, such as negative savings for very
 strict thresholds.
 
-\subsection{Cross-Model Scaling}
-
-A second validation examines how emissions and savings scale across different
-model architectures.  For models run under the same region and carbon-aware
-policy, baseline emissions should approximately scale with total data center
-energy, driven by GPU count, power, GPU-hours, and power usage effectiveness.  Similarly, absolute
-savings should scale with baseline emissions.  Ratios of simulated emissions
-and savings between models are compared against ratios implied by their
-GPU-hours and power.  Qualitatively implausible outcomes---such as a smaller
-model emitting far more than a larger one under identical assumptions---would
-indicate issues.
 
 \subsection{Regional and Temporal Realism}
 
@@ -44,17 +33,6 @@ already-clean regions, albeit with more complex pause patterns.  Anomalous
 results are checked against features of the underlying time series to ensure
 they can be explained by specific training windows.
 
-\subsection{Checkpoint Granularity and Overhead Effects}
-
-Finally, the interaction between pause granularity, checkpoint overhead, and
-carbon-aware pausing is validated.  Finer pause granularity should allow more
-precise avoidance of high-carbon intervals and thus higher potential savings,
-but also increase the number of pauses and associated time and energy overhead.
-The observed runtime extension and additional energy consumption are compared
-to what is implied by the configured per-checkpoint overhead and the recorded
-pause count.  The resulting savings-overhead trade-off is checked for
-qualitatively reasonable behaviour and diminishing returns at very fine
-granularity.
 
 \section{Verification}
 
@@ -94,16 +72,6 @@ baseline runtime within numerical tolerance.  In scenarios with pauses, the
 simulated policy runtime is compared against the analytical expression
 combining baseline time, total paused time, and per-pause checkpoint overhead.
 
-\subsection{Handling of Data Gaps}
-
-The fourth verification step ensures robust handling of missing or invalid
-CO$_2$ data.  When the data availability flag indicates missing data, the
-simulation must replace the instantaneous intensity with a predefined
-region-year average and consistently use this effective value both for
-emissions calculations and pause decisions.  Synthetic time series with known
-missing points are used to confirm that the effective intensity and resulting
-decisions follow this rule at every affected time step.
-
 \subsection{Unit Tests for KPI Functions}
 
 Finally, KPI computations are tested in isolation through unit tests.  Fixed
@@ -113,11 +81,3 @@ the composite score are checked against manually computed expected results.
 This confirms that the KPI implementations are numerically correct,
 independent of the rest of the simulation engine.
 
-\subsection{Optimizer Verification}
-
-We additionally verify the adaptive grid-search optimizer by comparing its
-output against brute-force enumeration on a downsampled problem.  For a
-reduced grid ($N=20$, one region, one model), we enumerate all 400
-(threshold, hysteresis) combinations and confirm that the optimizer's best
-point matches the global optimum found by exhaustive search.  The optimizer
-converges to within 1\% of the global optimum across all tested configurations.

@@ -1,0 +1,28 @@
+\begin{frame}[t]{Simulation Engine}{Core grid-replay loop}
+
+  \begin{columns}[T]
+    \begin{column}{0.52\textwidth}
+      \centering
+      \includegraphics[width=\textwidth,height=0.78\textheight,keepaspectratio]{assets/activity_grid_replay.png}
+    \end{column}
+    \begin{column}{0.44\textwidth}
+      \textbf{Key design points:}
+      \begin{itemize}
+        \item 5-minute timesteps
+        \item Hysteresis policy: $\theta_p$, $\theta_r$
+        \item Checkpoint overhead on pause/resume
+        \item GPU idle power during pauses
+        \item Baseline: never-pause schedule
+      \end{itemize}
+
+      \vspace{0.3cm}
+      \textbf{Outputs per run:}
+      \begin{itemize}
+        \item CO$_2$ savings \%
+        \item Time overhead \%
+        \item Composite score
+      \end{itemize}
+    \end{column}
+  \end{columns}
+
+\end{frame}

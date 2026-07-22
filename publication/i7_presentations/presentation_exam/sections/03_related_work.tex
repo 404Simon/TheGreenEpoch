@@ -1,0 +1,33 @@
+\begin{frame}[t]{Related Work}{What's the state of the art?}
+
+  \small
+  \begin{itemize}
+    \item \textbf{Temporal workload shifting}
+      \begin{itemize}
+        \item Wiesner et al.\ (Middleware~'21): delaying cloud batch jobs by hours
+          reduces operational emissions 10--40\%~\cite{wiesner_lets_2021}.
+        \item Pause-resume semantics similar to ours, but for generic cloud workloads.
+      \end{itemize}
+
+    \item \textbf{Carbon-aware distributed LLM training}
+      \begin{itemize}
+        \item Wiesner et al.\ (2026): 561M-parameter transformer during curtailment windows
+          across geo-distributed sites; emissions reduced to 5--12\% of baseline~\cite{wiesner_distributed_2026}.
+      \end{itemize}
+
+    \item \textbf{Datacenter-scale frameworks}
+      \begin{itemize}
+        \item Acun et al.\ (ASPLOS~'23): Carbon Explorer balances operational
+          and embodied carbon across hardware lifecycles~\cite{acun_carbon_2023}.
+        \item Operates at \emph{planning} timescale (years), not per-run timescale.
+      \end{itemize}
+
+    \item \textbf{Emissions accounting}
+      \begin{itemize}
+        \item Patterson et al.\ (2021): GPU-hours $\times$ TDP $\times$ PUE $\times$ grid intensity~\cite{patterson_carbon_nodate}.
+        \item Dodge et al.\ (FAccT~'22): marginal vs.\ average grid intensity;
+          time-specific cloud data~\cite{dodge_measuring_2022}.
+      \end{itemize}
+  \end{itemize}
+
+\end{frame}

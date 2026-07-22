@@ -1,0 +1,25 @@
+\begin{frame}[t]{Contributions}{What is new in this work?}
+
+  \begin{enumerate}
+    \item \textbf{Simulation framework} for carbon-aware LLM training with
+      hysteresis-based pausing, validated against ground-truth energy models
+      and cross-model scaling expectations.
+
+      \vspace{0.2cm}
+    \item \textbf{Adaptive grid-search optimizer} that efficiently
+      explores the $(\theta_p, \theta_r, t_s)$ policy space,
+      converging within $\leq$6-7 iterations. (a discrete, 3D
+      variation of the Golden Section Search)
+
+      \vspace{0.2cm}
+    \item \textbf{Comprehensive empirical study} covering 2~SOTA models
+      (DeepSeek~V3, Kimi~K2) $\times$ 5~grid regions of replay data
+      --- the first systematic Pareto frontiers for carbon-aware LLM training.
+
+      \vspace{0.2cm}
+    \item \textbf{Actionable design rule:} the optimal hysteresis policy uses a
+      narrow margin ($\theta_p - \theta_r < 16$~gCO$_2$eq/kWh).
+      Wide hysteresis is never Pareto-optimal.
+  \end{enumerate}
+
+\end{frame}

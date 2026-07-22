@@ -1,0 +1,328 @@
+% ..............................................................................
+% Demo of the fau-beamer template.
+%
+% Copyright 2022 by Tim Roith <tim.roith@fau.de>
+%
+% This program can be redistributed and/or modified under the terms
+% of the GNU Public License, version 2.
+%
+% ------------------------------------------------------------------------------
+\documentclass[final]{beamer}
+\def\fauThemeLanguage{Eng}  % simple remove this line, if your
+% presentation is in German
+\usepackage{preamble}
+
+% ========================================================================================
+% Theme: inner, outer, font and colors
+% ----------------------------------------------------------------------------------------
+\usepackage[institute=Tech,
+  %SecondLogo = template-art/i7-logo.pdf,
+  %ThirdLogo = template-art/FAUWortmarkeBlau.pdf,
+  %WordMark=None,
+  aspectratio=169,
+  fontsize=11,
+  fontbaselineskip=13,
+  scale=1.,
+  %InsertTotalFoot
+]{styles/beamerthemefau}
+
+% ----------------------------------------------------------------------------------------
+% Input and output encoding
+%\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+% ----------------------------------------------------------------------------------------
+% Language settings
+\usepackage[english]{babel}
+
+% ========================================================================================
+% Fonts
+% - Helvet is loaded by styles/beamerfonts
+% - We use serif for math environements
+% - isomath is used for upGreek letters
+% ----------------------------------------------------------------------------------------
+\usepackage{isomath}
+\usefonttheme[onlymath]{serif}
+\usepackage{exscale}
+\usepackage{anyfontsize}
+\setbeamercolor{alerted text}{fg=BaseColor}
+% ----------------------------------------------------------------------------------------
+% custom commands for symbols
+\usepackage{styles/symbols}
+
+\sisetup{detect-weight,mode=text}
+
+% ============================================================
+% Title page
+% ------------------------------------------------------------
+\title[Carbon-Aware LLM Training]{Carbon-Aware LLM Training
+via\\Hysteresis Policy Optimization}
+
+\author[TheGreenEpoch]{
+  Bastian Wiesner, Julian Kraus, Simon Wittmann
+}
+
+\institute[FAU]{
+  Friedrich-Alexander-Universit\"at Erlangen-N\"urnberg, Computer Science 7
+}
+
+\date{09.07.2026}
+
+% ============================================================
+% Bibliography
+% ------------------------------------------------------------
+\usepackage[style=numeric,
+  defernumbers=true,
+  useprefix=true,
+  giveninits=true,
+  hyperref=true,
+  autocite=inline,
+  maxcitenames=5,
+  maxbibnames=20,
+  uniquename=init,
+  sortcites=true,
+  doi=true,
+  isbn=false,
+  url=false,
+  eprint=false,
+  backend=bibtex
+]{biblatex}
+\addbibresource{bibliography.bib}
+\setbeamertemplate{bibliography item}[text]
+
+% ============================================================
+% Hyperref
+% ------------------------------------------------------------
+\hypersetup{
+  colorlinks = true,
+  final=true,
+  plainpages=false,
+  pdfstartview=FitV,
+  pdftoolbar=true,
+  pdfmenubar=true,
+  pdfencoding=auto,
+  psdextra,
+  bookmarksopen=true,
+  bookmarksnumbered=true,
+  breaklinks=true,
+  linktocpage=true,
+  urlcolor=BaseColor,
+  citecolor=BaseColor,
+  linkcolor=BaseColor
+}
+
+\newcommand{\colorcite}[3]{{\hypersetup{citecolor=#1}{\cite[#2]{#3}}}}
+
+% ============================================================
+% Document
+% ------------------------------------------------------------
+\begin{document}
+
+% Title page
+\begin{frame}[t,titleimagenofooter]{-}
+  \titlepage
+\end{frame}
+
+% ============================================================
+% Problem and Motivation
+% ============================================================
+\section{Problem}
+
+\input{sections/02_motivation}
+\input{sections/05_novelty}
+\input{sections/06_objectives}
+
+% ============================================================
+% Data
+% ============================================================
+%\section{Data}
+
+
+%\input{sections/18_input_modeling}
+
+% ============================================================
+% Related Work
+% ============================================================
+%\section{Related Work}
+
+%\input{sections/03_related_work}
+
+% ============================================================
+% Method
+% ============================================================
+\section{Method}
+
+\input{sections/08_parameters}
+\input{sections/09_policy_scoring}
+\input{sections/14_activity}
+\input{sections/30_optimization}
+
+% ============================================================
+% Experimental Setup
+% ============================================================
+%\section{Experimental Setup}
+
+%\input{sections/31_experiment_setup}
+
+% ============================================================
+% Implementation
+% ============================================================
+%\section{Implementation}
+
+%\input{sections/12_techstack}
+
+% ============================================================
+% Demo
+% ============================================================
+\iffalse
+\section{Demo}
+
+\begin{frame}[t]{Demo Time}{}
+  \centering
+  \vfill
+  {\Huge Live Simulation}
+  \vfill
+\end{frame}
+\fi
+% ============================================================
+% Results
+% ============================================================
+\section{Results}
+
+\input{sections/18_results}
+
+% ============================================================
+% Conclusion and Outlook
+% ============================================================
+\section{Conclusion and Outlook}
+
+\input{sections/19_conclusion}
+\input{sections/20_outlook}
+
+% Thank you
+\begin{frame}[titleimagenofooter]{}{}
+  \centering
+  Thank you for your attention.
+\end{frame}
+
+% ============================================================
+% Additional Slides
+% ============================================================
+
+\begin{frame}[t]{Motivation}{We are only simulating the Pretraining Phase}
+  \includegraphics[width=\textwidth,height=0.8\textheight,keepaspectratio]{assets/LLM_training.png}
+\end{frame}
+
+\input{sections/07_electricity_map}
+
+\section{Related Work}
+
+\input{sections/03_related_work}
+
+\section{Data}
+
+\input{sections/18_input_modeling}
+
+\begin{frame}[t]{Optimization Convergence}{Rapid convergence within 5--6 iterations}
+
+  \centering
+  \includegraphics[width=0.75\textwidth,height=0.62\textheight,keepaspectratio]{assets/score_vs_iteration_all.png}
+
+  \vspace{0.1cm}
+  \begin{itemize}
+    \item Score improves substantially between iterations 1--5, plateaus by 6--7.
+    \item Remaining iterations provide only marginal refinement ($<$2\%).
+    \item Consistent behavior across all 10 (model, region) combinations.
+  \end{itemize}
+
+\end{frame}
+
+\section{Experimental Setup}
+
+\input{sections/31_experiment_setup}
+
+\section{Implementation}
+
+\input{sections/12_techstack}
+
+\section{Results}
+
+\begin{frame}[t]{Results}{Score heatmaps: savings vs.\ overhead trade-off}
+
+  \centering
+  \includegraphics[width=0.82\textwidth,height=0.72\textheight,keepaspectratio]{assets/score_heatmaps.png}
+
+\end{frame}
+
+\begin{frame}[t]{Results}{Example runs: different $\alpha$ values pick different winners}
+
+  \centering
+  \includegraphics[width=0.82\textwidth,height=0.72\textheight,keepaspectratio]{assets/score_example_comparison.png}
+
+\end{frame}
+
+\begin{frame}[t]{Results}{Absolute vs.\ relative CO$_2$ savings}
+
+  \centering
+  \includegraphics[width=0.82\textwidth,height=0.72\textheight,keepaspectratio]{assets/absolute_relative_savings.png}
+
+  \vspace{0.1cm}
+  \begin{itemize}
+    \item Regions with higher baseline emissions can achieve larger
+      absolute reductions even at modest relative savings.
+  \end{itemize}
+
+\end{frame}
+
+\subsection{Threshold Space Analysis}
+
+\begin{frame}[t]{Results}{Threshold space: $\theta_p$ vs $\theta_r$ colored by score}
+
+  \centering
+  \includegraphics[width=0.85\textwidth,height=0.72\textheight,keepaspectratio]{assets/threshold_space_overview.png}
+
+\end{frame}
+
+\begin{frame}[t]{Results}{Hysteresis margin analysis: diminishing returns}
+
+  \centering
+  \includegraphics[width=0.78\textwidth,height=0.68\textheight,keepaspectratio]{assets/margin_vs_best_overview.png}
+
+  \vspace{0.05cm}
+  \begin{itemize}
+    \item Beyond $\theta_p - \theta_r \approx 50$~gCO$_2$eq/kWh: score plateaus or declines.
+    \item Higher margins $\Rightarrow$ more idle time without proportional savings.
+  \end{itemize}
+
+\end{frame}
+
+\subsection{Multi-Year Stability}
+
+\begin{frame}[t]{Results}{Multi-year averaging attenuates peak savings}
+
+  \centering
+  \includegraphics[width=0.75\textwidth,height=0.55\textheight,keepaspectratio]{assets/multiyear_avg_score.png}
+
+  \vspace{0.1cm}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \textbf{DE:} 43.4\% $\to$ 19.7\% \\
+      \textbf{IT:} 32.7\% $\to$ 18.7\%
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \textbf{SE:} 23.2\% $\to$ 22.3\% \\
+      \textbf{CN:} 6.2\% $\to$ 2.6\%
+    \end{column}
+  \end{columns}
+
+  \vspace{0.1cm}
+  \begin{block}{Practical implication}
+    Multi-year optima may underestimate savings by up to $54\%$ due to smoothing.
+  \end{block}
+
+\end{frame}
+
+% Backmatter
+
+\input{sections/99_backmatter}
+
+\end{document}

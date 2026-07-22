@@ -1,0 +1,23 @@
+\begin{frame}[t]{Adaptive Grid-Search Optimization}{Efficiently exploring the policy space}
+
+  \textbf{Challenge:} Exhaustive 3D grid over $(\theta_p, \theta_r, t_s)$ costs $O(N^2 \times D)$ ---
+  prohibitive for $N=100$, $D=52$ ($\sim$265\,k simulations).
+
+  \vspace{0.3cm}
+  \textbf{Solution:} Iterative zoom refinement (trust-region style)\\
+  \begin{enumerate}
+    \item \textbf{Coarse grid} over full bounds: $\theta_p \in [0, \theta_p^{\max}]$,
+      $\theta_r \in [0, \theta_p]$, $t_s$ at $D$ uniform intervals.
+    \item \textbf{Evaluate} all points; discard those exceeding overhead budget $B$.
+      Select feasible point with highest score.
+    \item \textbf{Zoom:} contract bounds by $s = 0.45$ around best point.
+      Re-sample at same resolution $N=10$.
+    \item \textbf{Repeat} until min step $< 3$ gCO$_2$eq/kWh or $K=10$ iterations.
+  \end{enumerate}
+
+  \vspace{0.2cm}
+  Complexity: $O(K \times N^2 \times D)$ --- with our settings ($N=10$, $D=7$, $K=10$),
+  $\approx$ 3,500 simulations per optimization run ($\sim$550 for $D=1$).
+
+\end{frame}
+

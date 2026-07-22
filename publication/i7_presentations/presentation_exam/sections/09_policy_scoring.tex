@@ -1,0 +1,51 @@
+\subsection{Scoring of Policies}
+
+\begin{frame}[t]{Scoring of Policies}{Key performance indicators}
+
+  \begin{itemize}
+    \item \textbf{Primary KPIs:}
+      \begin{itemize}
+        \item CO$_2$ savings relative to a baseline:
+          \[
+            \text{CO2\_savings\_pct}
+            = \frac{CO2_{\text{baseline}} -
+            CO2_{\text{policy}}}{CO2_{\text{baseline}}} \times 100
+          \]
+        \item Time overhead relative to baseline:
+          \[
+            \text{time\_overhead\_pct}
+            = \frac{T_{\text{policy}} -
+            T_{\text{baseline}}}{T_{\text{baseline}}} \times 100
+          \]
+      \end{itemize}
+
+      \vspace{0.2cm}
+    \item \textbf{Composite score for ranking policies:}
+      \[
+        \text{score} = \frac{
+          \alpha \cdot \frac{\text{CO2\_savings\_pct}}{100}
+          + 1 - (1-\alpha) \cdot \frac{\text{time\_overhead\_pct}}{B}
+        }{2}
+      \]
+      where $B$ = overhead budget (200\%), $\alpha \in [0,1]$ controls
+      the trade-off.
+      \begin{itemize}
+        \item $\alpha = 1$ (used in all experiments): score simplifies to
+          $\frac{1}{2} + \frac{\text{CO2\_savings\_pct}}{200}$.
+          Savings maximization subject to overhead budget.
+        \item $\alpha = 0$: score penalizes overhead alone.
+      \end{itemize}
+
+      \vspace{0.2cm}
+    \item \textbf{Hard constraint:}
+      \[
+        \text{time\_overhead\_pct} \leq B
+      \]
+      \begin{itemize}
+        \item Only policies within the budget are considered.
+        \item Among budget-feasible policies, the one with the
+          highest score is selected.
+      \end{itemize}
+  \end{itemize}
+
+\end{frame}

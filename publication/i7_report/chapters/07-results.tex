@@ -126,6 +126,25 @@ lower grid carbon intensity during the heating season in many regions.
 The effect ranges from approximately 5 percentage points of savings (Sweden) to
 under 2 percentage points (China), confirming that hysteresis threshold choice
 dominates start-date scheduling in the savings-overhead trade-off.
+
+\section{Threshold Generalization Across Years}
+\label{sec:threshold-generalization}
+
+The best-scoring hysteresis threshold pairs for each model are not consistent across years.
+Figure~\ref{fig:pareto} shows that the best-scoring thresholds for each model vary from year
+to year, indicating that the optimal thresholds are sensitive to the specific carbon intensity
+patterns of each year.  This suggests that a static threshold policy may not be optimal across
+different years, and adaptive or year-specific threshold tuning could yield better performance
+in terms of emissions savings and overhead management.
+
+\begin{figure}
+  \centering
+  \includegraphics[width=1\textwidth]{figures/threshold_generalization}
+  \caption{Threshold Generalization:Best scoring hysteresis threshold pairs for each model across the years from 2022 to 2025.}
+  \label{fig:pareto}
+\end{figure}
+
+
 \section{Optimizer Convergence}
 \label{sec:convergence}
 

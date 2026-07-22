@@ -1505,7 +1505,33 @@ def plot_savings_vs_overhead_combined(df: pd.DataFrame, output_dir: Path):
     ax.set_xlabel("Time Overhead (%)")
     ax.set_ylabel("CO₂ Savings (%)")
     # ax.set_title("Pareto Frontiers: CO₂ Savings vs Overhead — All Regions & Models")
-    ax.legend(fontsize=15, loc="lower right", ncol=2)
+    # split the legend into 2 columns: first 4 entries, then remaining entries
+    handles, labels = ax.get_legend_handles_labels()
+    if len(handles) > 4:
+        left_handles, left_labels = handles[:4], labels[:4]
+        right_handles, right_labels = handles[4:], labels[4:]
+
+        legend1 = ax.legend(
+            left_handles,
+            left_labels,
+            fontsize=12,
+            loc="lower left",
+            bbox_to_anchor=(0.50, 0.02),
+            frameon=False,
+            borderaxespad=0.0,
+        )
+        ax.add_artist(legend1)
+        ax.legend(
+            right_handles,
+            right_labels,
+            fontsize=12,
+            loc="lower left",
+            bbox_to_anchor=(0.76, 0.02),
+            frameon=False,
+            borderaxespad=0.0,
+        )
+    else:
+        ax.legend(fontsize=12, loc="lower right")
     ax.grid(True, alpha=0.3)
 
     filename = "savings_vs_overhead_all.svg"
@@ -2302,7 +2328,7 @@ def plot_score_example_comparison(output_dir: Path):
     print(f"  ✓ {filename}")
 
 
-OPT_JSON_DIR = Path("output/results")
+OPT_JSON_DIR = Path("publication/output/results")
 
 
 def _load_opt_json_results():
@@ -2466,17 +2492,17 @@ def plot_threshold_generalization(output_dir: Path):
 
         ax.set_xlabel("Year")
         ax.set_ylabel("Threshold [gCO₂eq/kWh]")
-        ax.set_title(region, fontsize=14, fontweight="bold")
-        ax.legend(fontsize=7, loc="best")
+        # ax.set_title(region, fontsize=14, fontweight="bold")
+        ax.legend(fontsize=14, loc="best")
         ax.grid(True, alpha=0.3)
         ax.set_xticks(sorted(df["year"].unique()))
 
-    fig.suptitle(
-        "Threshold Generalization Across Years",
-        fontsize=16, fontweight="bold", y=1.02,
-    )
+    # fig.suptitle(
+    #     "Threshold Generalization Across Years",
+    #     fontsize=16, fontweight="bold", y=1.02,
+    # )
     fig.tight_layout()
-    filename = "threshold_generalization.png"
+    filename = "threshold_generalization.svg"
     fig.savefig(output_dir / filename)
     plt.close(fig)
     print(f"  ✓ {filename}")

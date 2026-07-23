@@ -33,15 +33,15 @@
     \begin{column}{0.48\textwidth}
       \textbf{Regions}
       \vspace{0.1cm}
-      \begin{tabular}{l|c|c}
+      \begin{tabular}{l|c|c|c}
         \toprule
-        Region & Mean (g/kWh) & Variance \\
+        Region & Mean (g/kWh) & Std.dev. & CV \\
         \midrule
-        SE (Sweden) & $\sim$30 & Low \\
-        DE (Germany) & $\sim$350 & High \\
-        IT (Italy) & $\sim$300 & High \\
-        US (United States) & $\sim$400 & Moderate \\
-        CN (China) & $\sim$600 & Low \\
+        DE (Germany) & 380 & 141.98 & 0.37 \\
+        SE (Sweden)  &  23 &   8.19 & 0.35 \\
+        IT (Italy)   & 309 &  87.02 & 0.28 \\
+        US (United States) & 412 & 44.68 & 0.11 \\
+        CN (China)   & 519 &  55.68 & 0.11 \\
         \bottomrule
       \end{tabular}
 
@@ -51,8 +51,8 @@
         \item $\theta_p^{\max}$: 100 (SE), 800 (others)
         \item Budget $B$: 200\%, $\alpha = 1.0$
         \item Resolution $N$: 10, Iterations $K$: 10
-        \item Years: 2022--2025 (4 years)
-        \item Start dates: Jan 1, Jul 1 (+ full sweep)
+        \item Year: 2025 (5-minute resolution)
+        \item Start dates: 7 uniform samples per year
       \end{itemize}
     \end{column}
   \end{columns}

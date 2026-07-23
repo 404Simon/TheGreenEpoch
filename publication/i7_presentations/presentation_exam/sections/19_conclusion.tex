@@ -5,7 +5,7 @@
       \item \textbf{Simulation framework} for carbon-aware LLM training with
         hysteresis-based pausing, validated against ground-truth energy models.
       \item \textbf{Adaptive grid-search optimizer} that efficiently explores
-        $(\theta_p, \theta_r, t_s)$ space, converging in $\leq$10 iterations.
+        $(\theta_p, \theta_r, t_s)$ space, converging in 5--6 iterations.
       \item \textbf{Empirical study} across 2 models $\times$ 5 regions
         --- first systematic Pareto frontiers for this problem.
     \end{itemize}
@@ -23,7 +23,7 @@
   \begin{block}{Recommendations}
     \begin{itemize}
       \item \textbf{Variable grids} (DE, IT): expect 30--43\% savings at $\sim$175--195\% overhead.
-      \item \textbf{Clean grids} (SE): 12--23\% savings at lower overhead ($\sim$35--106\%).
+      \item \textbf{Clean grids} (SE): 12--23\% savings at lower overhead ($\sim$106--115\%).
       \item \textbf{Low-variance grids} (CN, US): $<$10\% savings --- consider geo-relocation instead.
     \end{itemize}
   \end{block}

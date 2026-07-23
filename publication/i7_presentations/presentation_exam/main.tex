@@ -295,29 +295,19 @@ via\\Hysteresis Policy Optimization}
 
 \end{frame}
 
-\subsection{Multi-Year Stability}
+\subsection{Threshold Generalization}
 
-\begin{frame}[t]{Results}{Multi-year averaging attenuates peak savings}
+\begin{frame}[t]{Results}{Best thresholds vary across years}
 
   \centering
-  \includegraphics[width=0.75\textwidth,height=0.55\textheight,keepaspectratio]{assets/multiyear_avg_score.png}
+  \includegraphics[width=0.82\textwidth,height=0.62\textheight,keepaspectratio]{assets/threshold_generalization.png}
 
   \vspace{0.1cm}
-  \begin{columns}[T]
-    \begin{column}{0.48\textwidth}
-      \textbf{DE:} 43.4\% $\to$ 19.7\% \\
-      \textbf{IT:} 32.7\% $\to$ 18.7\%
-    \end{column}
-    \begin{column}{0.48\textwidth}
-      \textbf{SE:} 23.2\% $\to$ 22.3\% \\
-      \textbf{CN:} 6.2\% $\to$ 2.6\%
-    \end{column}
-  \end{columns}
-
-  \vspace{0.1cm}
-  \begin{block}{Practical implication}
-    Multi-year optima may underestimate savings by up to $54\%$ due to smoothing.
-  \end{block}
+  \begin{itemize}
+    \item Optimal $\theta_p, \theta_r$ pairs are \textbf{not consistent} across years 2022--2025.
+    \item Static threshold policies may underperform adaptive year-specific tuning.
+    \item Suggests annual recalibration for maximum savings in deployment.
+  \end{itemize}
 
 \end{frame}
 

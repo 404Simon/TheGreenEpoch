@@ -95,13 +95,13 @@ while enforcing a hard overhead budget $B$:
 \[
 \text{score} = \frac{
   \alpha \cdot \frac{\text{S}}{100}
-  + (1-\alpha) \cdot \left(1 - \frac{\text{O}}{B}\right)
+  + 1 - (1-\alpha) \cdot \frac{\text{O}}{B}
 }{2}
 \]
 with feasibility constraint $O \le B$.  The
 parameter $\alpha \in [0,1]$ controls the trade-off between savings
 maximization and overhead minimization.  In all experiments reported here, we
-use $\alpha = 1$, which simplifies the score to $\frac{S}{200}$---pure savings maximization subject to
+use $\alpha = 1$, which simplifies the score to $\frac{S}{200} + 0.5$---pure savings maximization subject to
 the overhead budget.
 
 \section{Adaptive Grid-Search Optimization}

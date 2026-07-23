@@ -38,28 +38,28 @@ sub-linear: DeepSeek~V3's up to 8$\times$ GPU advantage yields only 1.5 to
 2.0$\times$ the relative savings, because checkpoint overhead also scales with
 GPU count.
 
-\begin{table}
+    \begin{table}
     \centering
     \caption{Best policy configurations per (model, region) with optimized
     start dates.  The hysteresis margin $\Delta_\theta = \theta_p - \theta_r$
     is at most 16~gCO$_2$eq/kWh across all combinations.}
     \label{tab:best}
     \small
-    \begin{tabular}{llrrrr}
+    \begin{tabular}{llrrrrr}
       \toprule
-      Model & Region & $\theta_p$ & $\theta_r$ & Savings & Score \\
+      Model & Region & $\theta_p$ & $\theta_r$ & Savings & Overhead & Score \\
       \midrule
-      DeepSeek~V3 & DE & 272 & 268 & 43.4\% & 0.717 \\
-      DeepSeek~V3 & IT & 246 & 231 & 32.7\% & 0.663 \\
-      DeepSeek~V3 & SE &  19 &  18 & 23.2\% & 0.616 \\
-      DeepSeek~V3 & US & 396 & 386 &  9.5\% & 0.547 \\
-      DeepSeek~V3 & CN & 528 & 512 &  6.2\% & 0.531 \\
+      DeepSeek~V3 & DE & 272 & 268 & 43.4\% & 174.3\% & 0.717 \\
+      DeepSeek~V3 & IT & 246 & 231 & 32.7\% & 194.7\% & 0.663 \\
+      DeepSeek~V3 & SE &  19 &  18 & 23.2\% & 106.3\% & 0.616 \\
+      DeepSeek~V3 & US & 396 & 386 &  9.5\% & 115.7\% & 0.547 \\
+      DeepSeek~V3 & CN & 528 & 512 &  6.2\% &  72.5\% & 0.531 \\
       \midrule
-      Kimi~K2 & DE & 267 & 262 & 27.5\% & 0.637 \\
-      Kimi~K2 & IT & 283 & 271 & 16.6\% & 0.583 \\
-      Kimi~K2 & SE &  22 &  21 & 12.8\% & 0.564 \\
-      Kimi~K2 & US & 453 & 447 &  3.1\% & 0.516 \\
-      Kimi~K2 & CN & 537 & 522 &  2.4\% & 0.512 \\
+      Kimi~K2 & DE & 267 & 262 & 27.5\% & 199.4\% & 0.637 \\
+      Kimi~K2 & IT & 283 & 271 & 16.6\% & 129.1\% & 0.583 \\
+      Kimi~K2 & SE &  22 &  21 & 12.8\% & 115.4\% & 0.564 \\
+      Kimi~K2 & US & 453 & 447 &  3.1\% &  22.2\% & 0.516 \\
+      Kimi~K2 & CN & 537 & 522 &  2.4\% &  40.1\% & 0.512 \\
       \bottomrule
     \end{tabular}
 \end{table}
@@ -123,15 +123,15 @@ Across all (model, region) combinations, winter months (November to February)
 are disproportionately represented among optimal start dates.  This reflects
 lower grid carbon intensity during the heating season in many regions.
 
-The effect ranges from approximately 5 percentage points of savings (Sweden) to
-under 2 percentage points (China), confirming that hysteresis threshold choice
-dominates start-date scheduling in the savings-overhead trade-off.
+The effect ranges from approximately 20 percentage points of savings (Italy) to
+under 2 percentage points (China), confirming that the hysteresis threshold
+choice mostly, but not always, dominates start-date scheduling.
 
 \section{Threshold Generalization Across Years}
 \label{sec:threshold-generalization}
 
 The best-scoring hysteresis threshold pairs for each model are not consistent across years.
-Figure~\ref{fig:pareto} shows that the best-scoring thresholds for each model vary from year
+Figure~\ref{fig:threshold-generalization} shows that the best-scoring thresholds for each model vary from year
 to year, indicating that the optimal thresholds are sensitive to the specific carbon intensity
 patterns of each year.  This suggests that a static threshold policy may not be optimal across
 different years, and adaptive or year-specific threshold tuning could yield better performance
@@ -140,8 +140,8 @@ in terms of emissions savings and overhead management.
 \begin{figure}
   \centering
   \includegraphics[width=1\textwidth]{figures/threshold_generalization}
-  \caption{Threshold Generalization:Best scoring hysteresis threshold pairs for each model across the years from 2022 to 2025.}
-  \label{fig:pareto}
+  \caption{Threshold Generalization: Best scoring hysteresis threshold pairs for each model across the years from 2022 to 2025.}
+  \label{fig:threshold-generalization}
 \end{figure}
 
 

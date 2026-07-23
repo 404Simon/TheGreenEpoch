@@ -10,7 +10,7 @@ We model a single training job defined by: model parameter count $N$, dataset
 token count $T$, GPU count $G$, per-GPU training power $P_t$, per-GPU idle
 power $P_i$, facility power usage effectiveness $\eta$, checkpoint save duration $\tau_c$, and
 checkpoint resume duration $\tau_r$.  The job runs on a cluster in a single
-region whose grid carbon intensity $c(t)$ is given as a time series at
+region whose grid carbon intensity $carbon(t)$ is given as a time series at
 5-minute resolution.
 
 The baseline (never-pause) scenario runs the job uninterrupted.  Total
@@ -48,7 +48,7 @@ Energy per timestep is
 E(t) = G \cdot P \cdot \eta \cdot \Delta t
 \]
 where $P = P_t$ when training and $P = P_i$ when paused.  Emissions are
-$E(t) \cdot c(t)$.  Total wall-clock time includes both active training time
+$E(t) \cdot carbon(t)$.  Total wall-clock time includes both active training time
 and paused intervals including checkpoint overhead.
 
 Figure~\ref{fig:grid-replay} visualizes this core grid-replay loop as an activity diagram.
@@ -69,9 +69,9 @@ Figure~\ref{fig:grid-replay} visualizes this core grid-replay loop as an activit
 A policy $\pi$ is defined by the triple $(\theta_p, \theta_r, t_s)$:
 \begin{itemize}
   \item $\theta_p$ (gCO$_2$eq/kWh): pause threshold.  When training and
-    $c(t) > \theta_p$, training pauses.
+    $carbon(t) > \theta_p$, training pauses.
   \item $\theta_r$ (gCO$_2$eq/kWh): resume threshold.  When paused and
-    $c(t) \le \theta_r$, training resumes.
+    $carbon(t) \le \theta_r$, training resumes.
   \item $t_s$ (datetime): start date and time of the training run.
 \end{itemize}
 
@@ -84,26 +84,25 @@ $\Delta_\theta = \theta_p - \theta_r$ controls the width of the dead zone.
 Policies are evaluated against the never-pause baseline using two primary
 key performance indicators:
 \begin{align*}
-  \text{CO2\_savings\_pct} &= \frac{E_b - E_p}{E_b} \times 100, \\
-  \text{time\_overhead\_pct} &= \frac{T_p - T_b}{T_b} \times 100,
+  S = \frac{GHG_{b} - GHG_{p}}{GHG_{b}} \times 100 \qquad
+  O = \frac{T_p - T_b}{T_b} \times 100
 \end{align*}
-where $E_b, T_b$ are baseline emissions and time, and $E_p, T_p$ are policy
+where $GHG_{b}, T_b$ are baseline (greenhouse gas) emissions and time, and $GHG_{p}, T_p$ are policy
 emissions and time.
 
 For ranking policies, we use a composite score that rewards carbon savings
 while enforcing a hard overhead budget $B$:
 \[
 \text{score} = \frac{
-  \alpha \cdot \frac{\text{CO2\_savings\_pct}}{100}
-  + (1-\alpha) \cdot \left(1 - \frac{\text{time\_overhead\_pct}}{B}\right)
+  \alpha \cdot \frac{\text{S}}{100}
+  + (1-\alpha) \cdot \left(1 - \frac{\text{O}}{B}\right)
 }{2}
 \]
-with feasibility constraint $\text{time\_overhead\_pct} \le B$.  The
+with feasibility constraint $O \le B$.  The
 parameter $\alpha \in [0,1]$ controls the trade-off between savings
 maximization and overhead minimization.  In all experiments reported here, we
-use $\alpha = 1$, which simplifies the score to $\frac{1}{2} +
-\frac{\text{CO2\_savings\_pct}}{200}$---pure savings maximization subject to
-the overhead budget.  The never-pause baseline has score 0.5.
+use $\alpha = 1$, which simplifies the score to $\frac{S}{200}$---pure savings maximization subject to
+the overhead budget.
 
 \section{Adaptive Grid-Search Optimization}
 \label{sec:optimization}

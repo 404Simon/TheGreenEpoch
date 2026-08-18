@@ -1,0 +1,146 @@
+[
+  {
+    "region": "DE",
+    "sigmaStar": 3.6584495444435383,
+    "sigmaRel": 0.009187290328123555,
+    "s0": 43.35101808672119,
+    "graceLevels": {
+      "additive": {
+        "level": 4,
+        "atMax": true
+      },
+      "multiplicative": {
+        "level": 4,
+        "atMax": true
+      },
+      "delay": {
+        "steps": 24,
+        "atMax": false
+      },
+      "persistence": {
+        "horizon": 24,
+        "atMax": false
+      },
+      "arma": {
+        "horizon": 24,
+        "atMax": false
+      }
+    },
+    "degradationAtSigmaStar": {
+      "additive": {
+        "delta_s_frac": 0.0031241365113258974,
+        "delta_s_pp": 0.13543449840787503
+      },
+      "multiplicative": {
+        "delta_s_frac": 0.0015587128080947461,
+        "delta_s_pp": 0.06757178713571932
+      }
+    },
+    "degradationAtH72": {
+      "persistence": {
+        "delta_s_frac": 0.3582705625481429,
+        "delta_s_pp": 15.531393636964317
+      },
+      "arma": {
+        "delta_s_frac": 0.3602341406555194,
+        "delta_s_pp": 15.616516747011886
+      }
+    }
+  },
+  {
+    "region": "IT",
+    "sigmaStar": 4.420603976606696,
+    "sigmaRel": 0.013575500092839138,
+    "s0": 32.665522834629066,
+    "graceLevels": {
+      "additive": {
+        "level": 4,
+        "atMax": true
+      },
+      "multiplicative": {
+        "level": 4,
+        "atMax": true
+      },
+      "delay": {
+        "steps": 12,
+        "atMax": false
+      },
+      "persistence": {
+        "horizon": 12,
+        "atMax": false
+      },
+      "arma": {
+        "horizon": 12,
+        "atMax": false
+      }
+    },
+    "degradationAtSigmaStar": {
+      "additive": {
+        "delta_s_frac": 0.003684715169477168,
+        "delta_s_pp": 0.12036314750766053
+      },
+      "multiplicative": {
+        "delta_s_frac": 0.002112718010792406,
+        "delta_s_pp": 0.06901303842467144
+      }
+    },
+    "degradationAtH72": {
+      "persistence": {
+        "delta_s_frac": 0.4219496048185344,
+        "delta_s_pp": 13.783204451262545
+      },
+      "arma": {
+        "delta_s_frac": 0.4251220610042242,
+        "delta_s_pp": 13.886834391238057
+      }
+    }
+  },
+  {
+    "region": "SE",
+    "sigmaStar": 0.7736418960809753,
+    "sigmaRel": 0.03300028124926251,
+    "s0": 22.868494380975463,
+    "graceLevels": {
+      "additive": {
+        "level": 1,
+        "atMax": false
+      },
+      "multiplicative": {
+        "level": 1,
+        "atMax": false
+      },
+      "delay": {
+        "steps": 12,
+        "atMax": false
+      },
+      "persistence": {
+        "horizon": 12,
+        "atMax": false
+      },
+      "arma": {
+        "horizon": 12,
+        "atMax": false
+      }
+    },
+    "degradationAtSigmaStar": {
+      "additive": {
+        "delta_s_frac": 0.04832362357916946,
+        "delta_s_pp": 1.1050885142886102
+      },
+      "multiplicative": {
+        "delta_s_frac": 0.029829406116943263,
+        "delta_s_pp": 0.6821536061731521
+      }
+    },
+    "degradationAtH72": {
+      "persistence": {
+        "delta_s_frac": 0.6049044059503382,
+        "delta_s_pp": 13.833253008502611
+      },
+      "arma": {
+        "delta_s_frac": 0.6223140285384869,
+        "delta_s_pp": 14.231384864834592
+      }
+    }
+  }
+]

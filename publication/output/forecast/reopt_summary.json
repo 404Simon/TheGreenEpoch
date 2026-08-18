@@ -1,0 +1,377 @@
+[
+  {
+    "region": "DE",
+    "baseline": {
+      "thetaP": 272.37,
+      "thetaR": 267.73,
+      "margin": 4.639999999999986,
+      "savings": 43.35101808672119,
+      "overhead": 174.30950950950947,
+      "score": 0.716755090433606
+    },
+    "drift": [
+      {
+        "family": "additive",
+        "param_value": 0,
+        "thetaP_drift": 0,
+        "thetaR_drift": 0,
+        "margin_drift": 0
+      },
+      {
+        "family": "additive",
+        "param_value": 0.5,
+        "thetaP_drift": 0.6733333333333462,
+        "thetaR_drift": -1.5933333333333053,
+        "margin_drift": 2.26666666666667
+      },
+      {
+        "family": "additive",
+        "param_value": 1,
+        "thetaP_drift": 6.096666666666636,
+        "thetaR_drift": -5.943333333333328,
+        "margin_drift": 12.04000000000002
+      },
+      {
+        "family": "additive",
+        "param_value": 2,
+        "thetaP_drift": 11.916666666666629,
+        "thetaR_drift": -11.8066666666667,
+        "margin_drift": 23.72333333333333
+      },
+      {
+        "family": "delay",
+        "param_value": 1,
+        "thetaP_drift": 0.10000000000002274,
+        "thetaR_drift": -0.12000000000000455,
+        "margin_drift": 0.22000000000002728
+      },
+      {
+        "family": "delay",
+        "param_value": 6,
+        "thetaP_drift": -0.06999999999999318,
+        "thetaR_drift": -0.12999999999999545,
+        "margin_drift": 0.060000000000002274
+      }
+    ],
+    "marginRuleSurvives": [
+      {
+        "family": "additive",
+        "param_value": 0,
+        "survives": true,
+        "seedFraction": 1
+      },
+      {
+        "family": "additive",
+        "param_value": 0.5,
+        "survives": true,
+        "seedFraction": 1
+      },
+      {
+        "family": "additive",
+        "param_value": 1,
+        "survives": false,
+        "seedFraction": 0.6666666666666666
+      },
+      {
+        "family": "additive",
+        "param_value": 2,
+        "survives": false,
+        "seedFraction": 0
+      },
+      {
+        "family": "delay",
+        "param_value": 1,
+        "survives": true,
+        "seedFraction": 1
+      },
+      {
+        "family": "delay",
+        "param_value": 6,
+        "survives": true,
+        "seedFraction": 1
+      }
+    ],
+    "regionalRule": [
+      {
+        "family": "additive",
+        "param_value": 0,
+        "survives": true
+      },
+      {
+        "family": "additive",
+        "param_value": 0.5,
+        "survives": true
+      },
+      {
+        "family": "additive",
+        "param_value": 1,
+        "survives": true
+      },
+      {
+        "family": "additive",
+        "param_value": 2,
+        "survives": true
+      },
+      {
+        "family": "delay",
+        "param_value": 1,
+        "survives": true
+      },
+      {
+        "family": "delay",
+        "param_value": 6,
+        "survives": true
+      }
+    ]
+  },
+  {
+    "region": "IT",
+    "baseline": {
+      "thetaP": 246.69999999999996,
+      "thetaR": 230.44999999999996,
+      "margin": 16.25,
+      "savings": 32.665522834629066,
+      "overhead": 194.6754754754755,
+      "score": 0.6633276141731453
+    },
+    "drift": [
+      {
+        "family": "additive",
+        "param_value": 0,
+        "thetaP_drift": 0,
+        "thetaR_drift": 0,
+        "margin_drift": 0
+      },
+      {
+        "family": "additive",
+        "param_value": 0.5,
+        "thetaP_drift": -0.5666666666666345,
+        "thetaR_drift": 0.21333333333336668,
+        "margin_drift": -0.7799999999999923
+      },
+      {
+        "family": "additive",
+        "param_value": 1,
+        "thetaP_drift": 3.4500000000000455,
+        "thetaR_drift": -3.486666666666622,
+        "margin_drift": 6.936666666666667
+      },
+      {
+        "family": "additive",
+        "param_value": 2,
+        "thetaP_drift": 6.9500000000000455,
+        "thetaR_drift": -6.9533333333332905,
+        "margin_drift": 13.903333333333336
+      },
+      {
+        "family": "delay",
+        "param_value": 1,
+        "thetaP_drift": 0,
+        "thetaR_drift": 0,
+        "margin_drift": 0
+      },
+      {
+        "family": "delay",
+        "param_value": 6,
+        "thetaP_drift": -6.029999999999973,
+        "thetaR_drift": 6.390000000000043,
+        "margin_drift": -12.420000000000016
+      }
+    ],
+    "marginRuleSurvives": [
+      {
+        "family": "additive",
+        "param_value": 0,
+        "survives": false,
+        "seedFraction": 0
+      },
+      {
+        "family": "additive",
+        "param_value": 0.5,
+        "survives": true,
+        "seedFraction": 0.3333333333333333
+      },
+      {
+        "family": "additive",
+        "param_value": 1,
+        "survives": false,
+        "seedFraction": 0
+      },
+      {
+        "family": "additive",
+        "param_value": 2,
+        "survives": false,
+        "seedFraction": 0
+      },
+      {
+        "family": "delay",
+        "param_value": 1,
+        "survives": false,
+        "seedFraction": 0
+      },
+      {
+        "family": "delay",
+        "param_value": 6,
+        "survives": true,
+        "seedFraction": 1
+      }
+    ],
+    "regionalRule": [
+      {
+        "family": "additive",
+        "param_value": 0,
+        "survives": true
+      },
+      {
+        "family": "additive",
+        "param_value": 0.5,
+        "survives": true
+      },
+      {
+        "family": "additive",
+        "param_value": 1,
+        "survives": true
+      },
+      {
+        "family": "additive",
+        "param_value": 2,
+        "survives": true
+      },
+      {
+        "family": "delay",
+        "param_value": 1,
+        "survives": true
+      },
+      {
+        "family": "delay",
+        "param_value": 6,
+        "survives": true
+      }
+    ]
+  },
+  {
+    "region": "SE",
+    "baseline": {
+      "thetaP": 18.18,
+      "thetaR": 17.51,
+      "margin": 0.6699999999999982,
+      "savings": 23.168974941556538,
+      "overhead": 106.34394394394394,
+      "score": 0.6158448747077827
+    },
+    "drift": [
+      {
+        "family": "additive",
+        "param_value": 0,
+        "thetaP_drift": 0,
+        "thetaR_drift": 0,
+        "margin_drift": 0
+      },
+      {
+        "family": "additive",
+        "param_value": 0.5,
+        "thetaP_drift": 1.0299999999999976,
+        "thetaR_drift": -0.5966666666666711,
+        "margin_drift": 1.6266666666666687
+      },
+      {
+        "family": "additive",
+        "param_value": 1,
+        "thetaP_drift": 1.4000000000000021,
+        "thetaR_drift": -1.1366666666666667,
+        "margin_drift": 2.536666666666669
+      },
+      {
+        "family": "additive",
+        "param_value": 2,
+        "thetaP_drift": 2.5899999999999963,
+        "thetaR_drift": -2.233333333333336,
+        "margin_drift": 4.823333333333334
+      },
+      {
+        "family": "delay",
+        "param_value": 1,
+        "thetaP_drift": 0,
+        "thetaR_drift": 0,
+        "margin_drift": 0
+      },
+      {
+        "family": "delay",
+        "param_value": 6,
+        "thetaP_drift": 0,
+        "thetaR_drift": 0,
+        "margin_drift": 0
+      }
+    ],
+    "marginRuleSurvives": [
+      {
+        "family": "additive",
+        "param_value": 0,
+        "survives": true,
+        "seedFraction": 1
+      },
+      {
+        "family": "additive",
+        "param_value": 0.5,
+        "survives": true,
+        "seedFraction": 1
+      },
+      {
+        "family": "additive",
+        "param_value": 1,
+        "survives": true,
+        "seedFraction": 1
+      },
+      {
+        "family": "additive",
+        "param_value": 2,
+        "survives": true,
+        "seedFraction": 1
+      },
+      {
+        "family": "delay",
+        "param_value": 1,
+        "survives": true,
+        "seedFraction": 1
+      },
+      {
+        "family": "delay",
+        "param_value": 6,
+        "survives": true,
+        "seedFraction": 1
+      }
+    ],
+    "regionalRule": [
+      {
+        "family": "additive",
+        "param_value": 0,
+        "survives": true
+      },
+      {
+        "family": "additive",
+        "param_value": 0.5,
+        "survives": true
+      },
+      {
+        "family": "additive",
+        "param_value": 1,
+        "survives": true
+      },
+      {
+        "family": "additive",
+        "param_value": 2,
+        "survives": true
+      },
+      {
+        "family": "delay",
+        "param_value": 1,
+        "survives": true
+      },
+      {
+        "family": "delay",
+        "param_value": 6,
+        "survives": true
+      }
+    ]
+  }
+]

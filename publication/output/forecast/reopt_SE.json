@@ -1,0 +1,309 @@
+{
+  "region": "SE",
+  "model": "Deepseek",
+  "year": 2025,
+  "budget": 200,
+  "start": "04-22",
+  "seeds": [
+    1,
+    2,
+    3
+  ],
+  "optimizer": {
+    "resolution": 10,
+    "iterations": 6,
+    "tpMax": 100
+  },
+  "configs": [
+    {
+      "family": "additive",
+      "param": "level",
+      "param_value": 0,
+      "sigma": 0,
+      "perSeed": [
+        {
+          "seed": 1,
+          "thetaP": 18.18,
+          "thetaR": 17.51,
+          "margin": 0.6699999999999982,
+          "savings": 23.168974941556538,
+          "overhead": 106.34394394394394,
+          "score": 0.6158448747077827,
+          "found": true
+        },
+        {
+          "seed": 2,
+          "thetaP": 18.18,
+          "thetaR": 17.51,
+          "margin": 0.6699999999999982,
+          "savings": 23.168974941556538,
+          "overhead": 106.34394394394394,
+          "score": 0.6158448747077827,
+          "found": true
+        },
+        {
+          "seed": 3,
+          "thetaP": 18.18,
+          "thetaR": 17.51,
+          "margin": 0.6699999999999982,
+          "savings": 23.168974941556538,
+          "overhead": 106.34394394394394,
+          "score": 0.6158448747077827,
+          "found": true
+        }
+      ],
+      "best": {
+        "thetaP": 18.18,
+        "thetaR": 17.51,
+        "margin": 0.6699999999999982,
+        "savings": 23.168974941556538,
+        "overhead": 106.34394394394394,
+        "score": 0.6158448747077827
+      },
+      "foundRate": 1
+    },
+    {
+      "family": "additive",
+      "param": "level",
+      "param_value": 0.5,
+      "sigma": 0.38682094804048767,
+      "perSeed": [
+        {
+          "seed": 1,
+          "thetaP": 19.26,
+          "thetaR": 16.97,
+          "margin": 2.2900000000000027,
+          "savings": 23.14393568042263,
+          "overhead": 103.31371371371371,
+          "score": 0.6157196784021132,
+          "found": true
+        },
+        {
+          "seed": 2,
+          "thetaP": 19.49,
+          "thetaR": 16.86,
+          "margin": 2.629999999999999,
+          "savings": 23.07804642514362,
+          "overhead": 103.32012012012012,
+          "score": 0.6153902321257181,
+          "found": true
+        },
+        {
+          "seed": 3,
+          "thetaP": 18.88,
+          "thetaR": 16.91,
+          "margin": 1.9699999999999989,
+          "savings": 23.151948866793028,
+          "overhead": 106.56816816816817,
+          "score": 0.6157597443339651,
+          "found": true
+        }
+      ],
+      "best": {
+        "thetaP": 19.209999999999997,
+        "thetaR": 16.91333333333333,
+        "margin": 2.296666666666667,
+        "savings": 23.124643657453092,
+        "overhead": 104.40066733400067,
+        "score": 0.6156232182872655
+      },
+      "foundRate": 1
+    },
+    {
+      "family": "additive",
+      "param": "level",
+      "param_value": 1,
+      "sigma": 0.7736418960809753,
+      "perSeed": [
+        {
+          "seed": 1,
+          "thetaP": 19.48,
+          "thetaR": 16.41,
+          "margin": 3.0700000000000003,
+          "savings": 23.076735393146027,
+          "overhead": 105.18438438438439,
+          "score": 0.6153836769657302,
+          "found": true
+        },
+        {
+          "seed": 2,
+          "thetaP": 19.48,
+          "thetaR": 16.41,
+          "margin": 3.0700000000000003,
+          "savings": 23.04982577235947,
+          "overhead": 106.62582582582583,
+          "score": 0.6152491288617974,
+          "found": true
+        },
+        {
+          "seed": 3,
+          "thetaP": 19.78,
+          "thetaR": 16.3,
+          "margin": 3.4800000000000004,
+          "savings": 23.069233329570302,
+          "overhead": 103.44824824824825,
+          "score": 0.6153461666478515,
+          "found": true
+        }
+      ],
+      "best": {
+        "thetaP": 19.580000000000002,
+        "thetaR": 16.373333333333335,
+        "margin": 3.206666666666667,
+        "savings": 23.065264831691934,
+        "overhead": 105.08615281948614,
+        "score": 0.6153263241584597
+      },
+      "foundRate": 1
+    },
+    {
+      "family": "additive",
+      "param": "level",
+      "param_value": 2,
+      "sigma": 1.5472837921619507,
+      "perSeed": [
+        {
+          "seed": 1,
+          "thetaP": 21.33,
+          "thetaR": 14.95,
+          "margin": 6.379999999999999,
+          "savings": 22.734910983037825,
+          "overhead": 103.34574574574575,
+          "score": 0.6136745549151892,
+          "found": true
+        },
+        {
+          "seed": 2,
+          "thetaP": 20.49,
+          "thetaR": 15.44,
+          "margin": 5.049999999999999,
+          "savings": 22.768714839715205,
+          "overhead": 106.87567567567568,
+          "score": 0.613843574198576,
+          "found": true
+        },
+        {
+          "seed": 3,
+          "thetaP": 20.49,
+          "thetaR": 15.44,
+          "margin": 5.049999999999999,
+          "savings": 22.852470443382632,
+          "overhead": 105.23563563563563,
+          "score": 0.6142623522169132,
+          "found": true
+        }
+      ],
+      "best": {
+        "thetaP": 20.769999999999996,
+        "thetaR": 15.276666666666666,
+        "margin": 5.493333333333332,
+        "savings": 22.78536542204522,
+        "overhead": 105.15235235235235,
+        "score": 0.6139268271102262
+      },
+      "foundRate": 1
+    },
+    {
+      "family": "delay",
+      "param": "steps",
+      "param_value": 1,
+      "sigma": null,
+      "perSeed": [
+        {
+          "seed": 1,
+          "thetaP": 18.18,
+          "thetaR": 17.51,
+          "margin": 0.6699999999999982,
+          "savings": 23.085804843384555,
+          "overhead": 106.34394394394394,
+          "score": 0.6154290242169228,
+          "found": true
+        },
+        {
+          "seed": 2,
+          "thetaP": 18.18,
+          "thetaR": 17.51,
+          "margin": 0.6699999999999982,
+          "savings": 23.085804843384555,
+          "overhead": 106.34394394394394,
+          "score": 0.6154290242169228,
+          "found": true
+        },
+        {
+          "seed": 3,
+          "thetaP": 18.18,
+          "thetaR": 17.51,
+          "margin": 0.6699999999999982,
+          "savings": 23.085804843384555,
+          "overhead": 106.34394394394394,
+          "score": 0.6154290242169228,
+          "found": true
+        }
+      ],
+      "best": {
+        "thetaP": 18.18,
+        "thetaR": 17.51,
+        "margin": 0.6699999999999982,
+        "savings": 23.085804843384555,
+        "overhead": 106.34394394394394,
+        "score": 0.6154290242169228
+      },
+      "foundRate": 1
+    },
+    {
+      "family": "delay",
+      "param": "steps",
+      "param_value": 6,
+      "sigma": null,
+      "perSeed": [
+        {
+          "seed": 1,
+          "thetaP": 18.18,
+          "thetaR": 17.51,
+          "margin": 0.6699999999999982,
+          "savings": 22.679922501490527,
+          "overhead": 106.34394394394394,
+          "score": 0.6133996125074527,
+          "found": true
+        },
+        {
+          "seed": 2,
+          "thetaP": 18.18,
+          "thetaR": 17.51,
+          "margin": 0.6699999999999982,
+          "savings": 22.679922501490527,
+          "overhead": 106.34394394394394,
+          "score": 0.6133996125074527,
+          "found": true
+        },
+        {
+          "seed": 3,
+          "thetaP": 18.18,
+          "thetaR": 17.51,
+          "margin": 0.6699999999999982,
+          "savings": 22.679922501490527,
+          "overhead": 106.34394394394394,
+          "score": 0.6133996125074527,
+          "found": true
+        }
+      ],
+      "best": {
+        "thetaP": 18.18,
+        "thetaR": 17.51,
+        "margin": 0.6699999999999982,
+        "savings": 22.679922501490527,
+        "overhead": 106.34394394394394,
+        "score": 0.6133996125074527
+      },
+      "foundRate": 1
+    }
+  ],
+  "baseline": {
+    "thetaP": 18.18,
+    "thetaR": 17.51,
+    "margin": 0.6699999999999982,
+    "savings": 23.168974941556538,
+    "overhead": 106.34394394394394,
+    "score": 0.6158448747077827
+  }
+}

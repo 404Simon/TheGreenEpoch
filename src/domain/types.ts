@@ -41,6 +41,7 @@ export interface SimConfig {
   startTime: string;
   historicalYears: number[];
   overheadBudgetPct: number;
+  decisionTimeline?: CO2Timeline;
 }
 
 export interface YearCO2 {
@@ -154,4 +155,56 @@ export interface SweepPoint {
   stopReason: string;
   completed: boolean;
   iteration: number;
+}
+
+export type ForecastModel =
+  | { type: "identity" }
+  | { type: "additive"; sigma: number }
+  | { type: "multiplicative"; sigma: number }
+  | { type: "delay"; steps: number }
+  | { type: "arma"; order: number; horizon: number; coeffs?: ArCoeffs };
+
+export interface ArCoeffs {
+  intercept: number;
+  ar: number[];
+}
+
+export interface CalibrationResult {
+  region: string;
+  trainYears: number[];
+  testYear: number;
+  order: number;
+  coeffs: ArCoeffs;
+  innovationStd: number;
+  lag1AutoCorr: number;
+  lag2AutoCorr: number;
+  evaluation: { horizon: number; model: "persistence" | "ar"; rmse: number; mae: number; mape: number }[];
+}
+
+export interface CalibrationRow {
+  horizon: number;
+  order: number;
+  model: "ar" | "persistence";
+  rmse: number;
+  mae: number;
+  mape: number;
+}
+
+export interface CalibrationOrderInfo {
+  coeffs: ArCoeffs;
+  innovationStd: number;
+}
+
+export interface CalibrationBundle {
+  region: string;
+  trainYears: number[];
+  testYear: number;
+  trainMean: number;
+  trainStd: number;
+  trainCv: number;
+  lag1AutoCorr: number;
+  lag2AutoCorr: number;
+  sigmaStar: number;
+  orders: Record<string, CalibrationOrderInfo>;
+  evaluation: CalibrationRow[];
 }

@@ -12,12 +12,30 @@ export function* simulateStepwise(
   const { timestamps, carbonIntensity: carbon } = timeline;
   if (timestamps.length < 2) throw new Error("Insufficient grid data");
 
+  const decisionTimeline = simConfig.decisionTimeline;
+  if (decisionTimeline) {
+    if (decisionTimeline.timestamps.length !== timestamps.length) {
+      throw new Error(
+        `decisionTimeline timestamps length (${decisionTimeline.timestamps.length}) does not match realized timeline (${timestamps.length})`,
+      );
+    }
+    if (decisionTimeline.carbonIntensity.length !== carbon.length) {
+      throw new Error(
+        `decisionTimeline carbonIntensity length (${decisionTimeline.carbonIntensity.length}) does not match realized timeline (${carbon.length})`,
+      );
+    }
+  }
+
   const tps = tokensPerSecond(profile.gpuCount);
   const trainPowerW = profile.gpuCount * profile.gpuPowerTrain * profile.pue;
   const pausePowerW = profile.gpuCount * profile.gpuPowerPause * profile.pue;
   const ckptPowerW = trainPowerW;
 
   const meanCo2 = carbon.reduce((a, b) => a + b, 0) / carbon.length;
+
+  const decisionMean = decisionTimeline
+    ? decisionTimeline.carbonIntensity.reduce((a, b) => a + b, 0) / decisionTimeline.carbonIntensity.length
+    : meanCo2;
 
   const diffMs = new Date(timestamps[1]).getTime() - new Date(timestamps[0]).getTime();
   const stepS = diffMs / 1000;
@@ -64,7 +82,17 @@ export function* simulateStepwise(
     return v;
   }
 
-  if (policy.evaluate(getCo2(startIdx), false) === "pause") {
+  function getDecisionCo2(i: number): number {
+    const v = decisionTimeline ? decisionTimeline.carbonIntensity[i] : carbon[i];
+    if (!isFinite(v)) {
+      nanFallbacks++;
+      return decisionTimeline ? decisionMean : meanCo2;
+    }
+    return v;
+  }
+
+  const startDecisionCo2 = decisionTimeline ? getDecisionCo2(startIdx) : getCo2(startIdx);
+  if (policy.evaluate(startDecisionCo2, false) === "pause") {
     const ckptS = profile.checkpointPauseTime;
     if (ckptS > 0) {
       transitionTimerS = ckptS;
@@ -109,6 +137,7 @@ export function* simulateStepwise(
     }
 
     const co2 = getCo2(idx);
+    const decisionCo2 = decisionTimeline ? getDecisionCo2(idx) : co2;
     let dtS = stepS;
     const curTs = timestamps[idx];
 
@@ -134,7 +163,7 @@ export function* simulateStepwise(
       }
     }
 
-    const action = policy.evaluate(co2, state === SimState.PAUSED);
+    const action = policy.evaluate(decisionCo2, state === SimState.PAUSED);
 
     if (action === "pause" && state === SimState.RUNNING) {
       const ckptS = profile.checkpointPauseTime;

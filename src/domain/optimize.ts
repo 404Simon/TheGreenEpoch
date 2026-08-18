@@ -23,6 +23,7 @@ export function runOptimization(
   historicalYears: number[],
   options: AdaptiveOptions,
   onIteration?: (iteration: number, points: SweepPoint[], best: SweepPoint | null) => void,
+  decisionTimeline?: CO2Timeline,
 ): { points: SweepPoint[]; best: SweepPoint | null } {
   const baseSimConfig: SimConfig = {
     startTime: "01-01",
@@ -47,7 +48,11 @@ export function runOptimization(
 
     for (const day of dateSamples) {
       const startTime = dayToDate(day);
-      const dateSimConfig: SimConfig = { ...baseSimConfig, startTime };
+      const dateSimConfig: SimConfig = {
+        ...baseSimConfig,
+        startTime,
+        ...(decisionTimeline ? { decisionTimeline } : {}),
+      };
 
       let baselineEm: number;
       const cached = baselineCache.get(startTime);

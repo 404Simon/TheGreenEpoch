@@ -1,0 +1,113 @@
+{
+  "region": "SE",
+  "model": "Deepseek",
+  "year": 2025,
+  "start": "04-22",
+  "optimizer": {
+    "resolution": 10,
+    "iterations": 6,
+    "budget": 200,
+    "alpha": 1,
+    "tpMax": 100
+  },
+  "ckptValues": [
+    148.8,
+    150,
+    900,
+    2700
+  ],
+  "runs": [
+    {
+      "ckpt_pause": 148.8,
+      "ckpt_resume": 0,
+      "theta_p": 18.18,
+      "theta_r": 17.51,
+      "margin": 0.6699999999999982,
+      "savings": 23.168974941556538,
+      "overhead": 106.34394394394394,
+      "score": 0.6158448747077827,
+      "num_pauses": 85,
+      "completed": true,
+      "found": true,
+      "bestCompleted": {
+        "theta_p": 18.18,
+        "theta_r": 17.51,
+        "margin": 0.6699999999999982,
+        "savings": 23.168974941556538,
+        "overhead": 106.34394394394394,
+        "score": 0.6158448747077827,
+        "num_pauses": 85,
+        "completed": true
+      }
+    },
+    {
+      "ckpt_pause": 150,
+      "ckpt_resume": 0,
+      "theta_p": 18.18,
+      "theta_r": 17.51,
+      "margin": 0.6699999999999982,
+      "savings": 23.167205068652716,
+      "overhead": 106.34394394394394,
+      "score": 0.6158360253432635,
+      "num_pauses": 85,
+      "completed": true,
+      "found": true,
+      "bestCompleted": {
+        "theta_p": 18.18,
+        "theta_r": 17.51,
+        "margin": 0.6699999999999982,
+        "savings": 23.167205068652716,
+        "overhead": 106.34394394394394,
+        "score": 0.6158360253432635,
+        "num_pauses": 85,
+        "completed": true
+      }
+    },
+    {
+      "ckpt_pause": 900,
+      "ckpt_resume": 0,
+      "theta_p": 18.18,
+      "theta_r": 17.51,
+      "margin": 0.6699999999999982,
+      "savings": 22.06104286074009,
+      "overhead": 106.34394394394394,
+      "score": 0.6103052143037004,
+      "num_pauses": 85,
+      "completed": true,
+      "found": true,
+      "bestCompleted": {
+        "theta_p": 18.18,
+        "theta_r": 17.51,
+        "margin": 0.6699999999999982,
+        "savings": 22.06104286074009,
+        "overhead": 106.34394394394394,
+        "score": 0.6103052143037004,
+        "num_pauses": 85,
+        "completed": true
+      }
+    },
+    {
+      "ckpt_pause": 2700,
+      "ckpt_resume": 0,
+      "theta_p": 21.81,
+      "theta_r": 16.64,
+      "margin": 5.169999999999998,
+      "savings": 18.866231700541192,
+      "overhead": 105.11391391391392,
+      "score": 0.594331158502706,
+      "num_pauses": 61,
+      "completed": true,
+      "found": true,
+      "bestCompleted": {
+        "theta_p": 21.81,
+        "theta_r": 16.64,
+        "margin": 5.169999999999998,
+        "savings": 18.866231700541192,
+        "overhead": 105.11391391391392,
+        "score": 0.594331158502706,
+        "num_pauses": 61,
+        "completed": true
+      }
+    }
+  ]
+}

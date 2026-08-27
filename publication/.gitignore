@@ -309,3 +309,4 @@ thesis*.pdf
 .vscode
 __pycache__/
 src/config.json
+.venv/

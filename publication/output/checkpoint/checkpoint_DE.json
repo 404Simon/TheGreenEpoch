@@ -1,0 +1,113 @@
+{
+  "region": "DE",
+  "model": "Deepseek",
+  "year": 2025,
+  "start": "02-01",
+  "optimizer": {
+    "resolution": 10,
+    "iterations": 6,
+    "budget": 200,
+    "alpha": 1,
+    "tpMax": 800
+  },
+  "ckptValues": [
+    148.8,
+    150,
+    900,
+    2700
+  ],
+  "runs": [
+    {
+      "ckpt_pause": 148.8,
+      "ckpt_resume": 0,
+      "theta_p": 272.37,
+      "theta_r": 267.73,
+      "margin": 4.639999999999986,
+      "savings": 43.35101808672119,
+      "overhead": 174.3095095095095,
+      "score": 0.716755090433606,
+      "num_pauses": 102,
+      "completed": true,
+      "found": true,
+      "bestCompleted": {
+        "theta_p": 272.37,
+        "theta_r": 267.73,
+        "margin": 4.639999999999986,
+        "savings": 43.35101808672119,
+        "overhead": 174.3095095095095,
+        "score": 0.716755090433606,
+        "num_pauses": 102,
+        "completed": true
+      }
+    },
+    {
+      "ckpt_pause": 150,
+      "ckpt_resume": 0,
+      "theta_p": 272.37,
+      "theta_r": 267.73,
+      "margin": 4.639999999999986,
+      "savings": 43.349480744554405,
+      "overhead": 174.3095095095095,
+      "score": 0.716747403722772,
+      "num_pauses": 102,
+      "completed": true,
+      "found": true,
+      "bestCompleted": {
+        "theta_p": 272.37,
+        "theta_r": 267.73,
+        "margin": 4.639999999999986,
+        "savings": 43.349480744554405,
+        "overhead": 174.3095095095095,
+        "score": 0.716747403722772,
+        "num_pauses": 102,
+        "completed": true
+      }
+    },
+    {
+      "ckpt_pause": 900,
+      "ckpt_resume": 0,
+      "theta_p": 246.93,
+      "theta_r": 234.8,
+      "margin": 12.129999999999995,
+      "savings": 47.908500548495816,
+      "overhead": 199.98238238238238,
+      "score": 0.7395425027424791,
+      "num_pauses": 112,
+      "completed": false,
+      "found": true,
+      "bestCompleted": {
+        "theta_p": 278.22,
+        "theta_r": 261.63,
+        "margin": 16.590000000000032,
+        "savings": 42.32038690982522,
+        "overhead": 175.62922922922922,
+        "score": 0.7116019345491261,
+        "num_pauses": 98,
+        "completed": true
+      }
+    },
+    {
+      "ckpt_pause": 2700,
+      "ckpt_resume": 0,
+      "theta_p": 170.58,
+      "theta_r": 138.58,
+      "margin": 32,
+      "savings": 82.17803437566901,
+      "overhead": 199.97597597597598,
+      "score": 0.9108901718783451,
+      "num_pauses": 15,
+      "completed": false,
+      "found": true,
+      "bestCompleted": {
+        "theta_p": 293.08,
+        "theta_r": 253.58,
+        "margin": 39.49999999999997,
+        "savings": 39.6020681278911,
+        "overhead": 172.06726726726725,
+        "score": 0.6980103406394556,
+        "num_pauses": 90,
+        "completed": true
+      }
+    }
+  ]
+}

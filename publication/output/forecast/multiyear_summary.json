@@ -1,0 +1,497 @@
+[
+  {
+    "region": "DE",
+    "baseline": {
+      "theta_p": 272.37,
+      "theta_r": 267.73,
+      "margin": 4.639999999999986,
+      "savings": 43.35101808672119,
+      "overhead": 174.3095095095095,
+      "score": 0.716755090433606,
+      "num_pauses": 102,
+      "completed": true,
+      "within_budget": true
+    },
+    "per_year": [
+      {
+        "year": 2022,
+        "theta_p": 449.14,
+        "theta_r": 433.14,
+        "margin": 16,
+        "savings": 14.949107476025949,
+        "overhead": 117.16436436436436,
+        "score": 0.5747455373801298,
+        "num_pauses": 63,
+        "completed": true,
+        "within_budget": true,
+        "found": true,
+        "best_completed_savings": 14.949107476025949,
+        "best_completed_overhead": 117.16436436436436
+      },
+      {
+        "year": 2023,
+        "theta_p": 316.1,
+        "theta_r": 301.06,
+        "margin": 15.04000000000002,
+        "savings": 28.115223670436684,
+        "overhead": 185.35415415415414,
+        "score": 0.6405761183521834,
+        "num_pauses": 85,
+        "completed": true,
+        "within_budget": true,
+        "found": true,
+        "best_completed_savings": 28.115223670436684,
+        "best_completed_overhead": 185.35415415415414
+      },
+      {
+        "year": 2024,
+        "theta_p": 251.61,
+        "theta_r": 246.85,
+        "margin": 4.760000000000019,
+        "savings": 28.328360866831243,
+        "overhead": 190.9149149149149,
+        "score": 0.6416418043341562,
+        "num_pauses": 108,
+        "completed": true,
+        "within_budget": true,
+        "found": true,
+        "best_completed_savings": 28.328360866831243,
+        "best_completed_overhead": 190.9149149149149
+      },
+      {
+        "year": 2025,
+        "theta_p": 272.37,
+        "theta_r": 267.73,
+        "margin": 4.639999999999986,
+        "savings": 43.35101808672119,
+        "overhead": 174.3095095095095,
+        "score": 0.716755090433606,
+        "num_pauses": 102,
+        "completed": true,
+        "within_budget": true,
+        "found": true,
+        "best_completed_savings": 43.35101808672119,
+        "best_completed_overhead": 174.3095095095095
+      }
+    ],
+    "rule_deviation": {
+      "near_zero_margin": {
+        "margins": [
+          16,
+          15.04000000000002,
+          4.760000000000019,
+          4.639999999999986
+        ],
+        "max_margin_g_per_kwh": 16,
+        "holds_years_out_of_4": 2,
+        "pass": false,
+        "note": "max optimized margin 16.00 g/kWh > 10 g/kWh; holds only 2/4 years"
+      },
+      "percentile_thresholds": {
+        "pct_exceed_theta_p_by_year": [
+          60.00380517503805,
+          59.87252663622527,
+          71.16347905282332,
+          65.29014459665144
+        ],
+        "pct_below_theta_r_by_year": [
+          35.87804414003044,
+          35.82857686453577,
+          27.578551912568305,
+          33.457001522070016
+        ],
+        "pct_exceed_deviation_pp": 11.290952416598053,
+        "pct_below_deviation_pp": 8.299492227462135,
+        "pass": false,
+        "note": "tolerance 10 pp deviation in the implied percentile (closest analog of the 10 g/kWh margin tolerance; no explicit percentile tolerance in the SPEC)"
+      },
+      "grace_horizon": {
+        "pass": true,
+        "note": "2025 grace delay/persistence = 24/24; delay within 1 step in 3/3 years (2023-2025), persistence within 1 step in 3/3 years (grid {1,3,6,12,24,72}); pass iff both >= 2 years",
+        "base_2025": {
+          "delay": 24,
+          "persistence": 24
+        },
+        "years": {
+          "delay": {
+            "base_2025": 24,
+            "by_year": {
+              "2023": {
+                "grace": 24,
+                "steps_off": 0,
+                "within_1_step": true
+              },
+              "2024": {
+                "grace": 24,
+                "steps_off": 0,
+                "within_1_step": true
+              }
+            },
+            "max_steps_off": 0,
+            "years_within_1_step": 3
+          },
+          "persistence": {
+            "base_2025": 24,
+            "by_year": {
+              "2023": {
+                "grace": 24,
+                "steps_off": 0,
+                "within_1_step": true
+              },
+              "2024": {
+                "grace": 24,
+                "steps_off": 0,
+                "within_1_step": true
+              }
+            },
+            "max_steps_off": 0,
+            "years_within_1_step": 3
+          }
+        }
+      },
+      "savings_stability": {
+        "savings_by_year": [
+          14.949107476025949,
+          28.115223670436684,
+          28.328360866831243,
+          43.35101808672119
+        ],
+        "min_savings_pp": 14.949107476025949,
+        "max_savings_pp": 43.35101808672119,
+        "range_pp": 28.40191061069524,
+        "pass": false,
+        "note": "savings range 28.40 pp > 5 pp tolerance"
+      }
+    }
+  },
+  {
+    "region": "IT",
+    "baseline": {
+      "theta_p": 246.7,
+      "theta_r": 230.45,
+      "margin": 16.25,
+      "savings": 32.665522834629066,
+      "overhead": 194.67547547547548,
+      "score": 0.6633276141731453,
+      "num_pauses": 173,
+      "completed": true,
+      "within_budget": true
+    },
+    "per_year": [
+      {
+        "year": 2022,
+        "theta_p": 372.56,
+        "theta_r": 369.32,
+        "margin": 3.240000000000009,
+        "savings": 10.019796407376361,
+        "overhead": 177.87787787787786,
+        "score": 0.5500989820368818,
+        "num_pauses": 107,
+        "completed": true,
+        "within_budget": true,
+        "found": true,
+        "best_completed_savings": 10.019796407376361,
+        "best_completed_overhead": 177.87787787787786
+      },
+      {
+        "year": 2023,
+        "theta_p": 296.97,
+        "theta_r": 288.97,
+        "margin": 8,
+        "savings": 25.063060220561994,
+        "overhead": 187.6988988988989,
+        "score": 0.62531530110281,
+        "num_pauses": 98,
+        "completed": true,
+        "within_budget": true,
+        "found": true,
+        "best_completed_savings": 25.063060220561994,
+        "best_completed_overhead": 187.6988988988989
+      },
+      {
+        "year": 2024,
+        "theta_p": 222.27,
+        "theta_r": 217.55,
+        "margin": 4.719999999999999,
+        "savings": 20.940401096953394,
+        "overhead": 187.14154154154153,
+        "score": 0.6047020054847669,
+        "num_pauses": 114,
+        "completed": true,
+        "within_budget": true,
+        "found": true,
+        "best_completed_savings": 20.940401096953394,
+        "best_completed_overhead": 187.14154154154153
+      },
+      {
+        "year": 2025,
+        "theta_p": 246.7,
+        "theta_r": 230.45,
+        "margin": 16.25,
+        "savings": 32.665522834629066,
+        "overhead": 194.67547547547548,
+        "score": 0.6633276141731453,
+        "num_pauses": 173,
+        "completed": true,
+        "within_budget": true,
+        "found": true,
+        "best_completed_savings": 32.665522834629066,
+        "best_completed_overhead": 194.67547547547548
+      }
+    ],
+    "rule_deviation": {
+      "near_zero_margin": {
+        "margins": [
+          3.240000000000009,
+          8,
+          4.719999999999999,
+          16.25
+        ],
+        "max_margin_g_per_kwh": 16.25,
+        "holds_years_out_of_4": 3,
+        "pass": true,
+        "note": "max margin 16.25 g/kWh exceeds the 10 g/kWh tolerance but the rule holds in 3/4 years (SPEC: pass if it holds for >=3 of 4 years)"
+      },
+      "percentile_thresholds": {
+        "pct_exceed_theta_p_by_year": [
+          69.75361491628615,
+          60.32724505327245,
+          74.03517759562841,
+          68.55593607305936
+        ],
+        "pct_below_theta_r_by_year": [
+          28.651065449010655,
+          36.202435312024356,
+          23.637674559805706,
+          26.12728310502283
+        ],
+        "pct_exceed_deviation_pp": 13.707932542355962,
+        "pct_below_deviation_pp": 12.56476075221865,
+        "pass": false,
+        "note": "tolerance 10 pp deviation in the implied percentile (closest analog of the 10 g/kWh margin tolerance; no explicit percentile tolerance in the SPEC)"
+      },
+      "grace_horizon": {
+        "pass": true,
+        "note": "2025 grace delay/persistence = 12/12; delay within 1 step in 2/3 years (2023-2025), persistence within 1 step in 2/3 years (grid {1,3,6,12,24,72}); pass iff both >= 2 years",
+        "base_2025": {
+          "delay": 12,
+          "persistence": 12
+        },
+        "years": {
+          "delay": {
+            "base_2025": 12,
+            "by_year": {
+              "2023": {
+                "grace": 72,
+                "steps_off": 2,
+                "within_1_step": false
+              },
+              "2024": {
+                "grace": 24,
+                "steps_off": 1,
+                "within_1_step": true
+              }
+            },
+            "max_steps_off": 2,
+            "years_within_1_step": 2
+          },
+          "persistence": {
+            "base_2025": 12,
+            "by_year": {
+              "2023": {
+                "grace": 72,
+                "steps_off": 2,
+                "within_1_step": false
+              },
+              "2024": {
+                "grace": 24,
+                "steps_off": 1,
+                "within_1_step": true
+              }
+            },
+            "max_steps_off": 2,
+            "years_within_1_step": 2
+          }
+        }
+      },
+      "savings_stability": {
+        "savings_by_year": [
+          10.019796407376361,
+          25.063060220561994,
+          20.940401096953394,
+          32.665522834629066
+        ],
+        "min_savings_pp": 10.019796407376361,
+        "max_savings_pp": 32.665522834629066,
+        "range_pp": 22.645726427252704,
+        "pass": false,
+        "note": "savings range 22.65 pp > 5 pp tolerance"
+      }
+    }
+  },
+  {
+    "region": "SE",
+    "baseline": {
+      "theta_p": 18.18,
+      "theta_r": 17.51,
+      "margin": 0.6699999999999982,
+      "savings": 23.168974941556538,
+      "overhead": 106.34394394394394,
+      "score": 0.6158448747077827,
+      "num_pauses": 85,
+      "completed": true,
+      "within_budget": true
+    },
+    "per_year": [
+      {
+        "year": 2022,
+        "theta_p": 19.18,
+        "theta_r": 18.43,
+        "margin": 0.75,
+        "savings": 20.102942534477716,
+        "overhead": 108.63103103103103,
+        "score": 0.6005147126723885,
+        "num_pauses": 50,
+        "completed": true,
+        "within_budget": true,
+        "found": true,
+        "best_completed_savings": 20.102942534477716,
+        "best_completed_overhead": 108.63103103103103
+      },
+      {
+        "year": 2023,
+        "theta_p": 18.18,
+        "theta_r": 17.51,
+        "margin": 0.6699999999999982,
+        "savings": 16.179512525011162,
+        "overhead": 134.94854854854856,
+        "score": 0.5808975626250559,
+        "num_pauses": 98,
+        "completed": true,
+        "within_budget": true,
+        "found": true,
+        "best_completed_savings": 16.179512525011162,
+        "best_completed_overhead": 134.94854854854856
+      },
+      {
+        "year": 2024,
+        "theta_p": 16.48,
+        "theta_r": 15.76,
+        "margin": 0.7200000000000006,
+        "savings": 22.419550781674175,
+        "overhead": 183.72052052052052,
+        "score": 0.6120977539083708,
+        "num_pauses": 104,
+        "completed": true,
+        "within_budget": true,
+        "found": true,
+        "best_completed_savings": 22.419550781674175,
+        "best_completed_overhead": 183.72052052052052
+      },
+      {
+        "year": 2025,
+        "theta_p": 18.18,
+        "theta_r": 17.51,
+        "margin": 0.6699999999999982,
+        "savings": 23.168974941556538,
+        "overhead": 106.34394394394394,
+        "score": 0.6158448747077827,
+        "num_pauses": 85,
+        "completed": true,
+        "within_budget": true,
+        "found": true,
+        "best_completed_savings": 23.168974941556538,
+        "best_completed_overhead": 106.34394394394394
+      }
+    ],
+    "rule_deviation": {
+      "near_zero_margin": {
+        "margins": [
+          0.75,
+          0.6699999999999982,
+          0.7200000000000006,
+          0.6699999999999982
+        ],
+        "max_margin_g_per_kwh": 0.75,
+        "holds_years_out_of_4": 4,
+        "pass": true,
+        "note": "max optimized margin 0.75 g/kWh <= 10 g/kWh tolerance"
+      },
+      "percentile_thresholds": {
+        "pct_exceed_theta_p_by_year": [
+          74.77359208523592,
+          68.88222983257229,
+          71.50026563448695,
+          59.95053272450533
+        ],
+        "pct_below_theta_r_by_year": [
+          20.254946727549466,
+          24.445395738203956,
+          21.14071038251366,
+          30.205479452054796
+        ],
+        "pct_exceed_deviation_pp": 14.82305936073059,
+        "pct_below_deviation_pp": 9.95053272450533,
+        "pass": false,
+        "note": "tolerance 10 pp deviation in the implied percentile (closest analog of the 10 g/kWh margin tolerance; no explicit percentile tolerance in the SPEC)"
+      },
+      "grace_horizon": {
+        "pass": true,
+        "note": "2025 grace delay/persistence = 12/12; delay within 1 step in 3/3 years (2023-2025), persistence within 1 step in 3/3 years (grid {1,3,6,12,24,72}); pass iff both >= 2 years",
+        "base_2025": {
+          "delay": 12,
+          "persistence": 12
+        },
+        "years": {
+          "delay": {
+            "base_2025": 12,
+            "by_year": {
+              "2023": {
+                "grace": 12,
+                "steps_off": 0,
+                "within_1_step": true
+              },
+              "2024": {
+                "grace": 12,
+                "steps_off": 0,
+                "within_1_step": true
+              }
+            },
+            "max_steps_off": 0,
+            "years_within_1_step": 3
+          },
+          "persistence": {
+            "base_2025": 12,
+            "by_year": {
+              "2023": {
+                "grace": 12,
+                "steps_off": 0,
+                "within_1_step": true
+              },
+              "2024": {
+                "grace": 12,
+                "steps_off": 0,
+                "within_1_step": true
+              }
+            },
+            "max_steps_off": 0,
+            "years_within_1_step": 3
+          }
+        }
+      },
+      "savings_stability": {
+        "savings_by_year": [
+          20.102942534477716,
+          16.179512525011162,
+          22.419550781674175,
+          23.168974941556538
+        ],
+        "min_savings_pp": 16.179512525011162,
+        "max_savings_pp": 23.168974941556538,
+        "range_pp": 6.989462416545376,
+        "pass": false,
+        "note": "savings range 6.99 pp > 5 pp tolerance"
+      }
+    }
+  }
+]

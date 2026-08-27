@@ -1,0 +1,667 @@
+{
+  "spec": "Phase B.4 overhead-budget sweep (DE/IT/SE, year 2025, DeepSeek, reopt settings)",
+  "generatedDate": "2026-08-20",
+  "deterministic": true,
+  "methodology": {
+    "budget": "overhead budget B in {30,50,100,200}%; alpha=1 so the score normalizes only savings (overhead term weighted by (1-alpha)=0), but the withinBudget filter (overhead <= B) still constrains which points the optimizer may select. ckpt_pause 148.8 s = the B.0-verdict (Story A) checkpoint; ckpt_pause 900 s = robustness block (secondary table).",
+    "collapse": "the feasible frontier collapses when no within-budget AND completed point with positive savings exists (best_completed == null). Reported per ckpt as the smallest such budget. All cells retain the raw max-score best AND the completed-feasible optimum (phase B.0 caveat: the raw best can be an incomplete budget-blocked run with inflated savings)."
+  },
+  "regions": [
+    {
+      "region": "DE",
+      "model": "Deepseek",
+      "year": 2025,
+      "start": "02-01",
+      "tpMax": 800,
+      "optimizer": {
+        "resolution": 10,
+        "iterations": 6,
+        "budget": null,
+        "alpha": 1,
+        "ckpt_resume": 0
+      },
+      "ckpt_148_8": [
+        {
+          "budget": 30,
+          "theta_p": 533.76,
+          "theta_r": 517.76,
+          "margin": 16,
+          "savings": 11.511795355989122,
+          "overhead": 29.9987987987988,
+          "score": 0.5575589767799456,
+          "num_pauses": 36,
+          "completed": true,
+          "within_budget": true,
+          "stop_reason": "completed",
+          "found": true,
+          "best_completed": {
+            "theta_p": 533.76,
+            "theta_r": 517.76,
+            "margin": 16,
+            "savings": 11.511795355989122,
+            "overhead": 29.9987987987988,
+            "score": 0.5575589767799456,
+            "num_pauses": 36,
+            "completed": true,
+            "within_budget": true
+          }
+        },
+        {
+          "budget": 50,
+          "theta_p": 491.33,
+          "theta_r": 486.31,
+          "margin": 5.019999999999982,
+          "savings": 16.28218814833236,
+          "overhead": 48.76316316316316,
+          "score": 0.5814109407416618,
+          "num_pauses": 52,
+          "completed": true,
+          "within_budget": true,
+          "stop_reason": "completed",
+          "found": true,
+          "best_completed": {
+            "theta_p": 491.33,
+            "theta_r": 486.31,
+            "margin": 5.019999999999982,
+            "savings": 16.28218814833236,
+            "overhead": 48.76316316316316,
+            "score": 0.5814109407416618,
+            "num_pauses": 52,
+            "completed": true,
+            "within_budget": true
+          }
+        },
+        {
+          "budget": 100,
+          "theta_p": 410.57,
+          "theta_r": 398.97,
+          "margin": 11.599999999999966,
+          "savings": 29.52208589506526,
+          "overhead": 98.62422422422422,
+          "score": 0.6476104294753263,
+          "num_pauses": 69,
+          "completed": true,
+          "within_budget": true,
+          "stop_reason": "completed",
+          "found": true,
+          "best_completed": {
+            "theta_p": 410.57,
+            "theta_r": 398.97,
+            "margin": 11.599999999999966,
+            "savings": 29.52208589506526,
+            "overhead": 98.62422422422422,
+            "score": 0.6476104294753263,
+            "num_pauses": 69,
+            "completed": true,
+            "within_budget": true
+          }
+        },
+        {
+          "budget": 200,
+          "theta_p": 272.37,
+          "theta_r": 267.73,
+          "margin": 4.639999999999986,
+          "savings": 43.35101808672119,
+          "overhead": 174.3095095095095,
+          "score": 0.716755090433606,
+          "num_pauses": 102,
+          "completed": true,
+          "within_budget": true,
+          "stop_reason": "completed",
+          "found": true,
+          "best_completed": {
+            "theta_p": 272.37,
+            "theta_r": 267.73,
+            "margin": 4.639999999999986,
+            "savings": 43.35101808672119,
+            "overhead": 174.3095095095095,
+            "score": 0.716755090433606,
+            "num_pauses": 102,
+            "completed": true,
+            "within_budget": true
+          }
+        }
+      ],
+      "ckpt_900": [
+        {
+          "budget": 30,
+          "theta_p": 479.18,
+          "theta_r": 453.76,
+          "margin": 25.420000000000016,
+          "savings": 68.01394672845095,
+          "overhead": 29.988388388388387,
+          "score": 0.8400697336422547,
+          "num_pauses": 20,
+          "completed": false,
+          "within_budget": true,
+          "stop_reason": "budget_exceeded",
+          "found": true,
+          "best_completed": {
+            "theta_p": 547.53,
+            "theta_r": 510.01,
+            "margin": 37.51999999999998,
+            "savings": 10.420433173628119,
+            "overhead": 28.358758758758757,
+            "score": 0.5521021658681406,
+            "num_pauses": 31,
+            "completed": true,
+            "within_budget": true
+          }
+        },
+        {
+          "budget": 50,
+          "theta_p": 507.98,
+          "theta_r": 335.27,
+          "margin": 172.71000000000004,
+          "savings": 68.05493299287097,
+          "overhead": 49.98918918918919,
+          "score": 0.8402746649643549,
+          "num_pauses": 7,
+          "completed": false,
+          "within_budget": true,
+          "stop_reason": "budget_exceeded",
+          "found": true,
+          "best_completed": {
+            "theta_p": 498.98,
+            "theta_r": 476.08,
+            "margin": 22.900000000000034,
+            "savings": 15.50761659827002,
+            "overhead": 48.852852852852855,
+            "score": 0.5775380829913501,
+            "num_pauses": 45,
+            "completed": true,
+            "within_budget": true
+          }
+        },
+        {
+          "budget": 100,
+          "theta_p": 379.21,
+          "theta_r": 370.21,
+          "margin": 9,
+          "savings": 59.855406143270194,
+          "overhead": 99.98478478478478,
+          "score": 0.799277030716351,
+          "num_pauses": 62,
+          "completed": false,
+          "within_budget": true,
+          "stop_reason": "budget_exceeded",
+          "found": true,
+          "best_completed": {
+            "theta_p": 412.7,
+            "theta_r": 396.7,
+            "margin": 16,
+            "savings": 28.462317618667658,
+            "overhead": 98.25905905905906,
+            "score": 0.6423115880933383,
+            "num_pauses": 66,
+            "completed": true,
+            "within_budget": true
+          }
+        },
+        {
+          "budget": 200,
+          "theta_p": 246.93,
+          "theta_r": 234.8,
+          "margin": 12.129999999999995,
+          "savings": 47.908500548495816,
+          "overhead": 199.98238238238238,
+          "score": 0.7395425027424791,
+          "num_pauses": 112,
+          "completed": false,
+          "within_budget": true,
+          "stop_reason": "budget_exceeded",
+          "found": true,
+          "best_completed": {
+            "theta_p": 278.22,
+            "theta_r": 261.63,
+            "margin": 16.590000000000032,
+            "savings": 42.32038690982522,
+            "overhead": 175.62922922922922,
+            "score": 0.7116019345491261,
+            "num_pauses": 98,
+            "completed": true,
+            "within_budget": true
+          }
+        }
+      ],
+      "collapse": {
+        "ckpt_148_8": {
+          "collapsed": false,
+          "note": "no collapse in-grid {30,50,100,200}%: every budget keeps a completed-feasible point; completed-feasible savings floor = 11.51% at 30%"
+        },
+        "ckpt_900": {
+          "collapsed": false,
+          "note": "no collapse in-grid {30,50,100,200}%: every budget keeps a completed-feasible point; completed-feasible savings floor = 10.42% at 30%"
+        }
+      }
+    },
+    {
+      "region": "IT",
+      "model": "Deepseek",
+      "year": 2025,
+      "start": "01-14",
+      "tpMax": 800,
+      "optimizer": {
+        "resolution": 10,
+        "iterations": 6,
+        "budget": null,
+        "alpha": 1,
+        "ckpt_resume": 0
+      },
+      "ckpt_148_8": [
+        {
+          "budget": 30,
+          "theta_p": null,
+          "theta_r": null,
+          "margin": null,
+          "savings": null,
+          "overhead": null,
+          "score": null,
+          "num_pauses": null,
+          "completed": null,
+          "within_budget": null,
+          "stop_reason": null,
+          "found": false,
+          "best_completed": null
+        },
+        {
+          "budget": 50,
+          "theta_p": null,
+          "theta_r": null,
+          "margin": null,
+          "savings": null,
+          "overhead": null,
+          "score": null,
+          "num_pauses": null,
+          "completed": null,
+          "within_budget": null,
+          "stop_reason": null,
+          "found": false,
+          "best_completed": null
+        },
+        {
+          "budget": 100,
+          "theta_p": 283.23,
+          "theta_r": 258.79,
+          "margin": 24.439999999999998,
+          "savings": 82.00054551809818,
+          "overhead": 99.9975975975976,
+          "score": 0.910002727590491,
+          "num_pauses": 24,
+          "completed": false,
+          "within_budget": true,
+          "stop_reason": "budget_exceeded",
+          "found": true,
+          "best_completed": {
+            "theta_p": 329.86,
+            "theta_r": 314.45,
+            "margin": 15.410000000000025,
+            "savings": 19.846822750262824,
+            "overhead": 99.57877877877878,
+            "score": 0.5992341137513141,
+            "num_pauses": 105,
+            "completed": true,
+            "within_budget": true
+          }
+        },
+        {
+          "budget": 200,
+          "theta_p": 246.7,
+          "theta_r": 230.45,
+          "margin": 16.25,
+          "savings": 32.665522834629066,
+          "overhead": 194.67547547547548,
+          "score": 0.6633276141731453,
+          "num_pauses": 173,
+          "completed": true,
+          "within_budget": true,
+          "stop_reason": "completed",
+          "found": true,
+          "best_completed": {
+            "theta_p": 246.7,
+            "theta_r": 230.45,
+            "margin": 16.25,
+            "savings": 32.665522834629066,
+            "overhead": 194.67547547547548,
+            "score": 0.6633276141731453,
+            "num_pauses": 173,
+            "completed": true,
+            "within_budget": true
+          }
+        }
+      ],
+      "ckpt_900": [
+        {
+          "budget": 30,
+          "theta_p": null,
+          "theta_r": null,
+          "margin": null,
+          "savings": null,
+          "overhead": null,
+          "score": null,
+          "num_pauses": null,
+          "completed": null,
+          "within_budget": null,
+          "stop_reason": null,
+          "found": false,
+          "best_completed": null
+        },
+        {
+          "budget": 50,
+          "theta_p": null,
+          "theta_r": null,
+          "margin": null,
+          "savings": null,
+          "overhead": null,
+          "score": null,
+          "num_pauses": null,
+          "completed": null,
+          "within_budget": null,
+          "stop_reason": null,
+          "found": false,
+          "best_completed": null
+        },
+        {
+          "budget": 100,
+          "theta_p": 283.23,
+          "theta_r": 258.79,
+          "margin": 24.439999999999998,
+          "savings": 81.70268499405313,
+          "overhead": 99.9975975975976,
+          "score": 0.9085134249702657,
+          "num_pauses": 24,
+          "completed": false,
+          "within_budget": true,
+          "stop_reason": "budget_exceeded",
+          "found": true,
+          "best_completed": {
+            "theta_p": 329.86,
+            "theta_r": 314.45,
+            "margin": 15.410000000000025,
+            "savings": 18.335673628756435,
+            "overhead": 99.57877877877878,
+            "score": 0.5916783681437822,
+            "num_pauses": 105,
+            "completed": true,
+            "within_budget": true
+          }
+        },
+        {
+          "budget": 200,
+          "theta_p": 209.04,
+          "theta_r": 172.41,
+          "margin": 36.629999999999995,
+          "savings": 70.55594773076794,
+          "overhead": 199.9951951951952,
+          "score": 0.8527797386538397,
+          "num_pauses": 55,
+          "completed": false,
+          "within_budget": true,
+          "stop_reason": "budget_exceeded",
+          "found": true,
+          "best_completed": {
+            "theta_p": 266.42,
+            "theta_r": 228.61,
+            "margin": 37.81,
+            "savings": 30.903853991519004,
+            "overhead": 176.1097097097097,
+            "score": 0.654519269957595,
+            "num_pauses": 106,
+            "completed": true,
+            "within_budget": true
+          }
+        }
+      ],
+      "collapse": {
+        "ckpt_148_8": {
+          "collapsed": true,
+          "first_collapse_budget": 30,
+          "infeasible_budgets": [
+            30,
+            50
+          ],
+          "prev_feasible_budget": null,
+          "note": "no within-budget AND completed point at budget(s) 30, 50% (frontier collapses at budget <= 30% on the lowest feasible edge; infeasible at B in {30, 50})"
+        },
+        "ckpt_900": {
+          "collapsed": true,
+          "first_collapse_budget": 30,
+          "infeasible_budgets": [
+            30,
+            50
+          ],
+          "prev_feasible_budget": null,
+          "note": "no within-budget AND completed point at budget(s) 30, 50% (frontier collapses at budget <= 30% on the lowest feasible edge; infeasible at B in {30, 50})"
+        }
+      }
+    },
+    {
+      "region": "SE",
+      "model": "Deepseek",
+      "year": 2025,
+      "start": "04-22",
+      "tpMax": 100,
+      "optimizer": {
+        "resolution": 10,
+        "iterations": 6,
+        "budget": null,
+        "alpha": 1,
+        "ckpt_resume": 0
+      },
+      "ckpt_148_8": [
+        {
+          "budget": 30,
+          "theta_p": 25.8,
+          "theta_r": 24.85,
+          "margin": 0.9499999999999993,
+          "savings": 14.59354628384784,
+          "overhead": 28.96096096096096,
+          "score": 0.5729677314192392,
+          "num_pauses": 71,
+          "completed": true,
+          "within_budget": true,
+          "stop_reason": "completed",
+          "found": true,
+          "best_completed": {
+            "theta_p": 25.8,
+            "theta_r": 24.85,
+            "margin": 0.9499999999999993,
+            "savings": 14.59354628384784,
+            "overhead": 28.96096096096096,
+            "score": 0.5729677314192392,
+            "num_pauses": 71,
+            "completed": true,
+            "within_budget": true
+          }
+        },
+        {
+          "budget": 50,
+          "theta_p": 22.33,
+          "theta_r": 20.33,
+          "margin": 2,
+          "savings": 18.355275030940124,
+          "overhead": 48.494094094094095,
+          "score": 0.5917763751547006,
+          "num_pauses": 70,
+          "completed": true,
+          "within_budget": true,
+          "stop_reason": "completed",
+          "found": true,
+          "best_completed": {
+            "theta_p": 22.33,
+            "theta_r": 20.33,
+            "margin": 2,
+            "savings": 18.355275030940124,
+            "overhead": 48.494094094094095,
+            "score": 0.5917763751547006,
+            "num_pauses": 70,
+            "completed": true,
+            "within_budget": true
+          }
+        },
+        {
+          "budget": 100,
+          "theta_p": 19.24,
+          "theta_r": 17.22,
+          "margin": 2.0199999999999996,
+          "savings": 22.868494380975463,
+          "overhead": 99.40580580580581,
+          "score": 0.6143424719048773,
+          "num_pauses": 77,
+          "completed": true,
+          "within_budget": true,
+          "stop_reason": "completed",
+          "found": true,
+          "best_completed": {
+            "theta_p": 19.24,
+            "theta_r": 17.22,
+            "margin": 2.0199999999999996,
+            "savings": 22.868494380975463,
+            "overhead": 99.40580580580581,
+            "score": 0.6143424719048773,
+            "num_pauses": 77,
+            "completed": true,
+            "within_budget": true
+          }
+        },
+        {
+          "budget": 200,
+          "theta_p": 18.18,
+          "theta_r": 17.51,
+          "margin": 0.6699999999999982,
+          "savings": 23.168974941556538,
+          "overhead": 106.34394394394394,
+          "score": 0.6158448747077827,
+          "num_pauses": 85,
+          "completed": true,
+          "within_budget": true,
+          "stop_reason": "completed",
+          "found": true,
+          "best_completed": {
+            "theta_p": 18.18,
+            "theta_r": 17.51,
+            "margin": 0.6699999999999982,
+            "savings": 23.168974941556538,
+            "overhead": 106.34394394394394,
+            "score": 0.6158448747077827,
+            "num_pauses": 85,
+            "completed": true,
+            "within_budget": true
+          }
+        }
+      ],
+      "ckpt_900": [
+        {
+          "budget": 30,
+          "theta_p": 27.8,
+          "theta_r": 20.89,
+          "margin": 6.91,
+          "savings": 41.082034909683195,
+          "overhead": 29.994794794794796,
+          "score": 0.705410174548416,
+          "num_pauses": 40,
+          "completed": false,
+          "within_budget": true,
+          "stop_reason": "budget_exceeded",
+          "found": true,
+          "best_completed": {
+            "theta_p": 25.8,
+            "theta_r": 24.87,
+            "margin": 0.9299999999999997,
+            "savings": 13.2542897593827,
+            "overhead": 28.96096096096096,
+            "score": 0.5662714487969135,
+            "num_pauses": 71,
+            "completed": true,
+            "within_budget": true
+          }
+        },
+        {
+          "budget": 50,
+          "theta_p": 21.35,
+          "theta_r": 18.33,
+          "margin": 3.020000000000003,
+          "savings": 76.81394570559465,
+          "overhead": 49.98918918918919,
+          "score": 0.8840697285279733,
+          "num_pauses": 24,
+          "completed": false,
+          "within_budget": true,
+          "stop_reason": "budget_exceeded",
+          "found": true,
+          "best_completed": {
+            "theta_p": 22.35,
+            "theta_r": 20.34,
+            "margin": 2.0100000000000016,
+            "savings": 17.191082085328325,
+            "overhead": 48.494094094094095,
+            "score": 0.5859554104266416,
+            "num_pauses": 70,
+            "completed": true,
+            "within_budget": true
+          }
+        },
+        {
+          "budget": 100,
+          "theta_p": 19.24,
+          "theta_r": 17.22,
+          "margin": 2.0199999999999996,
+          "savings": 21.803495471128468,
+          "overhead": 99.40580580580581,
+          "score": 0.6090174773556424,
+          "num_pauses": 77,
+          "completed": true,
+          "within_budget": true,
+          "stop_reason": "completed",
+          "found": true,
+          "best_completed": {
+            "theta_p": 19.24,
+            "theta_r": 17.22,
+            "margin": 2.0199999999999996,
+            "savings": 21.803495471128468,
+            "overhead": 99.40580580580581,
+            "score": 0.6090174773556424,
+            "num_pauses": 77,
+            "completed": true,
+            "within_budget": true
+          }
+        },
+        {
+          "budget": 200,
+          "theta_p": 18.18,
+          "theta_r": 17.51,
+          "margin": 0.6699999999999982,
+          "savings": 22.06104286074009,
+          "overhead": 106.34394394394394,
+          "score": 0.6103052143037004,
+          "num_pauses": 85,
+          "completed": true,
+          "within_budget": true,
+          "stop_reason": "completed",
+          "found": true,
+          "best_completed": {
+            "theta_p": 18.18,
+            "theta_r": 17.51,
+            "margin": 0.6699999999999982,
+            "savings": 22.06104286074009,
+            "overhead": 106.34394394394394,
+            "score": 0.6103052143037004,
+            "num_pauses": 85,
+            "completed": true,
+            "within_budget": true
+          }
+        }
+      ],
+      "collapse": {
+        "ckpt_148_8": {
+          "collapsed": false,
+          "note": "no collapse in-grid {30,50,100,200}%: every budget keeps a completed-feasible point; completed-feasible savings floor = 14.59% at 30%"
+        },
+        "ckpt_900": {
+          "collapsed": false,
+          "note": "no collapse in-grid {30,50,100,200}%: every budget keeps a completed-feasible point; completed-feasible savings floor = 13.25% at 30%"
+        }
+      }
+    }
+  ]
+}

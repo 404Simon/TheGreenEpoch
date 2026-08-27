@@ -84,7 +84,8 @@ export async function optimizeCli(raw: {
   model: string; region: string; years: string;
   tpMax?: string; budget?: string; resolution?: string;
   dateRes?: string; maxIter?: string; alpha?: string;
-  start?: string; output?: string; csv?: string;
+  start?: string; ckptPause?: string; ckptResume?: string;
+  output?: string; csv?: string;
 }): Promise<void> {
   const output = raw.output ?? null;
   const csv = raw.csv ?? null;
@@ -112,8 +113,8 @@ export async function optimizeCli(raw: {
     gpuPowerTrain: constants.gpu_power_train,
     gpuPowerPause: constants.gpu_power_pause,
     pue: constants.pue,
-    checkpointPauseTime: constants.checkpoint_pause_time,
-    checkpointResumeTime: constants.checkpoint_resume_time,
+    checkpointPauseTime: raw.ckptPause != null ? parseFloat(raw.ckptPause) : constants.checkpoint_pause_time,
+    checkpointResumeTime: raw.ckptResume != null ? parseFloat(raw.ckptResume) : constants.checkpoint_resume_time,
   };
 
   const timeline = loadCO2Timeline(raw.region, historicalYears);

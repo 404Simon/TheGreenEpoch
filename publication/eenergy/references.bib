@@ -1,0 +1,527 @@
+% ----------------------------------------------------------------------------
+% ACM e-Energy 2027 (Winter) — references for
+% "Staleness, Not Noise: Why Carbon-Aware LLM Pretraining Does Not Need ML Forecasting"
+% All keys + DOI/arXiv ids existence-verified (see research_report.md §11).
+% DOI entries fetched via Crossref; arXiv-only entries use the misc type with
+% an eprint field. Every entry in this file is cited in main.tex.
+% ----------------------------------------------------------------------------
+
+% ---------------- accounting / ML carbon footprint ----------------
+@article{strubell2019energy,
+  author    = {Strubell, Emma and Ganesh, Ananya and McCallum, Andrew},
+  title     = {Energy and Policy Considerations for Modern Deep Learning Research},
+  journal   = {Proceedings of the AAAI Conference on Artificial Intelligence},
+  volume    = {34},
+  number    = {09},
+  pages     = {13693--13696},
+  year      = {2020},
+  month     = apr,
+  doi       = {10.1609/aaai.v34i09.7123}
+}
+
+@misc{patterson2021carbon,
+  author       = {Patterson, David and Gonzalez, Joseph and H{\"o}lzle, Urs and Le, Quoc and Liang, Chen and Munguia, Lluis-Miquel and Rothchild, Daniel and So, David and Texier, Maud and Dean, Jeff},
+  title        = {Carbon Emissions and Large Neural Network Training},
+  year         = {2021},
+  eprint       = {2104.10350},
+  archivePrefix= {arXiv},
+  primaryClass = {cs.LG},
+  note         = {arXiv:2104.10350}
+}
+
+@misc{wu2022sustainable,
+  author       = {Wu, Carole-Jean and Raghavendra, Ramya and Gupta, Udit and Acun, Bilge and Ardalani, Newsha and Maeng, Kiwan and Chang, Gloria and Aga, Fiona and Huang, Jinshi and Bai, Charles and Gschwend, Aditya and Zheng, Chameleon and Williams, Tony and Chen, Ravi and Dutta, Nandita and Ma, Jenny and Wen, Mark and Chandramohan, Ranjani and Wong, Sean and Deasy, Sara and Chen, Regina and Chen, Kevin and Wilson, Scott and Sharma, Ashish and Paglieri, Mark and Vahdat, Amin and Ferreira, Alex and Dally, Bill and Liang, Dick and Mattina, Matt and Kalidindi, Anand and Vanterpool, Ramesh and Aiken, John and Guzzi, Henry and Pant, Roy and Bourdeau, Victor and Szetela, Jeff and Malak, Steph and Jankov, Peter and Munguia, Lluis-Miquel and Lacy, John and Grizzle, William and Cooter, Duncan and Wang, Xiaoyu and Yuan, Hang and Allen, Jimmy and He, Lu and Li, Lei and Ho, Lisa and Pandey, Dhiraj and Chang, Ye and Bhalgat, Aditya and Chen, Chih-Jen and Zhang, Wei and Zhou, Alan and Yashar, Ehud and Arumugam, Ramesh and Jannik, Mike and Kanaujia, Manish and Whitfield, Joel and Wu, Peter and Agarwal, Ritu and Schutt, Maura and Yuen, Sam and Janapa Reddi, Vijay},
+  title        = {Sustainable {AI}: Environmental Implications, Challenges and Opportunities},
+  year         = {2022},
+  eprint       = {2111.00364},
+  archivePrefix= {arXiv},
+  primaryClass = {cs.LG},
+  note         = {arXiv:2111.00364}
+}
+
+@misc{luccioni2022bloom,
+  author       = {Luccioni, Alexandra Sasha and Viguier, Sylvain and Ligozat, Anne-Laure},
+  title        = {Estimating the Carbon Footprint of {BLOOM}, a 176B Parameter Language Model},
+  year         = {2022},
+  eprint       = {2211.02001},
+  archivePrefix= {arXiv},
+  primaryClass = {cs.CL},
+  note         = {arXiv:2211.02001}
+}
+
+@inproceedings{dodge2022measuring,
+  author    = {Dodge, Jesse and Prewitt, Taylor and Tachet des Combes, Remi and Odmark, Erika and Schwartz, Roy and Strubell, Emma and Luccioni, Alexandra Sasha and Smith, Noah A. and DeCario, Nicole and Buchanan, Will},
+  title     = {Measuring the Carbon Intensity of {AI} in Cloud Instances},
+  booktitle = {Proceedings of the 2022 ACM Conference on Fairness, Accountability, and Transparency (FAccT '22)},
+  series    = {FAccT '22},
+  pages     = {1877--1894},
+  year      = {2022},
+  month     = jun,
+  publisher = {ACM},
+  doi       = {10.1145/3531146.3533234},
+  address = {New York, NY, USA}
+}
+
+@misc{jegham2025hungry,
+  author       = {Jegham, Hamza and others},
+  title        = {How Hungry is {AI}? An Assessment of the Energy and Water Footprint of {LLM} Inference},
+  year         = {2025},
+  eprint       = {2505.09598},
+  archivePrefix= {arXiv},
+  primaryClass = {cs.LG},
+  note         = {arXiv:2505.09598}
+}
+
+@misc{schneider2025lifecycle,
+  author       = {Schneider, Thomas and others},
+  title        = {Life-Cycle Emissions of {AI} Hardware: A Cradle-to-Grave Approach},
+  year         = {2025},
+  eprint       = {2502.01671},
+  archivePrefix= {arXiv},
+  primaryClass = {cs.AR},
+  note         = {arXiv:2502.01671}
+}
+
+@article{maji2025crossroads,
+  author  = {Maji, Diptyaroop and Hanafy, Walid A. and Wu, Li and Irwin, David and Shenoy, Prashant and Sitaraman, Ramesh K.},
+  title   = {Data Centers Carbon Emissions at Crossroads: An Empirical Study},
+  journal = {ACM SIGEnergy Energy Informatics Review},
+  volume  = {5},
+  number  = {2},
+  pages   = {48--55},
+  year    = {2025},
+  month   = jul,
+  doi     = {10.1145/3757892.3757899}
+}
+
+% ---------------- carbon-aware scheduling ----------------
+@inproceedings{sukprasert2024limitations,
+  author    = {Sukprasert, Thanathorn and Souza, Abel and Bashir, Noman and Irwin, David and Shenoy, Prashant},
+  title     = {On the Limitations of Carbon-Aware Temporal and Spatial Workload Shifting in the Cloud},
+  booktitle = {Proceedings of the Nineteenth European Conference on Computer Systems (EuroSys '24)},
+  series    = {EuroSys '24},
+  pages     = {924--941},
+  year      = {2024},
+  month     = apr,
+  publisher = {ACM},
+  address   = {New York, NY, USA},
+  doi       = {10.1145/3627703.3650079}
+}
+
+@article{radovanovic2022carbon,
+  author  = {Radovanovi{\'c}, Ana and Koningstein, Ross and Schneider, Ian and Chen, Bokan and Duarte, Alexandre and Roy, Binz and Xiao, Diyue and Haridasan, Maya and Hung, Patrick and Care, Nick and Talukdar, Saurav and Mullen, Eric and Smith, Kendal and Cottman, MariEllen and Cirne, Walfredo},
+  title   = {Carbon-Aware Computing for Datacenters},
+  journal = {IEEE Transactions on Power Systems},
+  volume  = {38},
+  number  = {2},
+  pages   = {1270--1280},
+  year    = {2023},
+  month   = mar,
+  doi     = {10.1109/TPWRS.2022.3173250}
+}
+
+@article{lechowicz2023opr,
+  author  = {Lechowicz, Adam and Christianson, Nicolas and Zuo, Jinhang and Bashir, Noman and Hajiesmaili, Mohammad and Wierman, Adam and Shenoy, Prashant},
+  title   = {The Online Pause and Resume Problem: Optimal Algorithms and An Application to Carbon-Aware Load Shifting},
+  journal = {Proceedings of the ACM on Measurement and Analysis of Computing Systems},
+  volume  = {7},
+  number  = {3},
+  pages   = {1--32},
+  year    = {2023},
+  month   = dec,
+  doi     = {10.1145/3626776}
+}
+
+@inproceedings{wiesner2021letswait,
+  author    = {Wiesner, Philipp and Behnke, Ilja and Scheinert, Dominik and Gontarska, Kordian and Thamsen, Lauritz},
+  title     = {Let's Wait Awhile: How Temporal Workload Shifting Can Reduce Carbon Emissions in the Cloud},
+  booktitle = {Proceedings of the 22nd International Middleware Conference (Middleware '21)},
+  series    = {Middleware '21},
+  pages     = {260--272},
+  year      = {2021},
+  month     = dec,
+  publisher = {ACM},
+  doi       = {10.1145/3464298.3493399},
+  address = {New York, NY, USA}
+}
+
+@inproceedings{bostandoost2024lacs,
+  author    = {Bostandoost, Roozbeh and Lechowicz, Adam and Hanafy, Walid A. and Bashir, Noman and Shenoy, Prashant and Hajiesmaili, Mohammad},
+  title     = {{LACS}: Learning-Augmented Algorithms for Carbon-Aware Resource Scaling with Uncertain Demand},
+  booktitle = {Proceedings of the 15th ACM International Conference on Future and Sustainable Energy Systems (e-Energy '24)},
+  series    = {e-Energy '24},
+  pages     = {27--45},
+  year      = {2024},
+  month     = may,
+  publisher = {ACM},
+  doi       = {10.1145/3632775.3661942},
+  address = {New York, NY, USA}
+}
+
+@article{hanafy2023carbonscaler,
+  author  = {Hanafy, Walid A. and Liang, Qianlin and Bashir, Noman and Irwin, David and Shenoy, Prashant},
+  title   = {{CarbonScaler}: Leveraging Cloud Workload Elasticity for Optimizing Carbon-Efficiency},
+  journal = {Proceedings of the ACM on Measurement and Analysis of Computing Systems},
+  volume  = {7},
+  number  = {3},
+  pages   = {1--28},
+  year    = {2023},
+  month   = dec,
+  doi     = {10.1145/3626788}
+}
+
+@misc{wiesner2025qora,
+  author       = {Wiesner, Philipp and Grinwald, Dennis and Wei{\ss}, Jan-Philipp and Wilhelm, Eva and Khalili, Ramin and Kao, Odej},
+  title        = {Carbon-Aware Quality Adaptation for Energy-Intensive Services},
+  year         = {2024},
+  eprint       = {2411.19058},
+  archivePrefix= {arXiv},
+  primaryClass = {cs.DC},
+  note         = {arXiv:2411.19058}
+}
+
+@inproceedings{maji2024greenmirage,
+  author    = {Maji, Diptyaroop and Bashir, Noman and Irwin, David and Shenoy, Prashant and Sitaraman, Ramesh K.},
+  title     = {The Green Mirage: Impact of Location- and Market-based Carbon Intensity Estimation on Carbon Optimization Efficacy},
+  booktitle = {Proceedings of the 15th ACM International Conference on Future and Sustainable Energy Systems (e-Energy '24)},
+  series    = {e-Energy '24},
+  pages     = {256--267},
+  year      = {2024},
+  month     = may,
+  publisher = {ACM},
+  doi       = {10.1145/3632775.3639587},
+  address = {New York, NY, USA}
+}
+
+@inproceedings{sukprasert2024avm,
+  author    = {Sukprasert, Thanathorn and Bashir, Noman and Souza, Abel and Irwin, David and Shenoy, Prashant},
+  title     = {On the Implications of Choosing Average versus Marginal Carbon Intensity Signals on Carbon-aware Optimizations},
+  booktitle = {Proceedings of the 15th ACM International Conference on Future and Sustainable Energy Systems (e-Energy '24)},
+  series    = {e-Energy '24},
+  pages     = {422--427},
+  year      = {2024},
+  month     = may,
+  publisher = {ACM},
+  doi       = {10.1145/3632775.3661953},
+  address = {New York, NY, USA}
+}
+
+@inproceedings{maji2024untangling,
+  author    = {Maji, Diptyaroop and Bashir, Noman and Irwin, David and Shenoy, Prashant and Sitaraman, Ramesh K.},
+  title     = {Untangling Carbon-free Energy Attribution and Carbon Intensity Estimation for Carbon-aware Computing},
+  booktitle = {Proceedings of the 15th ACM International Conference on Future and Sustainable Energy Systems (e-Energy '24)},
+  series    = {e-Energy '24},
+  pages     = {580--588},
+  year      = {2024},
+  month     = may,
+  publisher = {ACM},
+  doi       = {10.1145/3632775.3662164},
+  address = {New York, NY, USA}
+}
+
+@misc{jiang2026equilibrium,
+  author       = {Jiang, Wei and Huber, Justin and Ferris, Michael C. and Roald, Line},
+  title        = {Can Carbon-Aware Electric Load Shifting Reduce Emissions? An Equilibrium-Based Analysis},
+  year         = {2025},
+  eprint       = {2504.07248},
+  archivePrefix= {arXiv},
+  primaryClass = {eess.SY},
+  note         = {arXiv:2504.07248}
+}
+
+@misc{wiesner2026curtailment,
+  author       = {Wiesner, Philipp and Kao, Odej},
+  title        = {Distributed {LLM} Pretraining During Renewable Curtailment Windows},
+  year         = {2026},
+  eprint       = {2602.22760},
+  archivePrefix= {arXiv},
+  primaryClass = {cs.DC},
+  note         = {arXiv:2602.22760}
+}
+
+@inproceedings{lin2023adapting,
+  author    = {Lin, Liuzixuan and Chien, Andrew A},
+  title     = {Adapting Datacenter Capacity for Greener Datacenters and Grid},
+  booktitle = {Proceedings of the 14th ACM International Conference on Future Energy Systems (e-Energy '23)},
+  series    = {e-Energy '23},
+  pages     = {200--213},
+  year      = {2023},
+  month     = jun,
+  publisher = {ACM},
+  doi       = {10.1145/3575813.3595197},
+  address = {New York, NY, USA}
+}
+
+@inproceedings{lin2024explodingai,
+  author    = {Lin, Liuzixuan and Wijayawardana, Rajini and Rao, Varsha and Nguyen, Hai and Gnibga, Emmanuel Wedan and Chien, Andrew A.},
+  title     = {Exploding {AI} Power Use: an Opportunity to Rethink Grid Planning and Management},
+  booktitle = {Proceedings of the 15th ACM International Conference on Future and Sustainable Energy Systems (e-Energy '24)},
+  series    = {e-Energy '24},
+  pages     = {434--441},
+  year      = {2024},
+  month     = may,
+  publisher = {ACM},
+  doi       = {10.1145/3632775.3661959},
+  address = {New York, NY, USA}
+}
+
+% ---------------- CI forecasting ----------------
+@inproceedings{maji2022dacf,
+  author    = {Maji, Diptyaroop and Sitaraman, Ramesh K. and Shenoy, Prashant},
+  title     = {{DACF}: Day-Ahead Carbon Intensity Forecasting of Power Grids Using Machine Learning},
+  booktitle = {Proceedings of the Thirteenth ACM International Conference on Future Energy Systems (e-Energy '22)},
+  series    = {e-Energy '22},
+  pages     = {188--192},
+  year      = {2022},
+  month     = jun,
+  publisher = {ACM},
+  doi       = {10.1145/3538637.3538849},
+  address = {New York, NY, USA}
+}
+
+@article{maji2023carboncast,
+  author  = {Maji, Diptyaroop and Shenoy, Prashant and Sitaraman, Ramesh K.},
+  title   = {Multi-Day Forecasting of Electric Grid Carbon Intensity Using Machine Learning},
+  journal = {ACM SIGEnergy Energy Informatics Review},
+  volume  = {3},
+  number  = {2},
+  pages   = {19--33},
+  year    = {2023},
+  month   = jun,
+  doi     = {10.1145/3607114.3607117}
+}
+
+@inproceedings{yan2025ensembleci,
+  author    = {Yan, Leyi and Wang, Linda and Liu, Sihang and Ding, Yi},
+  title     = {{EnsembleCI}: Ensemble Learning for Carbon Intensity Forecasting},
+  booktitle = {Proceedings of the 16th ACM International Conference on Future and Sustainable Energy Systems (e-Energy '25)},
+  series    = {e-Energy '25},
+  pages     = {208--212},
+  year      = {2025},
+  month     = jun,
+  publisher = {ACM},
+  doi       = {10.1145/3679240.3734630},
+  address = {New York, NY, USA}
+}
+
+@misc{maji2025carbonx,
+  author       = {Maji, Diptyaroop and others},
+  title        = {{CarbonX}: A Foundation Model for Carbon Intensity Forecasting},
+  year         = {2025},
+  eprint       = {2510.01521},
+  archivePrefix= {arXiv},
+  primaryClass = {cs.LG},
+  note         = {arXiv:2510.01521}
+}
+
+@misc{wiesner2025beyondmci,
+  author       = {Wiesner, Philipp and Kao, Odej},
+  title        = {Moving Beyond Marginal Carbon Intensity},
+  year         = {2025},
+  eprint       = {2507.11377},
+  archivePrefix= {arXiv},
+  primaryClass = {cs.DC},
+  note         = {arXiv:2507.11377}
+}
+
+@inproceedings{acun2023carbonexplorer,
+  author    = {Acun, Bilge and Lee, Benjamin and Kazhamiaka, Fiodar and Maeng, Kiwan and Gupta, Udit and Chakkaravarthy, Manoj and Brooks, David and Wu, Carole-Jean},
+  title     = {Carbon Explorer: A Holistic Framework for Designing Carbon Aware Datacenters},
+  booktitle = {Proceedings of the 28th ACM International Conference on Architectural Support for Programming Languages and Operating Systems (ASPLOS '23), Volume 2},
+  series    = {ASPLOS '23},
+  pages     = {118--132},
+  year      = {2023},
+  month     = jan,
+  publisher = {ACM},
+  doi       = {10.1145/3575693.3575754},
+  address = {New York, NY, USA}
+}
+
+% ---------------- uncertainty-aware scheduling ----------------
+@misc{li2024uncertainty,
+  author       = {Li, Baolin and Liu, Sihang and Ding, Yi},
+  title        = {Uncertainty-Aware Decarbonization for Datacenters},
+  year         = {2024},
+  eprint       = {2407.02390},
+  archivePrefix= {arXiv},
+  primaryClass = {cs.DC},
+  note         = {arXiv:2407.02390}
+}
+
+@misc{johnson2025uqadvice,
+  author       = {Johnson, Samuel and Lechowicz, Adam and Hajiesmaili, Mohammad},
+  title        = {Signal-Aware Workload Shifting with Uncertainty-Quantified Forecasts},
+  year         = {2025},
+  eprint       = {2509.26511},
+  archivePrefix= {arXiv},
+  primaryClass = {cs.DC},
+  note         = {arXiv:2509.26511}
+}
+
+% ---------------- LLM training sustainability ----------------
+@misc{deepseek2024v3,
+  author       = {{DeepSeek-AI}},
+  title        = {DeepSeek-{V3} Technical Report},
+  year         = {2024},
+  eprint       = {2412.19437},
+  archivePrefix= {arXiv},
+  primaryClass = {cs.CL},
+  note         = {arXiv:2412.19437}
+}
+
+@misc{kimi2025k2,
+  author       = {{Moonshot AI Kimi Team}},
+  title        = {{Kimi K2} Technical Report},
+  year         = {2025},
+  eprint       = {2507.20534},
+  archivePrefix= {arXiv},
+  primaryClass = {cs.CL},
+  note         = {arXiv:2507.20534}
+}
+
+@misc{jiang2025carbonscaling,
+  author       = {Jiang, Zheng and Chen, Lei},
+  title        = {CarbonScaling: Hardware-Aware Analytic Carbon Modeling for {LLM} Training},
+  year         = {2025},
+  eprint       = {2508.06524},
+  archivePrefix= {arXiv},
+  primaryClass = {cs.LG},
+  note         = {arXiv:2508.06524}
+}
+
+@inproceedings{chung2024perseus,
+  author    = {Chung, Jae-Won and Gu, Yile and Jang, Insu and Meng, Luoxi and Bansal, Nikhil and Chowdhury, Mosharaf},
+  title     = {Reducing Energy Bloat in Large Model Training},
+  booktitle = {Proceedings of the ACM SIGOPS 30th Symposium on Operating Systems Principles (SOSP '24)},
+  series    = {SOSP '24},
+  pages     = {144--159},
+  year      = {2024},
+  month     = nov,
+  publisher = {ACM},
+  doi       = {10.1145/3694715.3695970},
+  address = {New York, NY, USA}
+}
+
+@misc{you2022zeus,
+  author       = {You, Jie and Chung, Jae-Won and Chowdhury, Mosharaf},
+  title        = {Zeus: Understanding and Optimizing {GPU} Energy Consumption of {DNN} Training},
+  year         = {2022},
+  eprint       = {2208.06102},
+  archivePrefix= {arXiv},
+  primaryClass = {cs.DC},
+  note         = {arXiv:2208.06102}
+}
+
+@inproceedings{bian2024cafe,
+  author    = {Bian, Jieming and Wang, Lei and Ren, Shaolei and Xu, Jie},
+  title     = {{CAFE}: Carbon-Aware Federated Learning in Geographically Distributed Data Centers},
+  booktitle = {Proceedings of the 15th ACM International Conference on Future and Sustainable Energy Systems (e-Energy '24)},
+  series    = {e-Energy '24},
+  pages     = {347--360},
+  year      = {2024},
+  month     = may,
+  publisher = {ACM},
+  doi       = {10.1145/3632775.3661970},
+  address = {New York, NY, USA}
+}
+
+@inproceedings{wiesner2024fedzero,
+  author    = {Wiesner, Philipp and Khalili, Ramin and Grinwald, Dennis and Agrawal, Pratik and Thamsen, Lauritz and Kao, Odej},
+  title     = {{FedZero}: Leveraging Renewable Excess Energy in Federated Learning},
+  booktitle = {Proceedings of the 15th ACM International Conference on Future and Sustainable Energy Systems (e-Energy '24)},
+  series    = {e-Energy '24},
+  pages     = {373--385},
+  year      = {2024},
+  month     = may,
+  publisher = {ACM},
+  doi       = {10.1145/3632775.3639589},
+  address = {New York, NY, USA}
+}
+
+@inproceedings{gsteiger2024caribou,
+  author    = {Gsteiger, Viktor Urban and Long, Pin Hong and Sun, Yiran and Javanrood, Parshan and Shahrad, Mohammad},
+  title     = {Caribou: Fine-Grained Geospatial Shifting of Serverless Applications for Sustainability},
+  booktitle = {Proceedings of the ACM SIGOPS 30th Symposium on Operating Systems Principles (SOSP '24)},
+  series    = {SOSP '24},
+  pages     = {403--420},
+  year      = {2024},
+  month     = nov,
+  publisher = {ACM},
+  doi       = {10.1145/3694715.3695954},
+  address = {New York, NY, USA}
+}
+
+@misc{ecoserve2025,
+  author       = {Choukse, Akshat and Gupta, Udit and others},
+  title        = {{EcoServe}: Carbon-Aware {LLM} Inference Provisioning},
+  year         = {2025},
+  eprint       = {2502.05043},
+  archivePrefix= {arXiv},
+  primaryClass = {cs.DC},
+  note         = {arXiv:2502.05043}
+}
+
+@misc{tian2025greencache,
+  author       = {Tian, Zhengjie and others},
+  title        = {GreenCache: Carbon-Aware {KV}-Cache Management for {LLM} Serving},
+  year         = {2025},
+  eprint       = {2505.23970},
+  archivePrefix= {arXiv},
+  primaryClass = {cs.DC},
+  note         = {arXiv:2505.23970}
+}
+
+% ---------------- control / online algorithms ----------------
+@misc{lechowicz2024ocs,
+  author       = {Lechowicz, Adam and Zuo, Jinhang and Christianson, Nicolas and Hajiesmaili, Mohammad and Wierman, Adam},
+  title        = {Online Conversion with Switching Costs: Robust and Learning-Augmented Algorithms},
+  year         = {2023},
+  eprint       = {2310.20598},
+  archivePrefix= {arXiv},
+  primaryClass = {cs.LG},
+  note         = {arXiv:2310.20598}
+}
+
+@article{lechowicz2025stclip,
+  author  = {Lechowicz, Adam and Christianson, Nicolas and Sun, Bo and Bashir, Noman and Hajiesmaili, Mohammad and Wierman, Adam and Shenoy, Prashant},
+  title   = {Learning-Augmented Competitive Algorithms for Spatiotemporal Online Allocation with Deadline Constraints},
+  journal = {Proceedings of the ACM on Measurement and Analysis of Computing Systems},
+  volume  = {9},
+  number  = {1},
+  pages   = {1--49},
+  year    = {2025},
+  month   = mar,
+  doi     = {10.1145/3711701}
+}
+
+@article{lykouris2021caching,
+  author  = {Lykouris, Thodoris and Vassilvitskii, Sergei},
+  title   = {Competitive Caching with Machine Learned Advice},
+  journal = {Journal of the ACM},
+  volume  = {68},
+  number  = {4},
+  pages   = {1--25},
+  year    = {2021},
+  month   = jul,
+  doi     = {10.1145/3447579}
+}
+
+@article{perfumo2011tcl,
+  author  = {Perfumo, Cristian and Kofman, Ernesto and Braslavsky, Julio H. and Ward, John K.},
+  title   = {Load Management: Model-Based Control of Aggregate Power for Populations of Thermostatically Controlled Loads},
+  journal = {Energy Conversion and Management},
+  volume  = {55},
+  pages   = {36--48},
+  year    = {2012},
+  month   = mar,
+  doi     = {10.1016/j.enconman.2011.10.019}
+}
+
+% ---------------- data sources ----------------
+@misc{electricitymaps,
+  author       = {{Electricity Maps}},
+  title        = {Electricity Maps — Live and Historical {CO}2 Intensity of Electricity Consumption},
+  year         = {2026},
+  howpublished = {\url{https://www.electricitymaps.com}},
+  note         = {Average carbon intensity (ACI) signal, 5-minute resolution}
+}

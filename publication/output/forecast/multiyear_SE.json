@@ -1,0 +1,150 @@
+{
+  "region": "SE",
+  "model": "Deepseek",
+  "budget": 200,
+  "alpha": 1,
+  "optimizer": {
+    "resolution": 10,
+    "iterations": 6,
+    "tpMax": 100,
+    "start": "04-22",
+    "ckpt_pause": 148.8
+  },
+  "baseline": {
+    "theta_p": 18.18,
+    "theta_r": 17.51,
+    "margin": 0.6699999999999982,
+    "savings": 23.168974941556538,
+    "overhead": 106.34394394394394,
+    "score": 0.6158448747077827,
+    "num_pauses": 85,
+    "completed": true,
+    "within_budget": true
+  },
+  "rows": [
+    {
+      "year": 2022,
+      "theta_p": 19.18,
+      "theta_r": 18.43,
+      "margin": 0.75,
+      "savings": 20.102942534477716,
+      "overhead": 108.63103103103103,
+      "score": 0.6005147126723885,
+      "num_pauses": 50,
+      "completed": true,
+      "within_budget": true,
+      "stop_reason": "completed",
+      "found": true,
+      "best_completed": {
+        "theta_p": 19.18,
+        "theta_r": 18.43,
+        "margin": 0.75,
+        "savings": 20.102942534477716,
+        "overhead": 108.63103103103103,
+        "score": 0.6005147126723885,
+        "num_pauses": 50,
+        "completed": true,
+        "within_budget": true
+      },
+      "percentile": {
+        "n": 105120,
+        "pct_exceed_theta_p": 74.77359208523592,
+        "pct_below_theta_r": 20.254946727549466,
+        "pct_le_theta_p": 25.226407914764078
+      }
+    },
+    {
+      "year": 2023,
+      "theta_p": 18.18,
+      "theta_r": 17.51,
+      "margin": 0.6699999999999982,
+      "savings": 16.179512525011162,
+      "overhead": 134.94854854854856,
+      "score": 0.5808975626250559,
+      "num_pauses": 98,
+      "completed": true,
+      "within_budget": true,
+      "stop_reason": "completed",
+      "found": true,
+      "best_completed": {
+        "theta_p": 18.18,
+        "theta_r": 17.51,
+        "margin": 0.6699999999999982,
+        "savings": 16.179512525011162,
+        "overhead": 134.94854854854856,
+        "score": 0.5808975626250559,
+        "num_pauses": 98,
+        "completed": true,
+        "within_budget": true
+      },
+      "percentile": {
+        "n": 105120,
+        "pct_exceed_theta_p": 68.88222983257229,
+        "pct_below_theta_r": 24.445395738203956,
+        "pct_le_theta_p": 31.1177701674277
+      }
+    },
+    {
+      "year": 2024,
+      "theta_p": 16.48,
+      "theta_r": 15.76,
+      "margin": 0.7200000000000006,
+      "savings": 22.419550781674175,
+      "overhead": 183.72052052052052,
+      "score": 0.6120977539083708,
+      "num_pauses": 104,
+      "completed": true,
+      "within_budget": true,
+      "stop_reason": "completed",
+      "found": true,
+      "best_completed": {
+        "theta_p": 16.48,
+        "theta_r": 15.04,
+        "margin": 1.4400000000000013,
+        "savings": 22.419550781674175,
+        "overhead": 183.72052052052052,
+        "score": 0.6120977539083708,
+        "num_pauses": 104,
+        "completed": true,
+        "within_budget": true
+      },
+      "percentile": {
+        "n": 105408,
+        "pct_exceed_theta_p": 71.50026563448695,
+        "pct_below_theta_r": 21.14071038251366,
+        "pct_le_theta_p": 28.499734365513053
+      }
+    },
+    {
+      "year": 2025,
+      "theta_p": 18.18,
+      "theta_r": 17.51,
+      "margin": 0.6699999999999982,
+      "savings": 23.168974941556538,
+      "overhead": 106.34394394394394,
+      "score": 0.6158448747077827,
+      "num_pauses": 85,
+      "completed": true,
+      "within_budget": true,
+      "stop_reason": "completed",
+      "found": true,
+      "best_completed": {
+        "theta_p": 18.18,
+        "theta_r": 17.51,
+        "margin": 0.6699999999999982,
+        "savings": 23.168974941556538,
+        "overhead": 106.34394394394394,
+        "score": 0.6158448747077827,
+        "num_pauses": 85,
+        "completed": true,
+        "within_budget": true
+      },
+      "percentile": {
+        "n": 105120,
+        "pct_exceed_theta_p": 59.95053272450533,
+        "pct_below_theta_r": 30.205479452054796,
+        "pct_le_theta_p": 40.04946727549467
+      }
+    }
+  ]
+}

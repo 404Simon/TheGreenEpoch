@@ -1,0 +1,150 @@
+{
+  "region": "DE",
+  "model": "Deepseek",
+  "budget": 200,
+  "alpha": 1,
+  "optimizer": {
+    "resolution": 10,
+    "iterations": 6,
+    "tpMax": 800,
+    "start": "02-01",
+    "ckpt_pause": 148.8
+  },
+  "baseline": {
+    "theta_p": 272.37,
+    "theta_r": 267.73,
+    "margin": 4.639999999999986,
+    "savings": 43.35101808672119,
+    "overhead": 174.3095095095095,
+    "score": 0.716755090433606,
+    "num_pauses": 102,
+    "completed": true,
+    "within_budget": true
+  },
+  "rows": [
+    {
+      "year": 2022,
+      "theta_p": 449.14,
+      "theta_r": 433.14,
+      "margin": 16,
+      "savings": 14.949107476025949,
+      "overhead": 117.16436436436436,
+      "score": 0.5747455373801298,
+      "num_pauses": 63,
+      "completed": true,
+      "within_budget": true,
+      "stop_reason": "completed",
+      "found": true,
+      "best_completed": {
+        "theta_p": 449.14,
+        "theta_r": 433.14,
+        "margin": 16,
+        "savings": 14.949107476025949,
+        "overhead": 117.16436436436436,
+        "score": 0.5747455373801298,
+        "num_pauses": 63,
+        "completed": true,
+        "within_budget": true
+      },
+      "percentile": {
+        "n": 105120,
+        "pct_exceed_theta_p": 60.00380517503805,
+        "pct_below_theta_r": 35.87804414003044,
+        "pct_le_theta_p": 39.99619482496195
+      }
+    },
+    {
+      "year": 2023,
+      "theta_p": 316.1,
+      "theta_r": 301.06,
+      "margin": 15.04000000000002,
+      "savings": 28.115223670436684,
+      "overhead": 185.35415415415414,
+      "score": 0.6405761183521834,
+      "num_pauses": 85,
+      "completed": true,
+      "within_budget": true,
+      "stop_reason": "completed",
+      "found": true,
+      "best_completed": {
+        "theta_p": 316.1,
+        "theta_r": 301.06,
+        "margin": 15.04000000000002,
+        "savings": 28.115223670436684,
+        "overhead": 185.35415415415414,
+        "score": 0.6405761183521834,
+        "num_pauses": 85,
+        "completed": true,
+        "within_budget": true
+      },
+      "percentile": {
+        "n": 105120,
+        "pct_exceed_theta_p": 59.87252663622527,
+        "pct_below_theta_r": 35.82857686453577,
+        "pct_le_theta_p": 40.12747336377473
+      }
+    },
+    {
+      "year": 2024,
+      "theta_p": 251.61,
+      "theta_r": 246.85,
+      "margin": 4.760000000000019,
+      "savings": 28.328360866831243,
+      "overhead": 190.9149149149149,
+      "score": 0.6416418043341562,
+      "num_pauses": 108,
+      "completed": true,
+      "within_budget": true,
+      "stop_reason": "completed",
+      "found": true,
+      "best_completed": {
+        "theta_p": 251.61,
+        "theta_r": 246.85,
+        "margin": 4.760000000000019,
+        "savings": 28.328360866831243,
+        "overhead": 190.9149149149149,
+        "score": 0.6416418043341562,
+        "num_pauses": 108,
+        "completed": true,
+        "within_budget": true
+      },
+      "percentile": {
+        "n": 105408,
+        "pct_exceed_theta_p": 71.16347905282332,
+        "pct_below_theta_r": 27.578551912568305,
+        "pct_le_theta_p": 28.836520947176684
+      }
+    },
+    {
+      "year": 2025,
+      "theta_p": 272.37,
+      "theta_r": 267.73,
+      "margin": 4.639999999999986,
+      "savings": 43.35101808672119,
+      "overhead": 174.3095095095095,
+      "score": 0.716755090433606,
+      "num_pauses": 102,
+      "completed": true,
+      "within_budget": true,
+      "stop_reason": "completed",
+      "found": true,
+      "best_completed": {
+        "theta_p": 272.37,
+        "theta_r": 267.73,
+        "margin": 4.639999999999986,
+        "savings": 43.35101808672119,
+        "overhead": 174.3095095095095,
+        "score": 0.716755090433606,
+        "num_pauses": 102,
+        "completed": true,
+        "within_budget": true
+      },
+      "percentile": {
+        "n": 105120,
+        "pct_exceed_theta_p": 65.29014459665144,
+        "pct_below_theta_r": 33.457001522070016,
+        "pct_le_theta_p": 34.709855403348556
+      }
+    }
+  ]
+}

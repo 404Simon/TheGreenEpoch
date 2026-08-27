@@ -1,0 +1,617 @@
+{
+  "spec": "Phase B.1 stale-aware adaptive controller",
+  "generatedDate": "2026-08-20",
+  "deterministic": true,
+  "methodology": {
+    "decisionModel": "decide-on-forecast / pay-on-realized. Decision timeline = AR(1) h-step-ahead forecast (applyForecast {type:arma, order:1, horizon:h, coeffs: calibration.orders['1'].coeffs}) = a decision made on data h*5min old. Emissions evaluated on the realized timeline. Deterministic (arma/identity have no RNG); the seed field is kept for API parity and is a no-op.",
+    "adaptiveRule": "margin(h) = c*sigmaStar*sqrt((1-phi^(2h))/(1-phi^2)); thresholds = widenedThresholds(reoptNominal, margin) i.e. theta_p = nominal.thetaP + margin/2, theta_r = nominal.thetaR - margin/2.",
+    "adaptiveRuleLimitation": "The margin rule is linear in c (margin(h) = c * sigmaStar * scale(h)), so it can express any margin; the observed modest recovery at h>=6 is a property of the CHOSEN c*, not of the rule's expressiveness. At c=1 the model interval under-widens vs the empirical staleness error (DE h=72: model interval ~= 30.7 g/kWh vs AR(1) h-step RMSE ~= 113 g/kWh; IT ~= 77.6; SE ~= 7.8). The c-grid ceiling (<= 2) — within which the train-year mean-recovery signal is near-zero and noisy (<= 0.056 everywhere; see c_selection) — together with the train-year c-selection prevented selecting the c ~= 6-7 that approaches the static oracle on the 2025 test year (DE h=72: c=6 -> S ~= 31.4, completed, recovery_vs_oracle ~= 0.75; c=8 -> 36.3 but budget-infeasible; see adaptive_sensitivity_*.json). The oracle's center at h=72 also drifts (~283 g/kWh vs the nominal midpoint ~= 270), which the symmetric widening rule cannot express. The residual h=72 loss unreachable by any static-threshold policy is 32/48/30 % of the loss for DE/IT/SE.",
+    "cSelection": "per-region c* = argmax over c in grid of the mean clipped recovery across train years {trainYears} x horizons {1,3,6,12,24,72}; ties -> smallest c. Recovery measured per (year,h) against that (year,h) naive-perfect gap; self-normalizing across years.",
+    "recovery": "recovery = clip((S_adaptive - S_naive)/(S0_FF - S_naive), 0, 1) with S0_FF = perfect-foresight savings of the naive (published) policy; recovery = 0 when S0_FF - S_naive <= 1e-3 pp (no positive loss to recover, incl. naive >= perfect). recovery_raw is the unclipped value. Completion guard (phase B.0 caveat): an incomplete (budget-exhausted) run's savings is inflated vs a completed baseline, so headline recovery is 0 whenever the adaptive or naive run does not complete. The guard changes only the budget-exhausted rows; every completed-run recovery is identical with or without the guard.",
+    "recoveryVsOracle": "recovery_vs_oracle = clip((S_adaptive - S_naive)/(S_oracle - S_naive), 0, 1): the fraction of the recoverable (naive -> static oracle) gap that the adaptive controller closes; 0 when naive >= oracle or runs incomplete. This is the HEADLINE controller metric (recovery is dominated by the structural, oracle-unreachable share of the loss): DE h=1 recovery_vs_oracle 0.95, h=3 0.80.",
+    "completionWarning": "Phase B.0 caveat confirmed in B.1: aggressive margin widening (large c) and DTPR-style constant margins push overhead to the 200% budget cap and the run stops incomplete with inflated savings. All headline recovery numbers therefore require the completion guard. This makes the completion constraint a first-class design rule for the adaptive controller.",
+    "baselines": {
+      "naiveFixed": "published thresholds (DEFAULT_POLICIES) under the arma(h) decision timeline; reproduces fixed_summary.json arma rows.",
+      "perfectForesight": "published thresholds under the identity decision; equals fixed_summary.json control S0.",
+      "staticOracle": "per-h reoptimized static thresholds under the arma(h) decision timeline (runOptimization, reopt settings, one seed). h in {1,6} sourced from committed reopt_{region}.json delay rows (delay(h) == arma(h) exactly to 6 decimals for near-unit-root phi)."
+    },
+    "dtprBenchmark": "DTPR-style double threshold with constant separation 2*beta around the reopt nominal midpoint; decision on the hourly-aggregated arma(h) forecast signal; evaluated on the same arma(h) traces. beta = (checkpointPauseTime + checkpointResumeTime)/3600 * nominal.thetaP (CO2-equivalent of one checkpoint/restore cycle amortized over one hour of shifted training energy).",
+    "dtprNote": "For IT the DTPR run is budget-exhausted (incomplete) at every h (overhead 200.0%); its reported savings (33.4-34.2%, above the perfect-foresight S0 of 32.67%) are an incompleteness artifact of the phase-B.0 caveat and must not be read as genuine savings.",
+    "reproducibilityNote": "The CSV columns are formatted with toPrecision(6); any claim-to-artifact trace must use the JSON artifacts, which carry full numeric precision. The path is deterministic: re-running produces byte-identical JSON (no RNG in the arma/identity/delay decision models or the optimizer)."
+  },
+  "dtprDerivation": {
+    "betaFormula": "beta = (tau_pause + tau_resume)/3600 * thetaP_nominal",
+    "unit": "g/kWh of the nominal operating scale (thetaP_nominal)",
+    "rationale": "A pause/resume cycle costs P*(tau_pause+tau_resume) of energy at the checkpoint's CI. Equating the CO2 cost of that cycle to the CO2 saved by shifting one hour of training from the resume level to the pause level gives (theta_p - theta_r) = 2*beta with beta = tau_hours*CI_ref, CI_ref = nominal thetaP. This is the margin at which switching cost equals pause savings (per hour of shifted training), matching DTPR's switching-cost parameter beta."
+  },
+  "regions": [
+    {
+      "region": "DE",
+      "chosenC": 0.75,
+      "c_selection": {
+        "grid": [
+          0,
+          0.25,
+          0.5,
+          0.75,
+          1,
+          1.5,
+          2
+        ],
+        "meanRecovery": {
+          "0": 0.005921622930807565,
+          "1": 0.012070125960696608,
+          "2": 0.01579700273882829,
+          "0.25": 0.006237032626905946,
+          "0.5": 0.01720209686355586,
+          "0.75": 0.05555555555555555,
+          "1.5": 0
+        },
+        "perYear": {
+          "2022": {
+            "meanRecovery": {
+              "0": 0,
+              "1": 0,
+              "2": 0,
+              "0.25": 0,
+              "0.5": 0,
+              "0.75": 0,
+              "1.5": 0
+            }
+          },
+          "2023": {
+            "meanRecovery": {
+              "0": 0,
+              "1": 0,
+              "2": 0,
+              "0.25": 0,
+              "0.5": 0,
+              "0.75": 0,
+              "1.5": 0
+            }
+          },
+          "2024": {
+            "meanRecovery": {
+              "0": 0.017764868792422697,
+              "1": 0.03621037788208983,
+              "2": 0.04739100821648487,
+              "0.25": 0.01871109788071784,
+              "0.5": 0.051606290590667576,
+              "0.75": 0.16666666666666666,
+              "1.5": 0
+            }
+          }
+        }
+      },
+      "s0_naive_ff": 43.35101808672119,
+      "s0_adaptive_ff": 43.35101808672119,
+      "nominal": {
+        "thetaP": 272.37,
+        "thetaR": 267.73,
+        "margin": 4.639999999999986,
+        "source": "reopt_summary.json baseline"
+      },
+      "naivePolicy": {
+        "thetaP": 272,
+        "thetaR": 268,
+        "start": "02-01"
+      },
+      "dtpr": {
+        "beta": 11.25796,
+        "center": 270.05,
+        "thetaP": 281.30796000000004,
+        "thetaR": 258.79204,
+        "margin": 22.51592000000005,
+        "derivation": "DTPR-style double threshold: constant separation 2*beta around the reopt nominal midpoint; beta = (checkpointPauseTime + checkpointResumeTime)/3600 * nominal.thetaP = the CO2-equivalent (in g/kWh of the nominal operating scale) of one checkpoint/restore cycle amortized over one hour of shifted training energy."
+      },
+      "rows": [
+        {
+          "h": 1,
+          "savings_naive": 43.25073937462226,
+          "overhead_naive": 175.5139139139139,
+          "savings_perfect": 43.35101808672119,
+          "savings_adaptive": 43.31969819811726,
+          "overhead_adaptive": 174.3095095095095,
+          "completed_adaptive": true,
+          "recovery": 0.6876716109692953,
+          "recovery_raw": 0.6876716109692953,
+          "oracle_gap": 0.0033419485493197953,
+          "savings_oracle": 43.32304014666658,
+          "oracle_theta_p": 272.47,
+          "oracle_theta_r": 267.61,
+          "savings_dtpr": 43.128929310456265,
+          "overhead_dtpr": 175.82142142142143,
+          "recovery_dtpr": 0,
+          "recovery_vs_oracle": 0.9537771388212641
+        },
+        {
+          "h": 3,
+          "savings_naive": 43.182553979999106,
+          "overhead_naive": 175.52672672672674,
+          "savings_perfect": 43.35101808672119,
+          "savings_adaptive": 43.24132532263238,
+          "overhead_adaptive": 174.3031031031031,
+          "completed_adaptive": true,
+          "recovery": 0.3488656650774081,
+          "recovery_raw": 0.3488656650774081,
+          "oracle_gap": 0.014799534043007156,
+          "savings_oracle": 43.256124856675385,
+          "oracle_theta_p": 272.3,
+          "oracle_theta_r": 267.6,
+          "savings_dtpr": 43.0551390304575,
+          "overhead_dtpr": 175.97517517517517,
+          "recovery_dtpr": 0,
+          "recovery_vs_oracle": 0.7988397758514273
+        },
+        {
+          "h": 6,
+          "savings_naive": 42.965685128471115,
+          "overhead_naive": 175.54594594594596,
+          "savings_perfect": 43.35101808672119,
+          "savings_adaptive": 42.931454704475854,
+          "overhead_adaptive": 175.65485485485485,
+          "completed_adaptive": true,
+          "recovery": 0,
+          "recovery_raw": -0.08883336673486962,
+          "oracle_gap": 0.11071363131092227,
+          "savings_oracle": 43.042168335786776,
+          "oracle_theta_p": 272.3,
+          "oracle_theta_r": 267.6,
+          "savings_dtpr": 42.80051212875971,
+          "overhead_dtpr": 174.28388388388387,
+          "recovery_dtpr": 0,
+          "recovery_vs_oracle": 0
+        },
+        {
+          "h": 12,
+          "savings_naive": 42.213558605953594,
+          "overhead_naive": 175.58438438438438,
+          "savings_perfect": 43.35101808672119,
+          "savings_adaptive": 42.0915220127407,
+          "overhead_adaptive": 175.77017017017016,
+          "completed_adaptive": true,
+          "recovery": 0,
+          "recovery_raw": -0.10728873887493788,
+          "oracle_gap": 0.21458976128097618,
+          "savings_oracle": 42.30611177402167,
+          "oracle_theta_p": 271.76,
+          "oracle_theta_r": 268.52,
+          "savings_dtpr": 42.01821862325683,
+          "overhead_dtpr": 174.43763763763764,
+          "recovery_dtpr": 0,
+          "recovery_vs_oracle": 0
+        },
+        {
+          "h": 24,
+          "savings_naive": 39.77982873978418,
+          "overhead_naive": 175.66126126126127,
+          "savings_perfect": 43.35101808672119,
+          "savings_adaptive": 39.50329969011629,
+          "overhead_adaptive": 175.93673673673675,
+          "completed_adaptive": true,
+          "recovery": 0,
+          "recovery_raw": -0.07743332061209894,
+          "oracle_gap": 0.4057457735977863,
+          "savings_oracle": 39.90904546371408,
+          "oracle_theta_p": 271.76,
+          "oracle_theta_r": 268.52,
+          "savings_dtpr": 39.52981954858593,
+          "overhead_dtpr": 174.5145145145145,
+          "recovery_dtpr": 0,
+          "recovery_vs_oracle": 0
+        },
+        {
+          "h": 72,
+          "savings_naive": 27.7345013397093,
+          "overhead_naive": 175.96876876876877,
+          "savings_perfect": 43.35101808672119,
+          "savings_adaptive": 27.321035463092503,
+          "overhead_adaptive": 176.2058058058058,
+          "completed_adaptive": true,
+          "recovery": 0,
+          "recovery_raw": -0.026476190773842775,
+          "oracle_gap": 5.349508568116473,
+          "savings_oracle": 32.670544031208976,
+          "oracle_theta_p": 407.47,
+          "oracle_theta_r": 159.35,
+          "savings_dtpr": 27.660500843217296,
+          "overhead_dtpr": 174.82202202202203,
+          "recovery_dtpr": 0,
+          "recovery_vs_oracle": 0
+        }
+      ]
+    },
+    {
+      "region": "IT",
+      "chosenC": 2,
+      "c_selection": {
+        "grid": [
+          0,
+          0.25,
+          0.5,
+          0.75,
+          1,
+          1.5,
+          2
+        ],
+        "meanRecovery": {
+          "0": 0.003497384649929524,
+          "1": 0.002335658223267855,
+          "2": 0.024791980146574258,
+          "0.25": 0.003426866357817327,
+          "0.5": 0,
+          "0.75": 0.00010573063798527773,
+          "1.5": 0.010007520226935773
+        },
+        "perYear": {
+          "2022": {
+            "meanRecovery": {
+              "0": 0,
+              "1": 0,
+              "2": 0,
+              "0.25": 0,
+              "0.5": 0,
+              "0.75": 0,
+              "1.5": 0
+            }
+          },
+          "2023": {
+            "meanRecovery": {
+              "0": 0,
+              "1": 0,
+              "2": 0,
+              "0.25": 0,
+              "0.5": 0,
+              "0.75": 0,
+              "1.5": 0
+            }
+          },
+          "2024": {
+            "meanRecovery": {
+              "0": 0.010492153949788571,
+              "1": 0.007006974669803565,
+              "2": 0.07437594043972277,
+              "0.25": 0.010280599073451982,
+              "0.5": 0,
+              "0.75": 0.0003171919139558332,
+              "1.5": 0.03002256068080732
+            }
+          }
+        }
+      },
+      "s0_naive_ff": 32.665522834629066,
+      "s0_adaptive_ff": 32.665522834629066,
+      "nominal": {
+        "thetaP": 246.69999999999996,
+        "thetaR": 230.44999999999996,
+        "margin": 16.25,
+        "source": "reopt_summary.json baseline"
+      },
+      "naivePolicy": {
+        "thetaP": 246,
+        "thetaR": 231,
+        "start": "01-14"
+      },
+      "dtpr": {
+        "beta": 10.196933333333332,
+        "center": 238.57499999999996,
+        "thetaP": 248.7719333333333,
+        "thetaR": 228.37806666666663,
+        "margin": 20.393866666666668,
+        "derivation": "DTPR-style double threshold: constant separation 2*beta around the reopt nominal midpoint; beta = (checkpointPauseTime + checkpointResumeTime)/3600 * nominal.thetaP = the CO2-equivalent (in g/kWh of the nominal operating scale) of one checkpoint/restore cycle amortized over one hour of shifted training energy."
+      },
+      "rows": [
+        {
+          "h": 1,
+          "savings_naive": 32.511953391059826,
+          "overhead_naive": 196.1041041041041,
+          "savings_perfect": 32.665522834629066,
+          "savings_adaptive": 32.26323525150471,
+          "overhead_adaptive": 199.64044044044044,
+          "completed_adaptive": true,
+          "recovery": 0,
+          "recovery_raw": -1.6195809125464316,
+          "oracle_gap": 0.2977838889665634,
+          "savings_oracle": 32.561019140471274,
+          "oracle_theta_p": 246.69999999999996,
+          "oracle_theta_r": 230.44999999999996,
+          "savings_dtpr": 33.420272713884955,
+          "overhead_dtpr": 200.0016016016016,
+          "recovery_dtpr": 0,
+          "recovery_vs_oracle": 0
+        },
+        {
+          "h": 3,
+          "savings_naive": 32.306983522019344,
+          "overhead_naive": 196.11691691691692,
+          "savings_perfect": 32.665522834629066,
+          "savings_adaptive": 32.8300646241611,
+          "overhead_adaptive": 200.0016016016016,
+          "completed_adaptive": false,
+          "recovery": 0,
+          "recovery_raw": 1.4589225888072848,
+          "oracle_gap": -0.4787153410162688,
+          "savings_oracle": 32.351349283144835,
+          "oracle_theta_p": 246.34,
+          "oracle_theta_r": 231.08,
+          "savings_dtpr": 33.96122087789989,
+          "overhead_dtpr": 200.0016016016016,
+          "recovery_dtpr": 0,
+          "recovery_vs_oracle": 0
+        },
+        {
+          "h": 6,
+          "savings_naive": 32.05164153544066,
+          "overhead_naive": 196.13613613613614,
+          "savings_perfect": 32.665522834629066,
+          "savings_adaptive": 33.18910113665332,
+          "overhead_adaptive": 200.0016016016016,
+          "completed_adaptive": false,
+          "recovery": 0,
+          "recovery_raw": 1.8528982764525677,
+          "oracle_gap": -1.0611727694410504,
+          "savings_oracle": 32.12792836721227,
+          "oracle_theta_p": 240.67,
+          "oracle_theta_r": 236.84,
+          "savings_dtpr": 34.15093186450147,
+          "overhead_dtpr": 200.0016016016016,
+          "recovery_dtpr": 0,
+          "recovery_vs_oracle": 0
+        },
+        {
+          "h": 12,
+          "savings_naive": 31.308826806415897,
+          "overhead_naive": 196.17457457457456,
+          "savings_perfect": 32.665522834629066,
+          "savings_adaptive": 33.8675721084022,
+          "overhead_adaptive": 200.0016016016016,
+          "completed_adaptive": false,
+          "recovery": 0,
+          "recovery_raw": 1.8860122302829245,
+          "oracle_gap": -2.4301450399997258,
+          "savings_oracle": 31.437427068402474,
+          "oracle_theta_p": 239.7,
+          "oracle_theta_r": 236.46,
+          "savings_dtpr": 32.16647725068518,
+          "overhead_dtpr": 200.0016016016016,
+          "recovery_dtpr": 0,
+          "recovery_vs_oracle": 0
+        },
+        {
+          "h": 24,
+          "savings_naive": 28.964555236710527,
+          "overhead_naive": 196.25145145145146,
+          "savings_perfect": 32.665522834629066,
+          "savings_adaptive": 32.136115604588134,
+          "overhead_adaptive": 200.0016016016016,
+          "completed_adaptive": false,
+          "recovery": 0,
+          "recovery_raw": 0.8569543731378045,
+          "oracle_gap": -2.8133006572425003,
+          "savings_oracle": 29.322814947345634,
+          "oracle_theta_p": 244.46,
+          "oracle_theta_r": 242.03,
+          "savings_dtpr": 30.283299024980703,
+          "overhead_dtpr": 200.0016016016016,
+          "recovery_dtpr": 0,
+          "recovery_vs_oracle": 0
+        },
+        {
+          "h": 72,
+          "savings_naive": 18.778688443391008,
+          "overhead_naive": 196.55895895895895,
+          "savings_perfect": 32.665522834629066,
+          "savings_adaptive": 22.46755849259938,
+          "overhead_adaptive": 200.0016016016016,
+          "completed_adaptive": false,
+          "recovery": 0,
+          "recovery_raw": 0.2656379377243727,
+          "oracle_gap": 3.0301223958703076,
+          "savings_oracle": 25.497680888469688,
+          "oracle_theta_p": 349.81,
+          "oracle_theta_r": 128.13,
+          "savings_dtpr": 20.26942737083863,
+          "overhead_dtpr": 200.0016016016016,
+          "recovery_dtpr": 0,
+          "recovery_vs_oracle": 0
+        }
+      ]
+    },
+    {
+      "region": "SE",
+      "chosenC": 1.5,
+      "c_selection": {
+        "grid": [
+          0,
+          0.25,
+          0.5,
+          0.75,
+          1,
+          1.5,
+          2
+        ],
+        "meanRecovery": {
+          "0": 0,
+          "1": 0.02174707644684419,
+          "2": 0,
+          "0.25": 0.0014863919691600026,
+          "0.5": 0.021675597220155565,
+          "0.75": 0.01631081367902137,
+          "1.5": 0.028891010105000083
+        },
+        "perYear": {
+          "2022": {
+            "meanRecovery": {
+              "0": 0,
+              "1": 0,
+              "2": 0,
+              "0.25": 0,
+              "0.5": 0,
+              "0.75": 0,
+              "1.5": 0
+            }
+          },
+          "2023": {
+            "meanRecovery": {
+              "0": 0,
+              "1": 0,
+              "2": 0,
+              "0.25": 0,
+              "0.5": 0,
+              "0.75": 0.01708269259723758,
+              "1.5": 0
+            }
+          },
+          "2024": {
+            "meanRecovery": {
+              "0": 0,
+              "1": 0.06524122934053257,
+              "2": 0,
+              "0.25": 0.004459175907480008,
+              "0.5": 0.0650267916604667,
+              "0.75": 0.03184974843982653,
+              "1.5": 0.08667303031500025
+            }
+          }
+        }
+      },
+      "s0_naive_ff": 22.868494380975463,
+      "s0_adaptive_ff": 23.168974941556538,
+      "nominal": {
+        "thetaP": 18.18,
+        "thetaR": 17.51,
+        "margin": 0.6699999999999982,
+        "source": "reopt_summary.json baseline"
+      },
+      "naivePolicy": {
+        "thetaP": 19,
+        "thetaR": 18,
+        "start": "04-22"
+      },
+      "dtpr": {
+        "beta": 0.75144,
+        "center": 17.845,
+        "thetaP": 18.596439999999998,
+        "thetaR": 17.09356,
+        "margin": 1.5028799999999976,
+        "derivation": "DTPR-style double threshold: constant separation 2*beta around the reopt nominal midpoint; beta = (checkpointPauseTime + checkpointResumeTime)/3600 * nominal.thetaP = the CO2-equivalent (in g/kWh of the nominal operating scale) of one checkpoint/restore cycle amortized over one hour of shifted training energy."
+      },
+      "rows": [
+        {
+          "h": 1,
+          "savings_naive": 23.085804843384555,
+          "overhead_naive": 106.34394394394394,
+          "savings_perfect": 22.868494380975463,
+          "savings_adaptive": 21.97730004159934,
+          "overhead_adaptive": 129.3109109109109,
+          "completed_adaptive": true,
+          "recovery": 0,
+          "recovery_raw": 0,
+          "oracle_gap": 1.108504801785216,
+          "savings_oracle": 23.085804843384555,
+          "oracle_theta_p": 18.18,
+          "oracle_theta_r": 17.51,
+          "savings_dtpr": 22.347960920199764,
+          "overhead_dtpr": 119.24004004004004,
+          "recovery_dtpr": 0,
+          "recovery_vs_oracle": 0
+        },
+        {
+          "h": 3,
+          "savings_naive": 22.921120898155177,
+          "overhead_naive": 106.34394394394394,
+          "savings_perfect": 22.868494380975463,
+          "savings_adaptive": 21.696530915175348,
+          "overhead_adaptive": 121.93073073073073,
+          "completed_adaptive": true,
+          "recovery": 0,
+          "recovery_raw": 0,
+          "oracle_gap": 1.224589982979829,
+          "savings_oracle": 22.921120898155177,
+          "oracle_theta_p": 18.18,
+          "oracle_theta_r": 17.51,
+          "savings_dtpr": 22.37232029540736,
+          "overhead_dtpr": 115.70370370370371,
+          "recovery_dtpr": 0,
+          "recovery_vs_oracle": 0
+        },
+        {
+          "h": 6,
+          "savings_naive": 22.679922501490527,
+          "overhead_naive": 106.34394394394394,
+          "savings_perfect": 22.868494380975463,
+          "savings_adaptive": 21.324051737433606,
+          "overhead_adaptive": 121.93073073073073,
+          "completed_adaptive": true,
+          "recovery": 0,
+          "recovery_raw": -7.190206555507304,
+          "oracle_gap": 1.3558707640569203,
+          "savings_oracle": 22.679922501490527,
+          "oracle_theta_p": 18.18,
+          "oracle_theta_r": 17.51,
+          "savings_dtpr": 22.223448263867006,
+          "overhead_dtpr": 114.01241241241242,
+          "recovery_dtpr": 0,
+          "recovery_vs_oracle": 0
+        },
+        {
+          "h": 12,
+          "savings_naive": 22.16863679174778,
+          "overhead_naive": 106.34394394394394,
+          "savings_perfect": 22.868494380975463,
+          "savings_adaptive": 17.86568359301475,
+          "overhead_adaptive": 143.61001001001,
+          "completed_adaptive": true,
+          "recovery": 0,
+          "recovery_raw": -6.148326838152151,
+          "oracle_gap": 4.302953198733029,
+          "savings_oracle": 22.16863679174778,
+          "oracle_theta_p": 18.18,
+          "oracle_theta_r": 17.51,
+          "savings_dtpr": 22.164567936257242,
+          "overhead_dtpr": 106.47847847847848,
+          "recovery_dtpr": 0,
+          "recovery_vs_oracle": 0
+        },
+        {
+          "h": 24,
+          "savings_naive": 20.234062583029104,
+          "overhead_naive": 106.34394394394394,
+          "savings_perfect": 22.868494380975463,
+          "savings_adaptive": 23.46323648480623,
+          "overhead_adaptive": 200.0016016016016,
+          "completed_adaptive": false,
+          "recovery": 0,
+          "recovery_raw": 1.2257572597986377,
+          "oracle_gap": -3.1506429080203056,
+          "savings_oracle": 20.312593576785925,
+          "oracle_theta_p": 18.67,
+          "oracle_theta_r": 18.67,
+          "savings_dtpr": 20.22679792792968,
+          "overhead_dtpr": 106.47847847847848,
+          "recovery_dtpr": 0,
+          "recovery_vs_oracle": 0
+        },
+        {
+          "h": 72,
+          "savings_naive": 8.637109516140871,
+          "overhead_naive": 105.72892892892892,
+          "savings_perfect": 22.868494380975463,
+          "savings_adaptive": 47.65966179388767,
+          "overhead_adaptive": 200.0016016016016,
+          "completed_adaptive": false,
+          "recovery": 0,
+          "recovery_raw": 2.7420066738670377,
+          "oracle_gap": -34.72626177292105,
+          "savings_oracle": 12.933400020966621,
+          "oracle_theta_p": 36.92,
+          "oracle_theta_r": 14.91,
+          "savings_dtpr": 8.51829560409197,
+          "overhead_dtpr": 106.47847847847848,
+          "recovery_dtpr": 0,
+          "recovery_vs_oracle": 0
+        }
+      ]
+    }
+  ]
+}

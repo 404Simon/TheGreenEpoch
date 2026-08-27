@@ -1,0 +1,651 @@
+{
+  "method": {
+    "note": "B.5.1 grace-horizon validation. Empirical grace g = grace_persistence (paper uses the persistence/delay family) from multiyear_fixed_summary.json; delay == persistence in all 9 cells (only arma differs, SE-2023: arma 24 vs delay/persistence 12). RMSE at g = empirical AR(1) (order 1, model 'ar') evaluation RMSE at horizon g from calibration_{region}.json; every g lies on the grid {1,3,6,12,24,72} so no interpolation is needed. The calibration bundle is evaluated on test year 2025; that bundle is reused for 2023/2024 exactly as in the B.3.2 multiyear sweep (documented B.3 choice). S = |theta_p − μ|; μ = decision-year mean CI (primary); trainMean and year-median reported as sensitivity. The SPEC relation RMSE(g) ≈ k·S is fit through the origin (y = k·x) and with an intercept; R² = 1 − SSE/SST on the same y-scale for both.",
+    "mu": {
+      "trainMean": {
+        "label": "μ = calibration trainMean (2022–24)",
+        "src": "calibration_{region}.json → trainMean"
+      },
+      "yearMean": {
+        "label": "μ = decision-year mean CI (5-min)",
+        "src": "public/data/co2/{region}_{year}.json → mean(carbonIntensity)"
+      },
+      "yearMedian": {
+        "label": "μ = decision-year median CI (5-min)",
+        "src": "public/data/co2/{region}_{year}.json → median(carbonIntensity)"
+      }
+    },
+    "grid": [
+      1,
+      3,
+      6,
+      12,
+      24,
+      72
+    ],
+    "outlier": {
+      "region": "IT",
+      "year": 2023
+    },
+    "outlierNote": "IT-2023 grace = 72 is right-censored on the grid: h=72 persistence degradation is only 3.1% (never crosses the 10% threshold inside the grid), so the empirical grace is not an interior crossing and the point is excluded from the primary fit.",
+    "signIssue": "theta_p < mu in all nine (region, year) cells (the control is pause-mostly / resume-on-clean-windows; e.g. DE 2025 theta_p=272.37 < year mean 339.94). S is therefore taken in absolute value; the excursion magnitude — not its sign — sets the forecast-error budget.",
+    "theoreticalNote": "Theoretical AR(1) h-step RMSE sigma*·sqrt((1−phi^(2h))/(1−phi^2)) grossly under-predicts the empirical evaluation RMSE (ratio ≈ 3–4 at h=72); this is the documented model under-widening (B.1 review M1). The empirical evaluation RMSE is the primary curve; the theoretical curve is reported as comparison and is NOT used for g_pred."
+  },
+  "calibrationFacts": {
+    "DE": {
+      "phi": 0.9996547011669317,
+      "sigmaStar": 3.6584495444435383,
+      "trainMean": 398.2076775395377
+    },
+    "IT": {
+      "phi": 0.998681463719788,
+      "sigmaStar": 4.420603976606696,
+      "trainMean": 325.6310225314274
+    },
+    "SE": {
+      "phi": 0.9959495079388525,
+      "sigmaStar": 0.7736418960809753,
+      "trainMean": 23.44349401865369
+    }
+  },
+  "points": [
+    {
+      "region": "DE",
+      "year": 2023,
+      "g": 24,
+      "gDelay": 24,
+      "s0": 55.47936225341854,
+      "h72DegFrac": 0.12706597947496764,
+      "rmseG": 49.760266201060084,
+      "thetaP": 316.1,
+      "yearMeanCi": 375.5472317351598,
+      "yearMedianCi": 356,
+      "S": {
+        "trainMean": 82.10767753953769,
+        "yearMean": 59.44723173515979,
+        "yearMedian": 39.89999999999998
+      },
+      "k": {
+        "trainMean": 0.606036703170648,
+        "yearMean": 0.8370493418893651,
+        "yearMedian": 1.2471244661919827
+      },
+      "isOutlier": false
+    },
+    {
+      "region": "DE",
+      "year": 2024,
+      "g": 24,
+      "gDelay": 24,
+      "s0": 27.240181080187753,
+      "h72DegFrac": 0.39652007842266407,
+      "rmseG": 49.760266201060084,
+      "thetaP": 251.61,
+      "yearMeanCi": 340.57413099574984,
+      "yearMedianCi": 338,
+      "S": {
+        "trainMean": 146.5976775395377,
+        "yearMean": 88.96413099574983,
+        "yearMedian": 86.38999999999999
+      },
+      "k": {
+        "trainMean": 0.33943420548145886,
+        "yearMean": 0.5593295370179846,
+        "yearMedian": 0.5759956731225847
+      },
+      "isOutlier": false
+    },
+    {
+      "region": "DE",
+      "year": 2025,
+      "g": 24,
+      "gDelay": 24,
+      "s0": 43.35101808672119,
+      "h72DegFrac": 0.3582705625481429,
+      "rmseG": 49.760266201060084,
+      "thetaP": 272.37,
+      "yearMeanCi": 339.939450152207,
+      "yearMedianCi": 340,
+      "S": {
+        "trainMean": 125.83767753953771,
+        "yearMean": 67.56945015220697,
+        "yearMedian": 67.63
+      },
+      "k": {
+        "trainMean": 0.39543217241454254,
+        "yearMean": 0.7364314211373645,
+        "yearMedian": 0.7357720863678854
+      },
+      "isOutlier": false
+    },
+    {
+      "region": "IT",
+      "year": 2023,
+      "g": 72,
+      "gDelay": 72,
+      "s0": 73.74837144484212,
+      "h72DegFrac": 0.031186063246374726,
+      "rmseG": 77.60957688812981,
+      "thetaP": 296.97,
+      "yearMeanCi": 313.29599505327246,
+      "yearMedianCi": 315,
+      "S": {
+        "trainMean": 28.661022531427363,
+        "yearMean": 16.325995053272436,
+        "yearMedian": 18.029999999999973
+      },
+      "k": {
+        "trainMean": 2.707843964849105,
+        "yearMean": 4.753742521352381,
+        "yearMedian": 4.3044690453760355
+      },
+      "isOutlier": true
+    },
+    {
+      "region": "IT",
+      "year": 2024,
+      "g": 24,
+      "gDelay": 24,
+      "s0": 19.422835389868464,
+      "h72DegFrac": 0.3607869114250589,
+      "rmseG": 36.64342170280091,
+      "thetaP": 222.27,
+      "yearMeanCi": 263.86288517000605,
+      "yearMedianCi": 266,
+      "S": {
+        "trainMean": 103.36102253142738,
+        "yearMean": 41.59288517000604,
+        "yearMedian": 43.72999999999999
+      },
+      "k": {
+        "trainMean": 0.35451876157339013,
+        "yearMean": 0.881002160658613,
+        "yearMedian": 0.8379469861148163
+      },
+      "isOutlier": false
+    },
+    {
+      "region": "IT",
+      "year": 2025,
+      "g": 12,
+      "gDelay": 12,
+      "s0": 32.665522834629066,
+      "h72DegFrac": 0.4219496048185344,
+      "rmseG": 20.619526600479556,
+      "thetaP": 246.7,
+      "yearMeanCi": 281.9925799086758,
+      "yearMedianCi": 293,
+      "S": {
+        "trainMean": 78.9310225314274,
+        "yearMean": 35.292579908675805,
+        "yearMedian": 46.30000000000001
+      },
+      "k": {
+        "trainMean": 0.261234758390082,
+        "yearMean": 0.5842453754821919,
+        "yearMedian": 0.445346146878608
+      },
+      "isOutlier": false
+    },
+    {
+      "region": "SE",
+      "year": 2023,
+      "g": 12,
+      "gDelay": 12,
+      "s0": 15.857954451028917,
+      "h72DegFrac": 0.6313312831823056,
+      "rmseG": 2.5814563607496663,
+      "thetaP": 18.18,
+      "yearMeanCi": 23.79136225266362,
+      "yearMedianCi": 22,
+      "S": {
+        "trainMean": 5.263494018653692,
+        "yearMean": 5.611362252663621,
+        "yearMedian": 3.8200000000000003
+      },
+      "k": {
+        "trainMean": 0.490445386961788,
+        "yearMean": 0.46004093917199723,
+        "yearMedian": 0.6757739164266142
+      },
+      "isOutlier": false
+    },
+    {
+      "region": "SE",
+      "year": 2024,
+      "g": 12,
+      "gDelay": 12,
+      "s0": 19.822904297578006,
+      "h72DegFrac": 0.8018008817524928,
+      "rmseG": 2.5814563607496663,
+      "thetaP": 16.48,
+      "yearMeanCi": 21.73811285670917,
+      "yearMedianCi": 20,
+      "S": {
+        "trainMean": 6.963494018653691,
+        "yearMean": 5.258112856709168,
+        "yearMedian": 3.5199999999999996
+      },
+      "k": {
+        "trainMean": 0.37071279932667484,
+        "yearMean": 0.49094730963330663,
+        "yearMedian": 0.7333682843038826
+      },
+      "isOutlier": false
+    },
+    {
+      "region": "SE",
+      "year": 2025,
+      "g": 12,
+      "gDelay": 12,
+      "s0": 22.868494380975463,
+      "h72DegFrac": 0.6049044059503382,
+      "rmseG": 2.5814563607496663,
+      "thetaP": 18.18,
+      "yearMeanCi": 20.994682267884322,
+      "yearMedianCi": 20,
+      "S": {
+        "trainMean": 5.263494018653692,
+        "yearMean": 2.814682267884322,
+        "yearMedian": 1.8200000000000003
+      },
+      "k": {
+        "trainMean": 0.490445386961788,
+        "yearMean": 0.9171395259082078,
+        "yearMedian": 1.4183826157965198
+      },
+      "isOutlier": false
+    }
+  ],
+  "predicted": [
+    {
+      "region": "DE",
+      "year": 2023,
+      "gEmpirical": 24,
+      "gPred": 24,
+      "gPredCont": 18,
+      "gPredTheoretical": null,
+      "target": 40.660502808471634,
+      "kPrimary": 0.6839763874895989,
+      "within1Step": true,
+      "dev": 0,
+      "devCont": -6
+    },
+    {
+      "region": "DE",
+      "year": 2024,
+      "gEmpirical": 24,
+      "gPred": 72,
+      "gPredCont": 29,
+      "gPredTheoretical": null,
+      "target": 60.84936493462442,
+      "kPrimary": 0.6839763874895989,
+      "within1Step": true,
+      "dev": 48,
+      "devCont": 5
+    },
+    {
+      "region": "DE",
+      "year": 2025,
+      "gEmpirical": 24,
+      "gPred": 24,
+      "gPredCont": 22,
+      "gPredTheoretical": null,
+      "target": 46.21590841976505,
+      "kPrimary": 0.6839763874895989,
+      "within1Step": true,
+      "dev": 0,
+      "devCont": -2
+    },
+    {
+      "region": "IT",
+      "year": 2023,
+      "gEmpirical": 72,
+      "gPred": 6,
+      "gPredCont": 5,
+      "gPredTheoretical": 12,
+      "target": 11.166595118710342,
+      "kPrimary": 0.6839763874895989,
+      "within1Step": false,
+      "dev": -66,
+      "devCont": -67
+    },
+    {
+      "region": "IT",
+      "year": 2024,
+      "gEmpirical": 24,
+      "gPred": 24,
+      "gPredCont": 17,
+      "gPredTheoretical": 72,
+      "target": 28.448551343850443,
+      "kPrimary": 0.6839763874895989,
+      "within1Step": true,
+      "dev": 0,
+      "devCont": -7
+    },
+    {
+      "region": "IT",
+      "year": 2025,
+      "gEmpirical": 12,
+      "gPred": 24,
+      "gPredCont": 14,
+      "gPredTheoretical": 72,
+      "target": 24.139291311124076,
+      "kPrimary": 0.6839763874895989,
+      "within1Step": true,
+      "dev": 12,
+      "devCont": 2
+    },
+    {
+      "region": "SE",
+      "year": 2023,
+      "gEmpirical": 12,
+      "gPred": 24,
+      "gPredCont": 20,
+      "gPredTheoretical": 72,
+      "target": 3.8380392824723617,
+      "kPrimary": 0.6839763874895989,
+      "within1Step": true,
+      "dev": 12,
+      "devCont": 8
+    },
+    {
+      "region": "SE",
+      "year": 2024,
+      "gEmpirical": 12,
+      "gPred": 24,
+      "gPredCont": 18,
+      "gPredTheoretical": 24,
+      "target": 3.596425036744552,
+      "kPrimary": 0.6839763874895989,
+      "within1Step": true,
+      "dev": 12,
+      "devCont": 6
+    },
+    {
+      "region": "SE",
+      "year": 2025,
+      "gEmpirical": 12,
+      "gPred": 12,
+      "gPredCont": 6,
+      "gPredTheoretical": 12,
+      "target": 1.92517620951855,
+      "kPrimary": 0.6839763874895989,
+      "within1Step": true,
+      "dev": 0,
+      "devCont": -6
+    }
+  ],
+  "rmseEmpiricalVsTheoretical": {
+    "DE": [
+      {
+        "h": 1,
+        "empirical": 4.213491794794646,
+        "theoretical": 3.6584495444435383,
+        "ratio": 1.1517151579127578
+      },
+      {
+        "h": 3,
+        "empirical": 7.239956575113363,
+        "theoretical": 6.334432963925401,
+        "ratio": 1.142952592022825
+      },
+      {
+        "h": 6,
+        "empirical": 13.850457105344292,
+        "theoretical": 8.953603905654347,
+        "ratio": 1.5469142092155206
+      },
+      {
+        "h": 12,
+        "empirical": 26.536168995003642,
+        "theoretical": 12.649209341898983,
+        "ratio": 2.0978519904090587
+      },
+      {
+        "h": 24,
+        "empirical": 49.760266201060084,
+        "theoretical": 17.85173038574967,
+        "ratio": 2.787419769726174
+      },
+      {
+        "h": 72,
+        "empirical": 113.41311636874056,
+        "theoretical": 30.666283223451785,
+        "ratio": 3.698300036634659
+      }
+    ],
+    "IT": [
+      {
+        "h": 1,
+        "empirical": 5.020184452824066,
+        "theoretical": 4.420603976606696,
+        "ratio": 1.135633157683945
+      },
+      {
+        "h": 3,
+        "empirical": 8.693728831899499,
+        "theoretical": 7.646623911114977,
+        "ratio": 1.1369368930597556
+      },
+      {
+        "h": 6,
+        "empirical": 12.49181960606961,
+        "theoretical": 10.792620669951077,
+        "ratio": 1.1574408096125772
+      },
+      {
+        "h": 12,
+        "empirical": 20.619526600479556,
+        "theoretical": 15.203013548400255,
+        "ratio": 1.3562789071282026
+      },
+      {
+        "h": 24,
+        "empirical": 36.64342170280091,
+        "theoretical": 21.33211081986835,
+        "ratio": 1.7177588290358905
+      },
+      {
+        "h": 72,
+        "empirical": 77.60957688812981,
+        "theoretical": 35.820563828159,
+        "ratio": 2.1666207505957775
+      }
+    ],
+    "SE": [
+      {
+        "h": 1,
+        "empirical": 0.7761409632893254,
+        "theoretical": 0.7736418960809753,
+        "ratio": 1.0032302635379617
+      },
+      {
+        "h": 3,
+        "empirical": 1.3434564265618045,
+        "theoretical": 1.3345741201827799,
+        "ratio": 1.0066555362079164
+      },
+      {
+        "h": 6,
+        "empirical": 1.8740227530783105,
+        "theoretical": 1.8759867874285368,
+        "ratio": 0.9989530660005775
+      },
+      {
+        "h": 12,
+        "empirical": 2.5814563607496663,
+        "theoretical": 2.6213265052528625,
+        "ratio": 0.9847900883681218
+      },
+      {
+        "h": 24,
+        "empirical": 4.220370299204481,
+        "theoretical": 3.620074388574476,
+        "ratio": 1.1658241920455097
+      },
+      {
+        "h": 72,
+        "empirical": 7.824998519105827,
+        "theoretical": 5.724168533805048,
+        "ratio": 1.3670105051753754
+      }
+    ]
+  },
+  "fits": {
+    "trainMean": {
+      "all": {
+        "throughOrigin": {
+          "k": 0.40911123301281305,
+          "r2": 0.15493015574146762,
+          "sse": 4877.958920262808,
+          "sst": 5772.255338897755,
+          "n": 9
+        },
+        "intercept": {
+          "a": 15.211622548787751,
+          "b": 0.265860475441048,
+          "r2": 0.2956323185862926,
+          "sse": 4065.7901095873053,
+          "sst": 5772.255338897755,
+          "n": 9
+        }
+      },
+      "noIT23": {
+        "throughOrigin": {
+          "k": 0.378198599631264,
+          "r2": 0.8622410706265,
+          "sse": 478.88098984747523,
+          "sst": 3476.2246775967988,
+          "n": 8
+        },
+        "intercept": {
+          "a": 1.5634465035015204,
+          "b": 0.3640108965140923,
+          "r2": 0.8643292636916655,
+          "sse": 471.6219615827604,
+          "sst": 3476.2246775967988,
+          "n": 8
+        }
+      }
+    },
+    "yearMean": {
+      "all": {
+        "throughOrigin": {
+          "k": 0.7401130181142903,
+          "r2": 0.1936086931126041,
+          "sse": 4654.696526421509,
+          "sst": 5772.255338897755,
+          "n": 9
+        },
+        "intercept": {
+          "a": 14.683058398733102,
+          "b": 0.4947718453593184,
+          "r2": 0.32825504018080687,
+          "sse": 3877.483430693995,
+          "sst": 5772.255338897755,
+          "n": 9
+        }
+      },
+      "noIT23": {
+        "throughOrigin": {
+          "k": 0.6839763874895989,
+          "r2": 0.9134345981568398,
+          "sse": 300.92078611327696,
+          "sst": 3476.2246775967988,
+          "n": 8
+        },
+        "intercept": {
+          "a": 1.5038039901612414,
+          "b": 0.6597859952269051,
+          "r2": 0.9154309707955808,
+          "sse": 293.9809462808067,
+          "sst": 3476.2246775967988,
+          "n": 8
+        }
+      }
+    },
+    "yearMedian": {
+      "all": {
+        "throughOrigin": {
+          "k": 0.7555004233230204,
+          "r2": 0.1437907468095696,
+          "sse": 4942.2584329421215,
+          "sst": 5772.255338897755,
+          "n": 9
+        },
+        "intercept": {
+          "a": 15.639512012527568,
+          "b": 0.4857687367875924,
+          "r2": 0.2977710558335207,
+          "sse": 4053.4447720934936,
+          "sst": 5772.255338897755,
+          "n": 9
+        }
+      },
+      "noIT23": {
+        "throughOrigin": {
+          "k": 0.6903760283014404,
+          "r2": 0.7777265641864052,
+          "sse": 772.6724027494465,
+          "sst": 3476.2246775967988,
+          "n": 8
+        },
+        "intercept": {
+          "a": 3.787528074835812,
+          "b": 0.6277093630037298,
+          "r2": 0.7907270986361561,
+          "sse": 727.4796240732751,
+          "sst": 3476.2246775967988,
+          "n": 8
+        }
+      }
+    }
+  },
+  "kPrimary": 0.6839763874895989,
+  "crossCheck": [
+    {
+      "region": "DE",
+      "fixedSummary": {
+        "persistence": 24,
+        "delay": 24
+      },
+      "multiyear2025": {
+        "persistence": 24,
+        "delay": 24
+      },
+      "match": true
+    },
+    {
+      "region": "IT",
+      "fixedSummary": {
+        "persistence": 12,
+        "delay": 12
+      },
+      "multiyear2025": {
+        "persistence": 12,
+        "delay": 12
+      },
+      "match": true
+    },
+    {
+      "region": "SE",
+      "fixedSummary": {
+        "persistence": 12,
+        "delay": 12
+      },
+      "multiyear2025": {
+        "persistence": 12,
+        "delay": 12
+      },
+      "match": true
+    }
+  ],
+  "verdict": {
+    "r2All": 0.1936086931126041,
+    "r2NoIT23": 0.9134345981568398,
+    "headline": "CONDITIONAL HEADLINE: R² ≈ 0.913 (8 points, IT-2023 censored outlier excluded). Not a universal law: with IT-2023 included R² drops to 0.194.",
+    "verdictSource": "fits.yearMean.{all,noIT23}.throughOrigin.r2"
+  },
+  "generatedDate": "2026-08-19"
+}

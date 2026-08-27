@@ -1,0 +1,5 @@
+region,year,theta_p,theta_r,margin,savings,overhead,score,num_pauses,completed,within_budget,found,best_completed_savings,best_completed_overhead,pct_exceed_theta_p,pct_below_theta_r
+SE,2022,19.1800,18.4300,0.750000,20.1029,108.631,0.600515,50,true,true,true,20.1029,108.631,74.7736,20.2549
+SE,2023,18.1800,17.5100,0.670000,16.1795,134.949,0.580898,98,true,true,true,16.1795,134.949,68.8822,24.4454
+SE,2024,16.4800,15.7600,0.720000,22.4196,183.721,0.612098,104,true,true,true,22.4196,183.721,71.5003,21.1407
+SE,2025,18.1800,17.5100,0.670000,23.1690,106.344,0.615845,85,true,true,true,23.1690,106.344,59.9505,30.2055

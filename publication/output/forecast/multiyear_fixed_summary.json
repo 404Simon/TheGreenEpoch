@@ -1,0 +1,110 @@
+[
+  {
+    "region": "DE",
+    "year": 2025,
+    "s0": 43.35101808672119,
+    "degradation_h72_persistence_frac": 0.3582705625481429,
+    "degradation_h72_persistence_pp": 15.531393636964317,
+    "degradation_h72_arma_frac": 0.3602341406555194,
+    "grace_delay": 24,
+    "grace_persistence": 24,
+    "grace_arma": 24,
+    "additive_grace_level": 4
+  },
+  {
+    "region": "DE",
+    "year": 2024,
+    "s0": 27.240181080187753,
+    "degradation_h72_persistence_frac": 0.39652007842266407,
+    "degradation_h72_persistence_pp": 10.801278738163617,
+    "degradation_h72_arma_frac": 0.4032025640696763,
+    "grace_delay": 24,
+    "grace_persistence": 24,
+    "grace_arma": 24,
+    "additive_grace_level": 4
+  },
+  {
+    "region": "DE",
+    "year": 2023,
+    "s0": 55.47936225341854,
+    "degradation_h72_persistence_frac": 0.12706597947496764,
+    "degradation_h72_persistence_pp": 7.049539505377176,
+    "degradation_h72_arma_frac": 0.12211841352940091,
+    "grace_delay": 24,
+    "grace_persistence": 24,
+    "grace_arma": 24,
+    "additive_grace_level": 4
+  },
+  {
+    "region": "IT",
+    "year": 2025,
+    "s0": 32.665522834629066,
+    "degradation_h72_persistence_frac": 0.4219496048185344,
+    "degradation_h72_persistence_pp": 13.783204451262545,
+    "degradation_h72_arma_frac": 0.4251220610042242,
+    "grace_delay": 12,
+    "grace_persistence": 12,
+    "grace_arma": 12,
+    "additive_grace_level": 4
+  },
+  {
+    "region": "IT",
+    "year": 2024,
+    "s0": 19.422835389868464,
+    "degradation_h72_persistence_frac": 0.3607869114250589,
+    "degradation_h72_persistence_pp": 7.007504791427973,
+    "degradation_h72_arma_frac": 0.36610822913859914,
+    "grace_delay": 24,
+    "grace_persistence": 24,
+    "grace_arma": 24,
+    "additive_grace_level": 2
+  },
+  {
+    "region": "IT",
+    "year": 2023,
+    "s0": 73.74837144484212,
+    "degradation_h72_persistence_frac": 0.031186063246374726,
+    "degradation_h72_persistence_pp": 2.2999213761959822,
+    "degradation_h72_arma_frac": 0.031186063246374726,
+    "grace_delay": 72,
+    "grace_persistence": 72,
+    "grace_arma": 72,
+    "additive_grace_level": 4
+  },
+  {
+    "region": "SE",
+    "year": 2025,
+    "s0": 22.868494380975463,
+    "degradation_h72_persistence_frac": 0.6049044059503382,
+    "degradation_h72_persistence_pp": 13.833253008502611,
+    "degradation_h72_arma_frac": 0.6223140285384869,
+    "grace_delay": 12,
+    "grace_persistence": 12,
+    "grace_arma": 12,
+    "additive_grace_level": 1
+  },
+  {
+    "region": "SE",
+    "year": 2024,
+    "s0": 19.822904297578006,
+    "degradation_h72_persistence_frac": 0.8018008817524928,
+    "degradation_h72_persistence_pp": 15.894022144693324,
+    "degradation_h72_arma_frac": 0.7601050081266464,
+    "grace_delay": 12,
+    "grace_persistence": 12,
+    "grace_arma": 12,
+    "additive_grace_level": 1
+  },
+  {
+    "region": "SE",
+    "year": 2023,
+    "s0": 15.857954451028917,
+    "degradation_h72_persistence_frac": 0.6313312831823056,
+    "degradation_h72_persistence_pp": 10.01162273221464,
+    "degradation_h72_arma_frac": 0.5671799289392828,
+    "grace_delay": 12,
+    "grace_persistence": 12,
+    "grace_arma": 24,
+    "additive_grace_level": 1
+  }
+]

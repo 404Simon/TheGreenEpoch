@@ -34,7 +34,7 @@
     "chartjs-plugin-annotation": "^3.1.0",
     "chartjs-plugin-zoom": "^2.2.0",
     "commander": "^15.0.0",
-    "plotly.js-dist-min": "^3.7.0",
+    "plotly.js-dist-min": "^4.0.0",
     "solid-js": "^1.9.14",
     "vega": "^6.2.0",
     "vega-embed": "^7.1.0",

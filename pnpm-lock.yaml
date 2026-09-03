@@ -27,8 +27,8 @@ importers:
         specifier: ^15.0.0
         version: 15.0.0
       plotly.js-dist-min:
-        specifier: ^3.7.0
-        version: 3.7.0
+        specifier: ^4.0.0
+        version: 4.0.0
       solid-js:
         specifier: ^1.9.14
         version: 1.9.15
@@ -1365,8 +1365,8 @@ packages:
     resolution: {integrity: sha512-RvwwcruNjI1ncT5xRakeyS9Lf8lcItv34KD+aif+VH9kduAyfYBipGh12274xtenIPZ119/R9BdTBa8gAwSh0A==}
     engines: {node: '>=12'}
 
-  plotly.js-dist-min@3.7.0:
-    resolution: {integrity: sha512-IRWNnBJZmKss3URDnicBK2nvt/VTSi/MD1GnUscAYFjwSuN6g/CTde5R1UC0RYtblehj8rkT4BL8r05e/c8j5Q==}
+  plotly.js-dist-min@4.0.0:
+    resolution: {integrity: sha512-Dm6Sr5aHaxDZ7HN6eLRBotMZ9zRYEd+eoimm27B8d2XOFiNpv0oO7QIE0WFwFAfPN16JHM/6do6kDbasB+ftbQ==}
 
   postcss@8.5.26:
     resolution: {integrity: sha512-u82N74LFzG8ca+dD8puPnplTXoGH4fTPpVGuIbt36G3qvNlkvfD0lEAZSxaly3KX8TS/L1A1gsCEmvKmBcVbkQ==}
@@ -2822,7 +2822,7 @@ snapshots:
 
   picomatch@4.0.5: {}
 
-  plotly.js-dist-min@3.7.0: {}
+  plotly.js-dist-min@4.0.0: {}
 
   postcss@8.5.26:
     dependencies:

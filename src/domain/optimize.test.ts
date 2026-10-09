@@ -239,6 +239,16 @@ describe("findBest", () => {
     expect(best!.score).toBe(0.4);
   });
 
+  it("ignores incomplete runs even if within budget and high score", () => {
+    const pts = [
+      sweepPoint({ completed: false, stopReason: "budget_exceeded", withinBudget: true, co2SavingsPct: 80, score: 0.95 }),
+      sweepPoint({ completed: true, withinBudget: true, co2SavingsPct: 10, score: 0.5 }),
+    ];
+    const best = findBest(pts, 200);
+    expect(best).not.toBeNull();
+    expect(best!.score).toBe(0.5);
+  });
+
   it("returns null for empty array", () => {
     expect(findBest([], 200)).toBeNull();
   });

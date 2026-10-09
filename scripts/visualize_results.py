@@ -141,6 +141,12 @@ def load_and_parse_results(results_dir: Path) -> pd.DataFrame:
     # Keep only points within overhead budget
     combined = combined[combined["budget"] == "\u2713 Yes"].reset_index(drop=True)
 
+    # A run stopped early by the overhead budget processed fewer tokens, so its
+    # emissions/savings are not comparable to a completed run. Drop it.
+    combined = combined[
+        combined["stop"].astype(str).str.strip() == "completed"
+    ].reset_index(drop=True)
+
     combined["overhead_pct"] = (
         combined["overhead_raw"]
         .astype(str)
@@ -1306,7 +1312,7 @@ def plot_savings_vs_overhead_all(df: pd.DataFrame, output_dir: Path):
     plot_pareto_combined_start (linewidth=2, marker="o", markersize=4,
     colored by model). Best-scoring run highlighted with red star.
     """
-    df_all = df[df["file_type"] == "all"]
+    df_all = df[(df["file_type"] == "all") & (df["year"].astype(str) == "2025")]
     if df_all.empty:
         print("  No _all_ data found, skipping savings vs overhead plot.")
         return
@@ -1456,7 +1462,7 @@ def plot_savings_vs_overhead_combined(df: pd.DataFrame, output_dir: Path):
     KM uses dashed lines. Colored by region (COLORS_REGION).
     Style matches plot_pareto_combined_start.
     """
-    df_all = df[df["file_type"] == "all"]
+    df_all = df[(df["file_type"] == "all") & (df["year"].astype(str) == "2025")]
     if df_all.empty:
         print("  No _all_ data found, skipping combined savings vs overhead.")
         return

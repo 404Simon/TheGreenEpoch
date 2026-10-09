@@ -224,7 +224,10 @@ export function expandBounds(bounds: Bounds, maxThetaPause: number = 500): Bound
 }
 
 export function findBest(points: SweepPoint[], budget: number): SweepPoint | null {
-  const valid = points.filter(r => r.withinBudget && r.co2SavingsPct > 0);
+  // Only fully completed runs are valid: a run stopped early by the overhead
+  // budget has processed fewer tokens, so its emissions (and hence savings)
+  // are not comparable to a completed baseline.
+  const valid = points.filter(r => r.withinBudget && r.completed && r.co2SavingsPct > 0);
   if (valid.length === 0) return null;
   return valid.reduce((a, b) => (a.score > b.score ? a : b));
 }

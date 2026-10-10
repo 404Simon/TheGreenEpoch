@@ -605,20 +605,19 @@ def plot_paper_margin_analysis(cost: pd.DataFrame, attain: pd.DataFrame) -> None
     colors = ["#059669" if i <= 2 else "#94a3b8" for i in range(len(BIN_LABELS))]
 
     x = np.arange(len(BIN_LABELS))
-    ax1.bar(x, prof["median"], color=colors, edgecolor="black", linewidth=0.6, width=0.75,
+    ax1.bar(x, prof["median"], color=colors, edgecolor="black", linewidth=0.7, width=0.62,
             zorder=3)
     ax1.errorbar(x, prof["median"],
                  yerr=[prof["median"] - prof["q25"], prof["q75"] - prof["median"]],
                  fmt="none", ecolor="black", elinewidth=0.8, capsize=3, zorder=4)
     for xi, (med, n) in enumerate(zip(prof["median"], prof["n"])):
-        ax1.text(xi, med + 4, f"{med:.0f}", ha="center", fontsize=11, zorder=5)
-        ax1.text(xi, 4, f"n={int(n)}", ha="center", fontsize=10, color="white", zorder=5,
+        ax1.text(xi, med + 4, f"{med:.0f}", ha="center", fontsize=10, zorder=5)
+        ax1.text(xi, 4, f"n={int(n)}", ha="center", fontsize=9, color="white", zorder=5,
                  rotation=90, va="bottom")
-    ax1.axvspan(-0.5, 2.5, color="#059669", alpha=0.07, zorder=0)
     ax1.set_xticks(x)
     ax1.set_xticklabels(BIN_LABELS, fontsize=11, rotation=45, ha="right",
                         rotation_mode="anchor")
-    ax1.set_xlim(-0.6, len(BIN_LABELS) - 0.4)
+    ax1.set_xlim(-0.65, len(BIN_LABELS) - 0.35)
     ax1.set_ylim(0, 115)
     ax1.set_xlabel(r"hysteresis margin $\Delta_\theta$ (gCO$_2$eq/kWh)", fontsize=12)
     ax1.set_ylabel("attainable savings\n(% of run optimum)", fontsize=12)
@@ -631,16 +630,14 @@ def plot_paper_margin_analysis(cost: pd.DataFrame, attain: pd.DataFrame) -> None
     y = np.arange(1, len(vals) + 1) / len(vals)
     ax2.step(np.concatenate([[0], vals]), np.concatenate([[0], y]), where="post",
              color="#2563eb", linewidth=1.8, zorder=3)
-    ax2.axvline(SMALL_MARGINS[0], ls="--", color="#059669", linewidth=1.2)
-    ax2.axvline(SMALL_MARGINS[1], ls=":", color="#dc2626", linewidth=1.4)
-    for cap in SMALL_MARGINS:
+    for cap, ls, col in zip(SMALL_MARGINS, ("--", ":"), ("#059669", "#dc2626")):
         share = (vals <= cap).mean()
+        ax2.axvline(cap, ls=ls, color=col, linewidth=1.2)
         ax2.hlines(share, 0, cap, colors="0.4", linestyles=":", linewidth=0.8, zorder=2)
         ax2.plot([cap], [share], "o", color="black", markersize=4, zorder=4)
-        ax2.annotate(f"{share * 100:.1f}%", xy=(cap, share),
-                     xytext=(cap + 9, share - 0.10), fontsize=11,
-                     arrowprops=dict(arrowstyle="-", linewidth=0.7, color="black"))
-    ax2.set_xlim(0, 200)
+        ax2.text(cap + 1.5, share - 0.05, f"{share * 100:.1f}%", fontsize=10,
+                 ha="left", va="top", zorder=5)
+    ax2.set_xlim(0, 45)
     ax2.set_ylim(0, 1.02)
     ax2.set_xlabel(r"optimal margin $\Delta_\theta$ (gCO$_2$eq/kWh)", fontsize=12)
     ax2.set_ylabel("cumulative share of runs", fontsize=12)

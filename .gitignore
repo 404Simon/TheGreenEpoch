@@ -29,6 +29,10 @@ app.config.timestamp_*.js
 .DS_Store
 Thumbs.db
 
+# Python bytecode (scripts/)
+__pycache__/
+*.py[codz]
+
 # Legacy Python simulation (under legacy/)
 legacy/__pycache__/
 legacy/*.py[codz]

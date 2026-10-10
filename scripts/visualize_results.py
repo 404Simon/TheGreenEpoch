@@ -1,7 +1,23 @@
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#   "pandas>=2.0",
+#   "matplotlib>=3.8",
+#   "seaborn>=0.13",
+#   "numpy>=1.24",
+# ]
+# ///
 """Generate publication-quality figures from optimization result CSVs.
 
-Reads CSV files from output/results/ and generates SVG figures to output/figures/
-for the paper draft.
+Reads CSV files from publication/output/results/ and generates SVG figures to
+publication/output/figures/. This is the general exploration toolkit; the three
+figures used in the LNCS paper are produced by dedicated scripts instead:
+
+    scripts/fig_1_savings_vs_overhead.py   (paper Fig. 1, \\label{fig:pareto})
+    scripts/fig_2_threshold_space.py       (paper Fig. 2, \\label{fig:threshold})
+    scripts/fig_3_margin_analysis.py       (paper Fig. 3, \\label{fig:margin})
+
+Data is restricted to DeepSeek V3 (Kimi K2 was dropped in the revision).
 
 Usage:
     uv run scripts/visualize_results.py
@@ -10,7 +26,6 @@ Usage:
 from __future__ import annotations
 
 import json
-import re
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -21,7 +36,10 @@ import seaborn as sns
 RESULTS_DIR = Path("publication/output/results")
 FIGURES_DIR = Path("publication/output/figures")
 
-MODEL_LABELS = {"DS": "DeepSeek V3", "KM": "Kimi K2"}
+MODEL_LABELS = {"DS": "DeepSeek V3"}
+# The paper covers DeepSeek V3 only (Kimi K2 was dropped in the revision),
+# so every figure is restricted to the DeepSeek scenario files.
+INCLUDED_MODELS = {"DS"}
 REGION_ORDER = ["SE", "DE", "IT", "US", "CN"]
 START_LABELS = {"01-01": "Jan 1", "07-01": "Jul 1"}
 MONTH_FROM_MMDD = {
@@ -31,9 +49,9 @@ MONTH_FROM_MMDD = {
 }
 MONTH_ORDER = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
                "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-MODEL_ORDER = ["DeepSeek V3", "Kimi K2"]
+MODEL_ORDER = ["DeepSeek V3"]
 
-COLORS_MODEL = {"DeepSeek V3": "#2563eb", "Kimi K2": "#dc2626"}
+COLORS_MODEL = {"DeepSeek V3": "#2563eb"}
 COLORS_REGION = {
     "SE": "#059669",
     "DE": "#2563eb",
@@ -132,6 +150,11 @@ def load_and_parse_results(results_dir: Path) -> pd.DataFrame:
         frames.append(df)
 
     combined = pd.concat(frames, ignore_index=True)
+
+    # The paper covers DeepSeek V3 only (Kimi K2 was dropped in the revision).
+    combined = combined[
+        combined["model_code"].isin(INCLUDED_MODELS)
+    ].reset_index(drop=True)
 
     # For SE, use threshold-100 files; for other regions, use threshold-800
     se_mask = (combined["region"] == "SE") & (combined["max_threshold"] == 100)
@@ -497,7 +520,7 @@ def plot_carbon_reduction_comparison(df: pd.DataFrame, output_dir: Path):
     ax3.grid(True, alpha=0.3, axis="y")
 
     fig.suptitle(
-        "Carbon Reduction Potential: DeepSeek V3 vs Kimi K2",
+        "Carbon Reduction Potential (DeepSeek V3)",
         fontsize=16,
         fontweight="bold",
         y=1.02,
@@ -1210,7 +1233,7 @@ def plot_best_abs_startdate_histogram(output_dir: Path):
         print("  No opt_*.json files found, skipping abs savings histogram.")
         return
 
-    MODEL_MAP = {"Deepseek": "DeepSeek V3", "Kimi": "Kimi K2"}
+    MODEL_MAP = {"Deepseek": "DeepSeek V3"}
 
     best_rows = []
     for fpath in opt_files:
@@ -1455,102 +1478,10 @@ def plot_score_vs_overhead_all(df: pd.DataFrame, output_dir: Path):
         print(f"  ✓ {filename}")
 
 
-def plot_savings_vs_overhead_combined(df: pd.DataFrame, output_dir: Path):
-    """Combined Pareto frontiers: CO₂ Savings vs Overhead, all regions.
-
-    Single figure with both models × all regions. DS uses solid lines,
-    KM uses dashed lines. Colored by region (COLORS_REGION).
-    Style matches plot_pareto_combined_start.
-    """
-    df_all = df[(df["file_type"] == "all") & (df["year"].astype(str) == "2025")]
-    if df_all.empty:
-        print("  No _all_ data found, skipping combined savings vs overhead.")
-        return
-
-    linestyles = {"DeepSeek V3": "-", "Kimi K2": "--"}
-
-    fig, ax = plt.subplots(figsize=(12, 8))
-
-    for model in MODEL_ORDER:
-        for region in REGION_ORDER:
-            subset = df_all[(df_all["model"] == model) & (df_all["region"] == region)]
-            if subset.empty:
-                continue
-
-            o = subset["overhead_pct"].values
-            s = subset["co2_save_pct"].values
-
-            f_o, f_s = compute_pareto_frontier(o, s)
-            if len(f_o) < 2:
-                continue
-
-            ls = linestyles.get(model, "-")
-            label = f"{region} ({model})"
-            ax.plot(
-                f_o, f_s,
-                linewidth=2,
-                linestyle=ls,
-                marker="o",
-                markersize=4,
-                color=COLORS_REGION.get(region, "gray"),
-                label=label,
-            )
-
-            best = find_best_tradeoff(subset)
-            ax.scatter(
-                best["overhead_pct"],
-                best["co2_save_pct"],
-                marker="*",
-                s=150,
-                color="red",
-                edgecolors="black",
-                linewidths=0.8,
-                zorder=10,
-            )
-
-    ax.set_xlabel("Time Overhead (%)")
-    ax.set_ylabel("CO₂ Savings (%)")
-    # ax.set_title("Pareto Frontiers: CO₂ Savings vs Overhead — All Regions & Models")
-    # split the legend into 2 columns: first 4 entries, then remaining entries
-    handles, labels = ax.get_legend_handles_labels()
-    if len(handles) > 4:
-        left_handles, left_labels = handles[:4], labels[:4]
-        right_handles, right_labels = handles[4:], labels[4:]
-
-        legend1 = ax.legend(
-            left_handles,
-            left_labels,
-            fontsize=12,
-            loc="lower left",
-            bbox_to_anchor=(0.50, 0.02),
-            frameon=False,
-            borderaxespad=0.0,
-        )
-        ax.add_artist(legend1)
-        ax.legend(
-            right_handles,
-            right_labels,
-            fontsize=12,
-            loc="lower left",
-            bbox_to_anchor=(0.76, 0.02),
-            frameon=False,
-            borderaxespad=0.0,
-        )
-    else:
-        ax.legend(fontsize=12, loc="lower right")
-    ax.grid(True, alpha=0.3)
-
-    filename = "savings_vs_overhead_all.svg"
-    fig.savefig(output_dir / filename)
-    plt.close(fig)
-    print(f"  ✓ {filename}")
-
-
 def plot_score_vs_overhead_combined(df: pd.DataFrame, output_dir: Path):
     """Combined Pareto frontiers: Score vs Overhead, all regions.
 
-    Single figure with both models × all regions. DS uses solid lines,
-    KM uses dashed lines. Colored by region (COLORS_REGION).
+    One curve per region, colored by region (COLORS_REGION).
     Style matches plot_pareto_combined_start.
     """
     df_all = df[df["file_type"] == "all"]
@@ -1558,7 +1489,7 @@ def plot_score_vs_overhead_combined(df: pd.DataFrame, output_dir: Path):
         print("  No _all_ data found, skipping combined score vs overhead.")
         return
 
-    linestyles = {"DeepSeek V3": "-", "Kimi K2": "--"}
+    linestyles = {"DeepSeek V3": "-"}
 
     fig, ax = plt.subplots(figsize=(12, 8))
 
@@ -1631,7 +1562,7 @@ def plot_score_vs_iteration(df: pd.DataFrame, output_dir: Path):
     take the max score across all (θ_p, θ_r, start_date) configurations.
     Uses all data (fixed + _all_).
     """
-    linestyles = {"DeepSeek V3": "-", "Kimi K2": "--"}
+    linestyles = {"DeepSeek V3": "-"}
 
     # Per-region figures
     for region in REGION_ORDER:
@@ -1724,7 +1655,7 @@ def plot_avg_score_vs_iteration(df: pd.DataFrame, output_dir: Path):
     all (θ_p, θ_r, start_date) configurations.
     Uses all data (fixed + _all_).
     """
-    linestyles = {"DeepSeek V3": "-", "Kimi K2": "--"}
+    linestyles = {"DeepSeek V3": "-"}
 
     # Per-region figures
     for region in REGION_ORDER:
@@ -2355,7 +2286,10 @@ def _load_opt_json_results():
 
         best = max(completed, key=lambda p: p["score"])
         model_raw = data.get("model", "?")
-        model = "DeepSeek V3" if "Deepseek" in model_raw else "Kimi K2"
+        # The paper covers DeepSeek V3 only; ignore any other model's files.
+        if "Deepseek" not in model_raw:
+            continue
+        model = "DeepSeek V3"
         region = data.get("region", "?")
         year = data.get("historicalYears", [0])[0] if data.get("historicalYears") else 0
 
@@ -2451,10 +2385,10 @@ def plot_threshold_generalization(output_dir: Path):
 
     fig, axes = plt.subplots(1, len(REGION_ORDER), figsize=(24, 5), sharey=False)
 
-    line_styles_p = {"DeepSeek V3": "-", "Kimi K2": "-"}
-    line_styles_r = {"DeepSeek V3": "--", "Kimi K2": "--"}
-    markers_p = {"DeepSeek V3": "o", "Kimi K2": "s"}
-    markers_r = {"DeepSeek V3": "o", "Kimi K2": "s"}
+    line_styles_p = {"DeepSeek V3": "-"}
+    line_styles_r = {"DeepSeek V3": "--"}
+    markers_p = {"DeepSeek V3": "o"}
+    markers_r = {"DeepSeek V3": "o"}
 
     for col_idx, region in enumerate(REGION_ORDER):
         ax = axes[col_idx]
@@ -2563,13 +2497,12 @@ def plot_co2_stats_vs_optimization(output_dir: Path):
             ax.scatter(
                 sub["co2_mean"], sub["score"],
                 color=COLORS_REGION.get(region, "gray"),
-                marker="o" if model == "DeepSeek V3" else "s",
+                marker="o",
                 s=80, alpha=0.7, edgecolors="black", linewidths=0.5,
             )
     for region in REGION_ORDER:
         ax.scatter([], [], color=COLORS_REGION.get(region, "gray"), s=80, label=region)
     ax.scatter([], [], marker="o", s=80, color="gray", label="DeepSeek V3")
-    ax.scatter([], [], marker="s", s=80, color="gray", label="Kimi K2")
     ax.set_xlabel("CO₂ Mean [gCO₂eq/kWh]")
     ax.set_ylabel("Best Score")
     ax.set_title("CO₂ Mean vs Best Score")
@@ -2586,13 +2519,12 @@ def plot_co2_stats_vs_optimization(output_dir: Path):
             ax.scatter(
                 sub["co2_cv"], sub["score"],
                 color=COLORS_REGION.get(region, "gray"),
-                marker="o" if model == "DeepSeek V3" else "s",
+                marker="o",
                 s=80, alpha=0.7, edgecolors="black", linewidths=0.5,
             )
     for region in REGION_ORDER:
         ax.scatter([], [], color=COLORS_REGION.get(region, "gray"), s=80, label=region)
     ax.scatter([], [], marker="o", s=80, color="gray", label="DeepSeek V3")
-    ax.scatter([], [], marker="s", s=80, color="gray", label="Kimi K2")
     ax.set_xlabel("CO₂ CV (σ/μ)")
     ax.set_ylabel("Best Score")
     ax.set_title("CO₂ Variability vs Best Score")
@@ -2609,13 +2541,12 @@ def plot_co2_stats_vs_optimization(output_dir: Path):
             ax.scatter(
                 sub["co2_mean"], sub["theta_p"],
                 color=COLORS_REGION.get(region, "gray"),
-                marker="o" if model == "DeepSeek V3" else "s",
+                marker="o",
                 s=80, alpha=0.7, edgecolors="black", linewidths=0.5,
             )
     for region in REGION_ORDER:
         ax.scatter([], [], color=COLORS_REGION.get(region, "gray"), s=80, label=region)
     ax.scatter([], [], marker="o", s=80, color="gray", label="DeepSeek V3")
-    ax.scatter([], [], marker="s", s=80, color="gray", label="Kimi K2")
     ax.set_xlabel("CO₂ Mean [gCO₂eq/kWh]")
     ax.set_ylabel("Optimal θ_p [gCO₂eq/kWh]")
     ax.set_title("CO₂ Mean vs Optimal Threshold")
@@ -2632,13 +2563,12 @@ def plot_co2_stats_vs_optimization(output_dir: Path):
             ax.scatter(
                 sub["co2_cv"], sub["theta_p"],
                 color=COLORS_REGION.get(region, "gray"),
-                marker="o" if model == "DeepSeek V3" else "s",
+                marker="o",
                 s=80, alpha=0.7, edgecolors="black", linewidths=0.5,
             )
     for region in REGION_ORDER:
         ax.scatter([], [], color=COLORS_REGION.get(region, "gray"), s=80, label=region)
     ax.scatter([], [], marker="o", s=80, color="gray", label="DeepSeek V3")
-    ax.scatter([], [], marker="s", s=80, color="gray", label="Kimi K2")
     ax.set_xlabel("CO₂ CV (σ/μ)")
     ax.set_ylabel("Optimal θ_p [gCO₂eq/kWh]")
     ax.set_title("CO₂ Variability vs Optimal Threshold")
@@ -2732,13 +2662,12 @@ def plot_co2_savings_scatter(output_dir: Path):
             ax.scatter(
                 sub["co2_cv"], sub["co2_save_pct"],
                 color=COLORS_REGION.get(region, "gray"),
-                marker="o" if model == "DeepSeek V3" else "s",
+                marker="o",
                 s=80, alpha=0.7, edgecolors="black", linewidths=0.5,
             )
     for region in REGION_ORDER:
         ax.scatter([], [], color=COLORS_REGION.get(region, "gray"), s=80, label=region)
     ax.scatter([], [], marker="o", s=80, color="gray", label="DeepSeek V3")
-    ax.scatter([], [], marker="s", s=80, color="gray", label="Kimi K2")
     ax.set_xlabel("CO₂ CV (σ/μ)")
     ax.set_ylabel("CO₂ Savings (%)")
     ax.set_title("CO₂ Variability vs Savings")
@@ -2755,13 +2684,12 @@ def plot_co2_savings_scatter(output_dir: Path):
             ax.scatter(
                 sub["co2_range"], sub["co2_save_pct"],
                 color=COLORS_REGION.get(region, "gray"),
-                marker="o" if model == "DeepSeek V3" else "s",
+                marker="o",
                 s=80, alpha=0.7, edgecolors="black", linewidths=0.5,
             )
     for region in REGION_ORDER:
         ax.scatter([], [], color=COLORS_REGION.get(region, "gray"), s=80, label=region)
     ax.scatter([], [], marker="o", s=80, color="gray", label="DeepSeek V3")
-    ax.scatter([], [], marker="s", s=80, color="gray", label="Kimi K2")
     ax.set_xlabel("CO₂ Range [gCO₂eq/kWh]")
     ax.set_ylabel("CO₂ Savings (%)")
     ax.set_title("CO₂ Range vs Savings")
@@ -2990,7 +2918,7 @@ def plot_best_run_comparison(df: pd.DataFrame, output_dir: Path):
     ax2.grid(True, alpha=0.3, axis="y")
 
     fig.suptitle(
-        "Best Run Comparison: DeepSeek V3 vs Kimi K2",
+        "Best Run Comparison (DeepSeek V3)",
         fontsize=16,
         fontweight="bold",
         y=1.02,
@@ -3046,7 +2974,6 @@ def main():
     plot_avg_score_vs_iteration(df, FIGURES_DIR)
     plot_savings_vs_overhead_all(df, FIGURES_DIR)
     plot_score_vs_overhead_all(df, FIGURES_DIR)
-    plot_savings_vs_overhead_combined(df, FIGURES_DIR)
     plot_score_vs_overhead_combined(df, FIGURES_DIR)
     plot_alpha_comparison(df, FIGURES_DIR)
     plot_multiyear_comparison(df, FIGURES_DIR)

@@ -24,8 +24,9 @@ Erzeugt:
   publication/output/margin_constraint_cost.csv
   publication/output/margin_bin_profile.csv
   publication/output/figures_margin/*.svg
-  publication/output/figures_margin/margin_analysis.{svg,eps}
-  ../TheGreenEpochPaper/assets/margin_analysis.{svg,eps}  (falls vorhanden)
+
+Die Paper-Abbildung (fig 3) wird separat erzeugt:
+  uv run scripts/fig_3_margin_analysis.py
 
 Usage:
   uv run scripts/analyze_margins.py
@@ -34,7 +35,6 @@ Usage:
 from __future__ import annotations
 
 import re
-import json
 from decimal import Decimal, ROUND_HALF_UP
 from pathlib import Path
 
@@ -48,7 +48,7 @@ DEFAULT_RESULTS_DIR = BASE_DIR / "results"
 DEFAULT_BUDGET = 200
 FIGURES_DIR = BASE_DIR / "figures_margin"
 
-MODEL_LABELS = {"DS": "DeepSeek V3", "KM": "Kimi K2"}
+MODEL_LABELS = {"DS": "DeepSeek V3"}
 # The paper covers DeepSeek V3 only (Kimi K2 was dropped in the revision),
 # so every statistic reported in the paper is restricted to DS scenario files.
 INCLUDED_MODELS = {"DS"}
@@ -385,8 +385,6 @@ def plot_per_region_heatmap(per_file: pd.DataFrame):
 # (English labels, LNCS-ready figures)
 # ------------------------------------------------------------------
 
-PAPER_ASSETS = Path("../TheGreenEpochPaper/assets")
-
 # margin bins: [0], (0,10], (10,20], (20,40], (40,80], (80,160], (160,320], >320
 BIN_EDGES = [-0.001, 0.0001, 10.0, 20.0, 40.0, 80.0, 160.0, 320.0, np.inf]
 BIN_LABELS = ["0", "1\u201310", "11\u201320", "21\u201340", "41\u201380",
@@ -584,72 +582,6 @@ def print_paper_stats(cost: pd.DataFrame, attain: pd.DataFrame) -> None:
     print(r"\end{tabular}")
 
 
-def _save(fig, name: str) -> None:
-    for ext in ("svg", "eps"):
-        fig.savefig(FIGURES_DIR / f"{name}.{ext}")
-    if PAPER_ASSETS.is_dir():
-        for ext in ("svg", "eps"):
-            fig.savefig(PAPER_ASSETS / f"{name}.{ext}")
-    plt.close(fig)
-
-
-def plot_paper_margin_analysis(cost: pd.DataFrame, attain: pd.DataFrame) -> None:
-    """Two-panel figure: (a) savings attainable per margin bin,
-    (b) distribution of the optimal margin over all runs."""
-    prof = attain.groupby("margin_bin", observed=True)["relative"].agg(
-        median="median", q25=lambda s: s.quantile(.25), q75=lambda s: s.quantile(.75),
-        n="size")
-    prof = prof.reindex(BIN_LABELS)
-
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(7.6, 3.4))
-    colors = ["#059669" if i <= 2 else "#94a3b8" for i in range(len(BIN_LABELS))]
-
-    x = np.arange(len(BIN_LABELS))
-    ax1.bar(x, prof["median"], color=colors, edgecolor="black", linewidth=0.7, width=0.62,
-            zorder=3)
-    ax1.errorbar(x, prof["median"],
-                 yerr=[prof["median"] - prof["q25"], prof["q75"] - prof["median"]],
-                 fmt="none", ecolor="black", elinewidth=0.8, capsize=3, zorder=4)
-    for xi, (med, n) in enumerate(zip(prof["median"], prof["n"])):
-        ax1.text(xi, med + 4, f"{med:.0f}", ha="center", fontsize=10, zorder=5)
-        ax1.text(xi, 4, f"n={int(n)}", ha="center", fontsize=9, color="white", zorder=5,
-                 rotation=90, va="bottom")
-    ax1.set_xticks(x)
-    ax1.set_xticklabels(BIN_LABELS, fontsize=11, rotation=45, ha="right",
-                        rotation_mode="anchor")
-    ax1.set_xlim(-0.65, len(BIN_LABELS) - 0.35)
-    ax1.set_ylim(0, 115)
-    ax1.set_xlabel(r"hysteresis margin $\Delta_\theta$ (gCO$_2$eq/kWh)", fontsize=12)
-    ax1.set_ylabel("attainable savings\n(% of run optimum)", fontsize=12)
-    ax1.tick_params(axis="y", labelsize=11)
-    ax1.grid(axis="y", alpha=0.3, zorder=0)
-    ax1.set_title("(a)", loc="left", fontsize=12)
-
-    # (b) ECDF of the optimal margin
-    vals = np.sort(cost["margin_best"].to_numpy())
-    y = np.arange(1, len(vals) + 1) / len(vals)
-    ax2.step(np.concatenate([[0], vals]), np.concatenate([[0], y]), where="post",
-             color="#2563eb", linewidth=1.8, zorder=3)
-    for cap, ls, col in zip(SMALL_MARGINS, ("--", ":"), ("#059669", "#dc2626")):
-        share = (vals <= cap).mean()
-        ax2.axvline(cap, ls=ls, color=col, linewidth=1.2)
-        ax2.hlines(share, 0, cap, colors="0.4", linestyles=":", linewidth=0.8, zorder=2)
-        ax2.plot([cap], [share], "o", color="black", markersize=4, zorder=4)
-        ax2.text(cap + 1.5, share - 0.05, f"{share * 100:.1f}%", fontsize=10,
-                 ha="left", va="top", zorder=5)
-    ax2.set_xlim(0, 45)
-    ax2.set_ylim(0, 1.02)
-    ax2.set_xlabel(r"optimal margin $\Delta_\theta$ (gCO$_2$eq/kWh)", fontsize=12)
-    ax2.set_ylabel("cumulative share of runs", fontsize=12)
-    ax2.tick_params(labelsize=11)
-    ax2.grid(alpha=0.3)
-    ax2.set_title("(b)", loc="left", fontsize=12)
-
-    fig.tight_layout()
-    _save(fig, "margin_analysis")
-    print(f"  ✓ margin_analysis.svg/.eps in {FIGURES_DIR}/")
-
-
 def main():
     setup_style()
     FIGURES_DIR.mkdir(parents=True, exist_ok=True)
@@ -677,13 +609,13 @@ def main():
     plot_distribution(per_file)
     plot_per_region_heatmap(per_file)
 
-    # Paper analysis: cost of constraining the margin + LNCS figure
+    # Cost of constraining the margin (written as CSV; the paper figure
+    # itself is produced by scripts/fig_3_margin_analysis.py).
     cost = constraint_cost(combined)
     attain = margin_bin_profile(combined, cost)
     cost.to_csv(BASE_DIR / "margin_constraint_cost.csv", index=False)
     attain.to_csv(BASE_DIR / "margin_bin_profile.csv", index=False)
     print_paper_stats(cost, attain)
-    plot_paper_margin_analysis(cost, attain)
 
     print(f"\nFiguren gespeichert in {FIGURES_DIR}/")
     for p in sorted(FIGURES_DIR.glob("*.svg")):

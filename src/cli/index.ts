@@ -48,6 +48,26 @@ program.command("optimize")
     await optimizeCli(opts);
   });
 
+program.command("checkpoint-sweep")
+  .description("Evaluate hysteresis (upper/lower bound) across checkpoint save/load costs")
+  .requiredOption("-m, --model <name>", "Model name (e.g. Deepseek, Kimi)")
+  .requiredOption("-r, --region <zone>", "Grid zone (e.g. CN, DE, SE, US)")
+  .requiredOption("-y, --years <years>", "Historical years, comma-separated (e.g. 2022,2023,2024)")
+  .option("--costs <costs>", "Checkpoint save/load costs in seconds, comma-separated (default 1,10,30,60,150,300,600)")
+  .option("--tp-max <number>", "Max theta_pause threshold (default 500)")
+  .option("--budget <number>", "Overhead budget % (default 200)")
+  .option("--resolution <number>", "Grid resolution per axis (default 10)")
+  .option("--date-res <number>", "Start date resolution (default 7)")
+  .option("--max-iter <number>", "Max adaptive iterations (default 6)")
+  .option("--alpha <number>", "CO₂ weight in score (α=1 pure CO₂, α=0 pure overhead, default 1)")
+  .option("--start <date>", "Fixed start date MM-DD (skip date sweep)")
+  .option("-o, --output <path>", "Write results as JSON")
+  .option("--csv <path>", "Export results as CSV")
+  .action(async (opts) => {
+    const { checkpointSweepCli } = await import("./checkpoint-sweep");
+    await checkpointSweepCli(opts);
+  });
+
 program.command("plot")
   .description("Render optimization results as SVG charts")
   .argument("<input>", "Optimization results JSON file")

@@ -2,17 +2,22 @@
 # ───────────────────────────────────────────────────────────────
 # Run all publication experiments with B=200% and consistent
 # optimizer settings. Overwrites publication/output/{opt_*.json, results/*.csv}
+#
+# Budget and output locations are overridable via environment
+# variables so the same matrix can be rerun for other budgets:
+#   BUDGET=100 OUT_DIR=.../output/budget_100 bash publication/run_experiments.sh
+# Defaults reproduce the original publication behaviour.
 # ───────────────────────────────────────────────────────────────
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-OUT_DIR="$ROOT/publication/output"
-CSV_DIR="$OUT_DIR/results"
+OUT_DIR="${OUT_DIR:-$ROOT/publication/output}"
+CSV_DIR="${CSV_DIR:-$OUT_DIR/results}"
 PNPM="pnpm"
 mkdir -p "$CSV_DIR"
 
 # Common flags
-BUDGET=200
+BUDGET="${BUDGET:-200}"
 RES=10
 DATE_RES=7
 MAX_ITER=10

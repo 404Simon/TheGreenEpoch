@@ -9,11 +9,11 @@ import { averageYears } from "../data/co2-loader";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = resolve(__dirname, "../../public/data");
 
-function loadJSON<T>(path: string): T {
+export function loadJSON<T>(path: string): T {
   return JSON.parse(readFileSync(resolve(DATA_DIR, path), "utf-8")) as T;
 }
 
-function loadCO2Timeline(zone: string, years: number[]): CO2Timeline {
+export function loadCO2Timeline(zone: string, years: number[]): CO2Timeline {
   const allData = years.map((y) => {
     return loadJSON<YearCO2>(`co2/${zone}_${y}.json`);
   });

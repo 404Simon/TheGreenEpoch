@@ -5,6 +5,7 @@
 #   "matplotlib>=3.8",
 #   "seaborn>=0.13",
 #   "numpy>=1.24",
+#   "scipy>=1.11",
 # ]
 # ///
 """Margin-Analyse: Wie häufig sind kleine Hysterese-Margins (θ_p - θ_r) optimal?
@@ -19,8 +20,12 @@ Analysiert Anteil "kleiner Margins" definiert als:
 
 Erzeugt:
   publication/output/margin_analysis_summary.csv
-  publication/output/margin_topk_details.csv
+  publication/output/margin_analysis_topk_details.csv
+  publication/output/margin_constraint_cost.csv
+  publication/output/margin_bin_profile.csv
   publication/output/figures_margin/*.svg
+  publication/output/figures_margin/margin_analysis.{svg,eps}
+  ../TheGreenEpochPaper/assets/margin_analysis.{svg,eps}  (falls vorhanden)
 
 Usage:
   uv run scripts/analyze_margins.py
@@ -30,6 +35,7 @@ from __future__ import annotations
 
 import re
 import json
+from decimal import Decimal, ROUND_HALF_UP
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -43,6 +49,9 @@ DEFAULT_BUDGET = 200
 FIGURES_DIR = BASE_DIR / "figures_margin"
 
 MODEL_LABELS = {"DS": "DeepSeek V3", "KM": "Kimi K2"}
+# The paper covers DeepSeek V3 only (Kimi K2 was dropped in the revision),
+# so every statistic reported in the paper is restricted to DS scenario files.
+INCLUDED_MODELS = {"DS"}
 THRESHOLDS = {"SE": 100, "other": 800}
 BUDGET_COLORS = {10: "#059669", 25: "#0891b2", 50: "#2563eb", 100: "#d97706", 200: "#dc2626"}
 
@@ -111,6 +120,8 @@ def load_all_points(budget_dirs: dict[int, Path]) -> pd.DataFrame:
     for budget, rdir in budget_dirs.items():
         for csv_path in sorted(rdir.glob("*.csv")):
             meta = parse_filename(csv_path.name)
+            if meta["model_code"] not in INCLUDED_MODELS:
+                continue
             expected = THRESHOLDS["SE"] if meta["region"] == "SE" else THRESHOLDS["other"]
             if meta["max_threshold"] != expected:
                 continue
@@ -369,6 +380,279 @@ def plot_per_region_heatmap(per_file: pd.DataFrame):
     plt.close(fig)
 
 
+# ------------------------------------------------------------------
+# Paper analysis: how costly is it to *constrain* the margin?
+# (English labels, LNCS-ready figures)
+# ------------------------------------------------------------------
+
+PAPER_ASSETS = Path("../TheGreenEpochPaper/assets")
+
+# margin bins: [0], (0,10], (10,20], (20,40], (40,80], (80,160], (160,320], >320
+BIN_EDGES = [-0.001, 0.0001, 10.0, 20.0, 40.0, 80.0, 160.0, 320.0, np.inf]
+BIN_LABELS = ["0", "1\u201310", "11\u201320", "21\u201340", "41\u201380",
+              "81\u2013160", "161\u2013320", ">320"]
+
+SMALL_MARGINS = (10, 20)
+
+
+def feasible_mask(df: pd.DataFrame) -> pd.Series:
+    return (df["budget_ok"] == "✓ Yes") & (df["stop"] == "completed") & (df["co2_save_pct"] > 0)
+
+
+def constraint_cost(combined: pd.DataFrame) -> pd.DataFrame:
+    """Per (budget, scenario): optimum vs. best policy under a margin cap.
+
+    For every scenario file and every overhead budget we take all feasible
+    policies and compute
+      * the unconstrained optimum (tie-broken on savings, since score is
+        rounded to 4 decimals in the CSV),
+      * the best policy with margin <= 10 and <= 20 gCO2/kWh,
+      * the savings lost by imposing that cap (regret, percentage points),
+      * the change in the number of pause/resume cycles,
+      * the relative rank of the optimal margin inside the feasible set
+        (0 = smallest margin among all feasible policies).
+    """
+    rows = []
+    feas = combined[feasible_mask(combined)]
+    for (budget, fname), grp in feas.groupby(["budget", "file"]):
+        ordered = grp.sort_values(["score", "co2_save_pct"], kind="mergesort")
+        best = ordered.iloc[-1]
+
+        def best_under(cap: float):
+            sub = ordered[ordered["margin"] <= cap]
+            if sub.empty:
+                return None
+            return sub.iloc[-1]
+
+        b10, b20 = best_under(SMALL_MARGINS[0]), best_under(SMALL_MARGINS[1])
+        zero = ordered[ordered["margin"] <= 0]
+        rows.append({
+            "budget": budget,
+            "file": fname,
+            "model": best["model"],
+            "region": best["region"],
+            "start_date": best["start_date"],
+            "year": best["year"],
+            "n_feasible": len(ordered),
+            "margin_best": best["margin"],
+            "margin_rel_best": best["margin_rel"],
+            "savings_best": best["co2_save_pct"],
+            "overhead_best": best["overhead_pct"],
+            "pauses_best": best["pauses"],
+            "score_best": best["score"],
+            "score_zero": zero["score"].iloc[-1] if len(zero) else np.nan,
+            "savings_capped10": b10["co2_save_pct"] if b10 is not None else np.nan,
+            "savings_capped20": b20["co2_save_pct"] if b20 is not None else np.nan,
+            "regret10": best["co2_save_pct"] - (b10["co2_save_pct"] if b10 is not None else np.nan),
+            "regret20": best["co2_save_pct"] - (b20["co2_save_pct"] if b20 is not None else np.nan),
+            "pause_delta10": (b10["pauses"] if b10 is not None else np.nan) - best["pauses"],
+            "margin_rank": float((grp["margin"] < best["margin"]).mean()),
+            "small10": best["margin"] <= SMALL_MARGINS[0],
+            "small20": best["margin"] <= SMALL_MARGINS[1],
+        })
+    return pd.DataFrame(rows)
+
+
+def margin_bin_profile(combined: pd.DataFrame, cost: pd.DataFrame) -> pd.DataFrame:
+    """Best savings still attainable when the margin is restricted to a bin."""
+    feas = combined[feasible_mask(combined)].copy()
+    feas["margin_bin"] = pd.cut(feas["margin"], bins=BIN_EDGES, labels=BIN_LABELS)
+    attain = (feas.groupby(["budget", "file", "margin_bin"], observed=True)
+              .agg(savings_bin_best=("co2_save_pct", "max"),
+                   n_points=("co2_save_pct", "size"))
+              .reset_index())
+    lookup = cost.set_index(["budget", "file"])["savings_best"]
+    attain["run_best"] = attain.set_index(["budget", "file"]).index.map(lookup)
+    attain["relative"] = attain["savings_bin_best"] / attain["run_best"] * 100
+    return attain
+
+
+def print_paper_stats(cost: pd.DataFrame, attain: pd.DataFrame) -> None:
+    from scipy import stats as _stats
+
+    n = len(cost)
+    print("\n" + "=" * 78)
+    print("PAPER-ORIENTED MARGIN ANALYSIS")
+    print("=" * 78)
+    def _n(v: float) -> str:
+        return f"{float(v):g}"
+
+    print(f"(scenario, budget) pairs: {n}; scenarios: {cost['file'].nunique()}; "
+          f"budgets: {[int(b) for b in sorted(cost['budget'].unique())]}")
+    print(f"feasible policies evaluated: {int(cost['n_feasible'].sum())}")
+    m = cost["margin_best"]
+    print(f"optimal margin: median {_n(m.median())}, "
+          f"IQR {_n(m.quantile(.25))}--{_n(m.quantile(.75))}, "
+          f"90th pct {_n(m.quantile(.90))}, max {_n(m.max())} gCO2/kWh")
+    print(f"optimum with margin <=10: {cost['small10'].mean() * 100:.1f}% ; "
+          f"<=20: {cost['small20'].mean() * 100:.1f}%")
+    print(f"normalised by the search range: "
+          f"{(cost['margin_rel_best'] <= 0.02).mean() * 100:.1f}% below 2% of theta_p^max; "
+          f"{(cost['margin_rel_best'] <= 0.05).mean() * 100:.1f}% below 5%")
+
+    stat = cost.groupby("budget").agg(
+        n=("file", "size"),
+        rate10=("small10", "mean"),
+        rate20=("small20", "mean"),
+        median_margin=("margin_best", "median"),
+        mean_regret10=("regret10", "mean"),
+        max_regret10=("regret10", "max"),
+        mean_regret20=("regret20", "mean"),
+        max_regret20=("regret20", "max"),
+        median_pause_delta=("pause_delta10", "median"),
+    )
+    stat[["rate10", "rate20"]] *= 100
+    print("\nper budget:")
+    print(stat.round(3).to_string())
+
+    print("\nregret when capping the margin at 10 gCO2/kWh (percentage points of savings):")
+    print(f"  median {cost['regret10'].median():.3f}, mean {cost['regret10'].mean():.3f}, "
+          f"max {cost['regret10'].max():.3f}")
+    print(f"  <0.5 pp: {(cost['regret10'] < 0.5).sum()}/{n}; "
+          f"<1 pp: {(cost['regret10'] < 1).sum()}/{n}")
+    print("  pairs with regret >= 1 pp:")
+    print(cost[cost["regret10"] >= 1][
+        ["budget", "model", "region", "start_date", "year", "n_feasible",
+         "margin_best", "savings_best", "savings_capped10", "regret10"]
+    ].round(2).to_string(index=False))
+
+    print("\nregret when capping the margin at 20 gCO2/kWh (percentage points of savings):")
+    print(f"  median {cost['regret20'].median():.3f}, mean {cost['regret20'].mean():.3f}, "
+          f"max {cost['regret20'].max():.3f}")
+    print(f"  <1 pp: {(cost['regret20'] < 1).sum()}/{n}")
+
+    zero_ratio = cost["score_zero"] / cost["score_best"]
+    print("\nzero-hysteresis policies (theta_r = theta_p):")
+    print(f"  median {zero_ratio.median() * 100:.1f}% of the optimum score; "
+          f"{(zero_ratio >= 0.99).mean() * 100:.1f}% within 1% of it; "
+          f"{(zero_ratio >= 0.97).mean() * 100:.1f}% within 3%")
+    print(f"  optima with margin > {SMALL_MARGINS[1]} gCO2/kWh: "
+          f"{(cost['margin_best'] > SMALL_MARGINS[1]).sum()}/{n}; "
+          f"margin <= {SMALL_MARGINS[0]}: {(cost['margin_best'] <= SMALL_MARGINS[0]).sum()}/{n}")
+    print(cost[cost["margin_best"] > SMALL_MARGINS[1]][
+        ["budget", "model", "region", "start_date", "year",
+         "margin_best", "regret10"]
+    ].round(2).to_string(index=False))
+
+    print("\nmargin cap and pause/resume cycles:")
+    print(f"  median change {cost['pause_delta10'].median():+.0f} pauses, "
+          f"mean {cost['pause_delta10'].mean():+.1f} "
+          f"(mean relative increase "
+          f"{((cost['pause_delta10'] / cost['pauses_best'].replace(0, np.nan)) * 100).mean():.1f}%), "
+          f"runs with >=2x pauses: {int((cost['pause_delta10'] >= cost['pauses_best']).sum())}")
+
+    rank = cost["margin_rank"] * 100
+    w = _stats.wilcoxon(rank - 50, alternative="less")
+    print("\nrank of the optimal margin inside the feasible margin distribution:")
+    print(f"  median {rank.median():.1f}th percentile (mean {rank.mean():.1f}); "
+          f"{(rank < 50).mean() * 100:.1f}% below the 50th percentile")
+    print(f"  Wilcoxon signed-rank (H1: median rank < 50): W={w.statistic:.0f}, p={w.pvalue:.3g}")
+
+    print("\nmedian attainable savings relative to the run optimum, per margin bin:")
+    prof = attain.groupby("margin_bin", observed=True)["relative"].agg(
+        median="median", q25=lambda s: s.quantile(.25), q75=lambda s: s.quantile(.75),
+        n="size")
+    print(prof.round(1).to_string())
+
+    # LaTeX fragment for the paper (same table as main.tex, tab:margin-cost)
+    def r1(v):
+        return Decimal(str(v)).quantize(Decimal("0.1"), rounding=ROUND_HALF_UP)
+
+    def r2(v):
+        return Decimal(str(v)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+    def rmed(v):
+        s = f"{Decimal(str(v)).quantize(Decimal('0.1'), rounding=ROUND_HALF_UP):f}"
+        return s[:-2] if s.endswith(".0") else s
+
+    print("\n--- LaTeX (tab:margin-cost) ---")
+    print(r"\begin{tabular}{r@{\hspace{1.4em}}c@{\hspace{1.4em}}rrrrr}")
+    print(r"  \toprule")
+    print(r"  $B$ & $n$ & $\Delta_\theta \leq 10$ & $\Delta_\theta \leq 20$ &")
+    print(r"  med.\ $\Delta_\theta$ & regret & regret \\")
+    print(r"  & & (\%) & (\%) & (g/kWh) & mean & max \\")
+    print(r"  \midrule")
+    for b, row in stat.iterrows():
+        print(f"  {int(b)} & {int(row['n'])} & {r1(row['rate10'])} & {r1(row['rate20'])} & "
+              f"{rmed(row['median_margin'])} & {r2(row['mean_regret10'])} & "
+              f"{r2(row['max_regret10'])} \\\\")
+    print(r"  \midrule")
+    print(f"  all & {n} & {r1(cost['small10'].mean() * 100)} & "
+          f"{r1(cost['small20'].mean() * 100)} & {rmed(cost['margin_best'].median())} & "
+          f"{r2(cost['regret10'].mean())} & {r2(cost['regret10'].max())} \\\\")
+    print(r"  \bottomrule")
+    print(r"\end{tabular}")
+
+
+def _save(fig, name: str) -> None:
+    for ext in ("svg", "eps"):
+        fig.savefig(FIGURES_DIR / f"{name}.{ext}")
+    if PAPER_ASSETS.is_dir():
+        for ext in ("svg", "eps"):
+            fig.savefig(PAPER_ASSETS / f"{name}.{ext}")
+    plt.close(fig)
+
+
+def plot_paper_margin_analysis(cost: pd.DataFrame, attain: pd.DataFrame) -> None:
+    """Two-panel figure: (a) savings attainable per margin bin,
+    (b) distribution of the optimal margin over all runs."""
+    prof = attain.groupby("margin_bin", observed=True)["relative"].agg(
+        median="median", q25=lambda s: s.quantile(.25), q75=lambda s: s.quantile(.75),
+        n="size")
+    prof = prof.reindex(BIN_LABELS)
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(7.6, 3.4))
+    colors = ["#059669" if i <= 2 else "#94a3b8" for i in range(len(BIN_LABELS))]
+
+    x = np.arange(len(BIN_LABELS))
+    ax1.bar(x, prof["median"], color=colors, edgecolor="black", linewidth=0.6, width=0.75,
+            zorder=3)
+    ax1.errorbar(x, prof["median"],
+                 yerr=[prof["median"] - prof["q25"], prof["q75"] - prof["median"]],
+                 fmt="none", ecolor="black", elinewidth=0.8, capsize=3, zorder=4)
+    for xi, (med, n) in enumerate(zip(prof["median"], prof["n"])):
+        ax1.text(xi, med + 4, f"{med:.0f}", ha="center", fontsize=11, zorder=5)
+        ax1.text(xi, 4, f"n={int(n)}", ha="center", fontsize=10, color="white", zorder=5,
+                 rotation=90, va="bottom")
+    ax1.axvspan(-0.5, 2.5, color="#059669", alpha=0.07, zorder=0)
+    ax1.set_xticks(x)
+    ax1.set_xticklabels(BIN_LABELS, fontsize=11, rotation=45, ha="right",
+                        rotation_mode="anchor")
+    ax1.set_xlim(-0.6, len(BIN_LABELS) - 0.4)
+    ax1.set_ylim(0, 115)
+    ax1.set_xlabel(r"hysteresis margin $\Delta_\theta$ (gCO$_2$eq/kWh)", fontsize=12)
+    ax1.set_ylabel("attainable savings\n(% of run optimum)", fontsize=12)
+    ax1.tick_params(axis="y", labelsize=11)
+    ax1.grid(axis="y", alpha=0.3, zorder=0)
+    ax1.set_title("(a)", loc="left", fontsize=12)
+
+    # (b) ECDF of the optimal margin
+    vals = np.sort(cost["margin_best"].to_numpy())
+    y = np.arange(1, len(vals) + 1) / len(vals)
+    ax2.step(np.concatenate([[0], vals]), np.concatenate([[0], y]), where="post",
+             color="#2563eb", linewidth=1.8, zorder=3)
+    ax2.axvline(SMALL_MARGINS[0], ls="--", color="#059669", linewidth=1.2)
+    ax2.axvline(SMALL_MARGINS[1], ls=":", color="#dc2626", linewidth=1.4)
+    for cap in SMALL_MARGINS:
+        share = (vals <= cap).mean()
+        ax2.hlines(share, 0, cap, colors="0.4", linestyles=":", linewidth=0.8, zorder=2)
+        ax2.plot([cap], [share], "o", color="black", markersize=4, zorder=4)
+        ax2.annotate(f"{share * 100:.1f}%", xy=(cap, share),
+                     xytext=(cap + 9, share - 0.10), fontsize=11,
+                     arrowprops=dict(arrowstyle="-", linewidth=0.7, color="black"))
+    ax2.set_xlim(0, 200)
+    ax2.set_ylim(0, 1.02)
+    ax2.set_xlabel(r"optimal margin $\Delta_\theta$ (gCO$_2$eq/kWh)", fontsize=12)
+    ax2.set_ylabel("cumulative share of runs", fontsize=12)
+    ax2.tick_params(labelsize=11)
+    ax2.grid(alpha=0.3)
+    ax2.set_title("(b)", loc="left", fontsize=12)
+
+    fig.tight_layout()
+    _save(fig, "margin_analysis")
+    print(f"  ✓ margin_analysis.svg/.eps in {FIGURES_DIR}/")
+
+
 def main():
     setup_style()
     FIGURES_DIR.mkdir(parents=True, exist_ok=True)
@@ -395,6 +679,15 @@ def main():
     plot_topk_comparison(summary)
     plot_distribution(per_file)
     plot_per_region_heatmap(per_file)
+
+    # Paper analysis: cost of constraining the margin + LNCS figure
+    cost = constraint_cost(combined)
+    attain = margin_bin_profile(combined, cost)
+    cost.to_csv(BASE_DIR / "margin_constraint_cost.csv", index=False)
+    attain.to_csv(BASE_DIR / "margin_bin_profile.csv", index=False)
+    print_paper_stats(cost, attain)
+    plot_paper_margin_analysis(cost, attain)
+
     print(f"\nFiguren gespeichert in {FIGURES_DIR}/")
     for p in sorted(FIGURES_DIR.glob("*.svg")):
         print(" ", p.name)

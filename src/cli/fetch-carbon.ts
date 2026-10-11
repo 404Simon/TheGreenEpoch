@@ -5,6 +5,9 @@ import { fileURLToPath } from "node:url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUT_DIR = resolve(__dirname, "../../public/data/co2");
 
+// Electricity Maps historical API. The carbon-intensity endpoint returns the
+// average, consumption-based (flow-traced) intensity of the consumed mix at
+// the requested zone; it is not the marginal signal.
 const API_URL = "https://api.electricitymaps.com/v3/carbon-intensity/past-range";
 
 interface ApiEntry {

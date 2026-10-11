@@ -68,3 +68,11 @@ uv run scripts/table_grid_stats.py
 ```
 
 It writes a LaTeX tabular body to `publication/output/tables/grid_stats.tex` and to `../TheGreenEpochPaper/assets/tables/grid_stats.tex`, which the paper imports with `\input{assets/tables/grid_stats.tex}`. Rows are ordered by coefficient of variation (descending).
+
+The start-date sensitivity numbers in the paper are reproduced by:
+
+```bash
+uv run scripts/analyze_start_dates.py
+```
+
+It prints the best start date per region and overhead budget, the January-vs-July fixed-start savings, and the monthly mean intensities, and writes `publication/output/start_date_analysis.csv`.

@@ -484,6 +484,10 @@ def print_paper_stats(cost: pd.DataFrame, attain: pd.DataFrame) -> None:
           f"90th pct {_n(m.quantile(.90))}, max {_n(m.max())} gCO2/kWh")
     print(f"optimum with margin <=10: {cost['small10'].mean() * 100:.1f}% ; "
           f"<=20: {cost['small20'].mean() * 100:.1f}%")
+    sub25 = cost[cost["year"].astype(str) == "2025"]
+    print(f"2025-only subset: {len(sub25)} pairs, median margin "
+          f"{_n(sub25['margin_best'].median())}, "
+          f"<=20: {(sub25['margin_best'] <= 20).mean() * 100:.1f}%")
     print(f"normalised by the search range: "
           f"{(cost['margin_rel_best'] <= 0.02).mean() * 100:.1f}% below 2% of theta_p^max; "
           f"{(cost['margin_rel_best'] <= 0.05).mean() * 100:.1f}% below 5%")

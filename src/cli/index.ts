@@ -63,6 +63,7 @@ program.command("checkpoint-sweep")
   .option("--start <date>", "Fixed start date MM-DD (skip date sweep)")
   .option("-o, --output <path>", "Write results as JSON")
   .option("--csv <path>", "Export results as CSV")
+  .option("--points <path>", "Export all sweep points as CSV (for margin analysis)")
   .action(async (opts) => {
     const { checkpointSweepCli } = await import("./checkpoint-sweep");
     await checkpointSweepCli(opts);

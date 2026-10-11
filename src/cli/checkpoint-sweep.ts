@@ -30,6 +30,7 @@ export interface CheckpointSweepResult {
   costsS: number[];
   options: AdaptiveOptions;
   rows: CheckpointSweepRow[];
+  points?: SweepPoint[];
 }
 
 function toRow(costS: number, points: ReturnType<typeof runOptimization>["points"], best: ReturnType<typeof runOptimization>["best"]): CheckpointSweepRow {
@@ -51,6 +52,11 @@ function toRow(costS: number, points: ReturnType<typeof runOptimization>["points
   };
 }
 
+export interface CostPoints {
+  costS: number;
+  points: SweepPoint[];
+}
+
 export function sweepCheckpoints(
   profile: TrainingProfile,
   constants: Constants,
@@ -59,8 +65,9 @@ export function sweepCheckpoints(
   costsS: number[],
   options: AdaptiveOptions,
   onProgress?: (costS: number, iteration: number, row: CheckpointSweepRow) => void,
-): CheckpointSweepRow[] {
+): { rows: CheckpointSweepRow[]; costPoints: CostPoints[] } {
   const rows: CheckpointSweepRow[] = [];
+  const costPoints: CostPoints[] = [];
 
   for (const costS of costsS) {
     const fullProfile: FullProfile = {
@@ -81,9 +88,10 @@ export function sweepCheckpoints(
     });
 
     rows.push(toRow(costS, points, best));
+    costPoints.push({ costS, points });
   }
 
-  return rows;
+  return { rows, costPoints };
 }
 
 // ── CLI handler ──────────────────────────────────────────────────
@@ -111,7 +119,7 @@ export async function checkpointSweepCli(raw: {
   costs?: string;
   tpMax?: string; budget?: string; resolution?: string;
   dateRes?: string; maxIter?: string; alpha?: string;
-  start?: string; output?: string; csv?: string;
+  start?: string; output?: string; csv?: string; points?: string;
 }): Promise<void> {
   const historicalYears = raw.years.split(",").map(Number);
   const costsS = parseCosts(raw.costs);
@@ -145,11 +153,11 @@ export async function checkpointSweepCli(raw: {
   console.log(`  Grid: ${options.resolution}\u00D7${options.startDateResolution}, ${options.maxIterations} iter(s)`);
   console.log(`  Budget: ${options.overheadBudgetPct}%, \u03B1=${options.alpha}\n`);
 
-  const rows = sweepCheckpoints(profile, constants, timeline, historicalYears, costsS, options, (costS, iter, row) => {
+  const { rows, costPoints } = sweepCheckpoints(profile, constants, timeline, historicalYears, costsS, options, (costS, iter, row) => {
     const msg = row.thetaPause !== null
       ? `best \u03B8\u209A=${row.thetaPause}, \u03B8\u209B=${row.thetaResume}, score=${row.score?.toFixed(4)}`
       : "no valid point";
-    console.log(`  cost=${costS}s · iter ${iter + 1}: ${msg}`);
+    console.log(`  cost=${costS}s \u00B7 iter ${iter + 1}: ${msg}`);
   });
 
   const upper = rows.map((r) => r.thetaPause).filter((v): v is number => v !== null);
@@ -224,6 +232,35 @@ export async function checkpointSweepCli(raw: {
     ].join(","));
     writeFileSync(raw.csv, "\uFEFF" + header.join(",") + "\n" + body.join("\n") + "\n", "utf-8");
     console.log(`  CSV:  ${raw.csv} (${rows.length} rows)`);
+  }
+
+  if (raw.points) {
+    const header = [
+      "cost_s", "iteration", "theta_pause", "theta_resume", "start_time",
+      "overhead_pct", "co2_savings_pct", "score", "num_pauses",
+      "within_budget", "stop_reason", "completed",
+    ];
+    const lines: string[] = [];
+    for (const cp of costPoints) {
+      for (const p of cp.points) {
+        lines.push([
+          cp.costS,
+          p.iteration,
+          p.thetaPause,
+          p.thetaResume,
+          p.startTime,
+          p.actualOverheadPct,
+          p.co2SavingsPct,
+          p.score,
+          p.numPauses,
+          p.withinBudget,
+          p.stopReason,
+          p.completed,
+        ].join(","));
+      }
+    }
+    writeFileSync(raw.points, "\uFEFF" + header.join(",") + "\n" + lines.join("\n") + "\n", "utf-8");
+    console.log(`  Points CSV: ${raw.points} (${lines.length} rows)`);
   }
 
   console.log(`  Done.\n`);

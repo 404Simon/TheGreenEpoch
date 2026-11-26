@@ -17,13 +17,17 @@ llncs.cls splncs04.bst llncsdoc.pdf readme.txt history.txt fig1.eps
 
 ```
 make            # build main.pdf
-make svgs       # regenerate figure SVGs from the simulation results
-make clean      # remove build artifacts and generated figures
+make clean      # remove build artifacts and generated EPS figures
 ```
 
 Uses `latexmk -pdfps` (latex → dvi → ps → pdf) because the figures are EPS; needs
 `rsvg-convert`. Build artifacts are gitignored. `assets/` **is** committed — Overleaf
 cannot run the Makefile, so the figures must be in the repo.
+
+The figure SVGs themselves are produced by the simulation repository
+(https://github.com/404Simon/TheGreenEpoch), not by this Makefile — see the
+"Paper figures" section of that repo's README. The `make` rule only converts the
+committed SVGs to EPS.
 
 Overleaf needs no configuration: main document is `main.tex`, and `llncs.cls` /
 `splncs04.bst` are picked up from the project root.

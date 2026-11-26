@@ -9,25 +9,29 @@
 \graphicspath{{./assets/}}
 \usepackage{amsmath,amssymb}
 \usepackage{booktabs}
+\usepackage{siunitx}
+\sisetup{group-digits=false}
 \usepackage{color}
 \usepackage[utf8]{inputenc}
 
-% If you use hyperref
-% \usepackage[colorlinks=true,
-%   linkcolor=blue,
-%   citecolor=blue,
-% urlcolor=blue]{hyperref}
-
 \usepackage{hyperref}
+% If you use the hyperref package, please uncomment the following line
+% to display URLs in blue roman font according to Springer's eBook style:
+\renewcommand\UrlFont{\color{blue}\rmfamily}
+\usepackage{breakurl}
 \usepackage{tabularx}
+\usepackage{threeparttable}
 
 % ------------------------------------------------------------------
 \begin{document}
 
 \title{Carbon-Aware LLM Training via\\Hysteresis Policy Optimization}
 
-\author{Simon Wittmann \and Julian Kraus \and Bastian
-Wiesner \and Saeid Jahandar \and Reinhard German}
+\author{Simon Wittmann\orcidID{0009-0006-2291-0736} \and Julian
+  Kraus\orcidID{0009-0006-1717-8376} \and Bastian
+  Wiesner\orcidID{0009-0004-2594-1373} \and Saeid
+  Jahandar\orcidID{0000-0002-7035-6462} \and Reinhard
+German\orcidID{0000-0002-9071-4802}}
 
 \authorrunning{S. Wittmann et al.}
 
@@ -43,24 +47,30 @@ Wiesner \and Saeid Jahandar \and Reinhard German}
 % Abstract
 % ============================================================
 \begin{abstract}
-%The abstract should briefly summarize the contents of the paper in 150--250 words.
+  %The abstract should briefly summarize the contents of the paper in
+  % 150--250 words.
 
-  Large language model training carries a critical environmental
-  cost: single runs consume millions of GPU-hours and emit hundreds of
-  tonnes of CO$_2$. Temporal workload shifting can reduce these
-  emissions, but existing approaches rely on ad-hoc thresholds
-  without systematic policy exploration. We present a framework that
-  searches the three-dimensional space of pause threshold, resume
-  threshold, and start date via adaptive grid-search optimization.
-  Evaluating two frontier models (DeepSeek~V3, Kimi~K2) across five
-  grid regions on 2025 Electricity Maps data at 5-minute resolution,
-  we find that the optimal hysteresis margin never exceeds
-  16~gCO$_2$eq/kWh: wide hysteresis degrades the savings-to-overhead
-  ratio, making pausing effectively a binary decision. In
-  high-variability grids (Germany, Italy), savings reach 43.4\% and
-  32.7\% at 174\% and 199\% time overhead. Low-variance grids (United
-  States, China) yield under 10\% savings. Our results provide
-  actionable, region-specific policies for carbon-aware LLM training.
+  Large language model (LLM) training carries a critical
+  environmental cost: single runs consume millions of GPU-hours and
+  emit hundreds of tonnes of CO$_2$. Pausing and resuming on
+  carbon-intensity thresholds is established and can cut emissions,
+  but the optimal pause--resume gap (the hysteresis margin) is
+  unstudied for LLM training. We present a framework that searches
+  the policy space (pause threshold, resume threshold, start date)
+  via adaptive grid search. Evaluating the frontier model DeepSeek~V3
+  on 2025 Electricity Maps data (average, flow-traced, 5-minute, plus
+  a 2022--2025 robustness check) across five grid regions, we find
+  the margin is a weak lever: across 84 scenario--budget combinations
+  its median optimum is 6.5~gCO$_2$eq/kWh and stays below
+  20~gCO$_2$eq/kWh in 94\% of runs, while capping it at
+  10~gCO$_2$eq/kWh costs a median of 0.00\,pp. Pausing is effectively
+  binary, and a wide dead zone buys nothing. Sweeping checkpoint
+  save/load time from 0 to 600~s over five budgets leaves the median
+  optimum at 4.8~gCO$_2$eq/kWh and costs at most 0.12\,pp under the cap. In
+  high-variability grids (Germany, Italy) savings reach 43.4\% and
+  32.7\% at 174\% and 195\% overhead; low-variance grids (United
+  States, China) yield under 10\% savings. Our results give
+  region-specific design guidance for carbon-aware LLM training.
 
   \keywords{Carbon-aware computing \and LLM training \and Hysteresis policy \and
     Grid carbon intensity \and Temporal workload shifting \and
@@ -74,445 +84,517 @@ Wiesner \and Saeid Jahandar \and Reinhard German}
 
 The energy consumption of large language model (LLM) training has
 grown dramatically. Training a single frontier model requires
-millions of GPU-hours: DeepSeek~V3 (2.79M~GPU-hours)
-~\cite{deepseek-ai_deepseek-v3_2024} and Kimi~K2 (15.5T tokens)
-~\cite{kimi_team_kimi_2025}. At a per-GPU power draw of 700~W
-for an NVIDIA H800 GPU during training \cite{h800_specs} and a power
-usage effectiveness (PUE) of 1.27 \cite{jegham_hungry_2025}, a single
-run can emit hundreds of tonnes of CO$_2$ depending on the local grid
-mix. As LLM deployment scales, managing this environmental cost
-becomes essential for sustainable AI infrastructure.
+millions of GPU-hours: DeepSeek~V3 (671B parameters, 14.8T tokens,
+2.79M~GPU-hours)~\cite{deepseek-ai_deepseek-v3_2024}. At a per-GPU
+power draw of 700~W for an NVIDIA H800 GPU during training
+\cite{h800_specs} and a power usage effectiveness (PUE) of 1.27
+\cite{jegham_hungry_2025}, a single run can emit hundreds of tonnes
+of CO$_2$ depending on the local grid mix~\cite{patterson_carbon_nodate}.
 
 Carbon-aware temporal workload shifting pauses training when grid
 carbon intensity exceeds a threshold and resumes when it falls below
-a second threshold, allowing a training run to consume cleaner energy
-without hardware modification. However, the threshold pair
-$(\theta_p, \theta_r)$
-and start date $t_s$ jointly determine the savings-overhead trade-off.
+a lower one~\cite{lechowicz_pause_2023}, letting a run consume
+cleaner energy without hardware modification. The threshold pair
+$(\theta_p, \theta_r)$ and the start date $t_s$ jointly determine the
+savings-overhead trade-off, and the gap between the two thresholds is
+the hysteresis margin.
 
-Temporal workload shifting can reduce operational carbon emissions of
-cloud batch jobs by 3--34\%~\cite{wiesner_lets_2021}, and
-geo-distributed training during renewable curtailment windows achieves
-88--95\% savings across multiple sites~\cite{wiesner_distributed_2026}.
-At the datacenter scale, Carbon Explorer balances operational and
-embodied carbon across hardware procurement and
-deployment~\cite{acun_carbon_2023}. The emissions accounting
-methodology of Patterson~et~al.~\cite{patterson_carbon_nodate} and
-marginal intensity-based accounting of
-Dodge~et~al.~\cite{dodge_measuring_2022} provide essential
-foundations. However, none of these works provides a systematic method for
-optimizing the hysteresis policy parameters of a single-site LLM
-training run. Ad-hoc thresholds predominate, and the value of the
-hysteresis margin (the gap between pause and resume thresholds)
-remains unexplored.
+The mechanism and its analysis are well established
+(Table~\ref{tab:prior}). Our policy belongs to the family of
+state-dependent two-threshold pause-and-resume policies formalized by
+Lechowicz~et~al.~\cite{lechowicz_pause_2023}, who charge a switching
+cost per transition and derive double-threshold algorithms with
+optimal competitive ratios; their threshold gap is fixed by the
+switching cost rather than tuned.
+Dodge~et~al.~\cite{dodge_measuring_2022} measure operational
+emissions for a 6.1B-parameter model on real cloud instances and
+evaluate region, time-of-day, and threshold-based pausing using
+location-based marginal intensity, with a single threshold set
+indirectly through a duration-increase budget. Neither calibrates how
+far apart the pause and resume thresholds should be for a single,
+long frontier-scale pretraining run. We study that hysteresis margin
+directly, optimizing $(\theta_p,\theta_r,t_s)$ offline on historical
+traces under location-based average (flow-traced) intensity, and
+quantify the cost of forcing the margin wide.
 
-  \begin{table}[htb]
-    \centering
-    \caption{Comparison of prior workload shifting approaches.}
+\begin{table}[htb]
+  \centering
+  \begin{threeparttable}
+    \caption{Comparison of prior workload shifting approaches. Savings
+    are as reported by the respective authors.}
+    \label{tab:prior}
     \small
-    \begin{tabular}{lcc}
+    \begin{tabular}{@{}llc@{}}
       \toprule
       Study & Approach & Savings \\
       \midrule
       Wiesner et al.~\cite{wiesner_lets_2021}
       & Temporal shifting, generic cloud jobs
       & 3--34\% \\
+      Dodge et al.~\cite{dodge_measuring_2022}
+      & Flexible start, pause/resume for AI
+      & up to 11.4\% \\
+      Lechowicz et al.~\cite{lechowicz_pause_2023}
+      & Online pause/resume, gap fixed by switch cost
+      & ---\tnote{a} \\
+      Hanafy et al.~\cite{hanafy_carbonscaler_2023}
+      & Elastic scaling, suspend/resume baseline
+      & up to 51\% \\
+      Xu et al.~\cite{xu_green_2025}
+      & Carbon-aware ML cluster scheduling
+      & up to 41.2\% \\
       Wiesner et al.~\cite{wiesner_distributed_2026}
       & Geo-distributed, curtailment windows
       & 88--95\% \\
+      Alla et al.~\cite{alla_ecoschedai_2026}
+      & Predicted CI, rule-based/RL policies
+      & up to 9.7\% \\
       This work
-      & Temporal hysteresis, frontier LLMs
-      & 2--43\% \\
+      & Static hysteresis, frontier LLMs
+      & 1--43\% \\
       \bottomrule
     \end{tabular}
-  \end{table}
+    \begin{tablenotes}
+      \footnotesize
+    \item[a] Lechowicz et al.\ report competitive-ratio improvements
+      (48.2\% over carbon-agnostic), not percentage carbon savings.
+    \end{tablenotes}
+  \end{threeparttable}
+\end{table}
 
 Our contributions to address this gap are:
-  \begin{enumerate}
-    \item A simulation framework for carbon-aware LLM training with
-      hysteresis-based pausing, validated through structural monotonicity
-      checks and cross-model scaling consistency.
-    \item An adaptive grid-search optimizer that efficiently explores the
-      $(\theta_p, \theta_r, t_s)$ policy space, converging within at most six
-      iterations.
-    \item A comprehensive empirical study covering two state-of-the-art models
-      across five grid regions, establishing systematic
-      Pareto frontiers, to the best of our knowledge, for
-      carbon-aware LLM training.
-    \item An actionable design rule: the optimal hysteresis policy uses a
-      narrow margin ($\theta_p - \theta_r \leq 16$~gCO$_2$eq/kWh). Wide
-      hysteresis is never Pareto-optimal.
-  \end{enumerate}
+\begin{enumerate}
+  \item A simulation framework for carbon-aware LLM training with
+    hysteresis-based pausing, validated against a reference
+    implementation and structural invariants.
+  \item An adaptive grid-search optimizer that efficiently explores
+    the $(\theta_p, \theta_r, t_s)$ policy space, converging within
+    at most six iterations.
+  \item A comprehensive empirical study of a frontier training run
+    across five grid regions, establishing, to the best of our
+    knowledge, the first systematic Pareto frontiers for carbon-aware
+    frontier-LLM training.
+  \item An empirical design rule for the hysteresis margin, based on
+    84 scenario--budget combinations: optima concentrate at
+    $\Delta_\theta \leq 20$~gCO$_2$eq/kWh (94\%), and enforcing
+    $\Delta_\theta \leq 10$~gCO$_2$eq/kWh costs a median of 0.00\,pp
+    of savings. The margin is not a sensitive tuning parameter; the
+    pause threshold and the start date are. The conclusion is
+    unchanged when the checkpoint cost is swept from 0 to 600\,s (40
+    budget--cost combinations, at most 0.12\,pp lost by the cap).
+\end{enumerate}
 
-  % ============================================================
-  % 2. Problem Formulation
-  % ============================================================
-  \section{Problem Formulation}
+% ============================================================
+% 2. Problem Formulation
+% ============================================================
+\section{Problem Formulation}
 
-  \subsection{System Model}
+\subsection{System Model}
 
-  We consider a single training job defined by: model parameter count $N$,
-  token count of the dataset $T$, GPU count $G$, per-GPU training power $P_t$,
-  per-GPU idle power $P_i$, facility PUE $\eta$, checkpoint save duration
-  $\tau_c$, and checkpoint resume duration $\tau_r$. The job runs on a
-  cluster in a single region whose grid carbon intensity $carbon(t)$ is a time
-  series at a resolution of 5-minutes.
+A single training job is defined by model parameter count $N$,
+dataset token count $T$, GPU count $G$, per-GPU training power $P_t$,
+per-GPU idle power $P_i$, facility PUE $\eta$, and checkpoint
+save/resume durations $\tau_c, \tau_r$. It runs on a cluster in one
+region whose grid carbon intensity $carbon(t)$ is a 5-minute time series.
 
-  \subsection{Hysteresis Policy}
+\subsection{Hysteresis Policy}
 
-  A hysteresis policy is defined by two thresholds and a start date:
-  \begin{itemize}
-    \item $\theta_p$: the pause threshold. When training and $carbon(t) > \theta_p$,
-      training pauses, a checkpoint is saved, and GPUs enter idle state.
-    \item $\theta_r$: the resume threshold. When paused and $carbon(t) \le \theta_r$,
-      training resumes from the last checkpoint.
-    \item $t_s$: the date and time at which training begins.
-  \end{itemize}
-  The policy is feasible only if $\theta_r \le \theta_p$; the
-  difference $\Delta_\theta = \theta_p - \theta_r$ is the
-  hysteresis margin. A zero margin ($\theta_r = \theta_p$) means
-  the job switches on and off at a single threshold; a positive margin introduces
-  a dead zone where the job remains in its current state.
+A hysteresis policy is defined by a pause threshold $\theta_p$, a
+resume threshold $\theta_r$, and a start date $t_s$. While training,
+a rise of $carbon(t)$ above $\theta_p$ pauses the job, saves a
+checkpoint, and idles the GPUs; while paused, a drop of $carbon(t)$
+below $\theta_r$ resumes training from the last checkpoint; and $t_s$
+is when training begins. The policy is feasible only if $\theta_r \leq
+\theta_p$, and $\Delta_\theta = \theta_p - \theta_r$ is the
+hysteresis margin. A zero margin ($\theta_r = \theta_p$) switches the
+job on and off at a single threshold, whereas a positive margin opens
+a dead zone in which the job keeps its current state. Prior work
+fixes this gap to the switching cost~\cite{lechowicz_pause_2023} or
+uses a single threshold~\cite{dodge_measuring_2022}; we treat
+$\Delta_\theta$ as a free parameter to be calibrated.
 
-  \subsection{Objective}
+\subsection{Objective}
 
-  Savings and overhead are computed relative to a never-pause baseline:
-  \begin{equation}
-    S = \frac{GHG_{b} - GHG_{p}}{GHG_{b}} \times 100 \qquad
-    O = \frac{T_p - T_b}{T_b} \times 100
-  \end{equation}
-  where $GHG_{b}, T_b$ are the baseline (greenhouse gas) emissions and time, and $GHG_{p}, T_p$ are the policy
-  emissions and time. We use a composite score that rewards carbon savings while
-  enforcing an overhead budget $B$:
-\[
-\text{score} = \frac{
-  \alpha \cdot \frac{\text{S}}{100}
-  + 1 - (1-\alpha) \cdot \frac{\text{O}}{B}
-}{2}
-\]
+Savings and overhead are measured against a never-pause baseline:
+\begin{equation}
+  S = \frac{GHG_{b} - GHG_{p}}{GHG_{b}} \times 100 \qquad
+  O = \frac{T_p - T_b}{T_b} \times 100
+\end{equation}
+where $GHG_{b}, T_b$ and $GHG_{p}, T_p$ are the baseline and policy
+emissions and times. Candidate policies are scored by
+$\bigl(\alpha\,S/100 + 1 - (1-\alpha)\,O/B\bigr)/2$, with $B$ the
+overhead budget. Since all experiments use $\alpha = 1$, the score
+reduces to $(S/100 + 1)/2$ and the optimizer simply maximizes carbon
+savings subject to $O \leq B$ (policies above $B$ are discarded,
+Sect.~\ref{sec:opti-algo}); the savings-overhead balance is thus set
+by $B$ alone rather than by a weighted trade-off.
 
-  % ============================================================
-  % 3. Simulation Framework
-  % ============================================================
-  \section{Simulation Framework}
+% ============================================================
+% 3. Simulation Framework
+% ============================================================
+\section{Simulation Framework} \label{sec:simulation}
 
-  \subsection{Discrete-Event Simulator}
+\subsection{Discrete-Event Simulator}
 
-  We implement a discrete-event simulator that replays a training run under a
-  given policy. At each 5-minute time step $\Delta t$:
-  \begin{itemize}
-    \item If training is active and $carbon(t) > \theta_p$, the job enters a
-      checkpoint-pause cycle: it spends $\tau_c$ saving state at full power,
-      then remains idle at $P_i$.
-    \item If paused and $carbon(t) < \theta_r$, the job resumes: it spends
-      $\tau_r$ loading state (negligible with asynchronous checkpointing), then
-      resumes training.
-    \item Otherwise, the job continues in its current state.
-  \end{itemize}
-  The energy consumed per timestep is $E(t) = G \cdot P \cdot \eta \cdot \Delta t$ where
-  $P$ is $P_t$ when training and $P_i$ when paused. The emissions are $GHG(t) = E(t) \cdot
-  carbon(t)$. Total training tokens are tracked to ensure completion; pause
-  episodes extend the duration of wall-clock time proportionally.
+A discrete-event simulator replays a training run under a given
+policy. At each 5-minute step $\Delta t$: if training is active and
+$carbon(t) > \theta_p$, the job spends $\tau_c$ saving state at full
+power and then idles at $P_i$; if paused and $carbon(t) < \theta_r$,
+it spends $\tau_r$ loading state (negligible for asynchronous
+checkpointing) and resumes; otherwise it keeps its current state. The
+energy per timestep is $E(t) = G \cdot P \cdot \eta \cdot \Delta t$
+with $P = P_t$ while training and $P_i$ while paused, and emissions
+are $GHG(t) = E(t) \cdot carbon(t)$. Training tokens are tracked to
+completion; pause episodes extend wall-clock duration proportionally.
 
-  \subsection{Carbon Intensity Data}
+\subsection{Carbon Intensity Data}
 
-  \begin{table}
-    \centering
-    \caption{Grid carbon intensity characteristics (2025). Regions ordered
-    by coefficient of variation.}
-    \label{tab:grid}
+\begin{table}
+  \centering
+  \caption{Grid carbon intensity characteristics (2025). Regions ordered
+  by coefficient of variation.}
+  \label{tab:grid}
+  \small
+  \input{assets/tables/grid_stats.tex}
+\end{table}
+
+Carbon intensity is the Electricity Maps average (consumption-based,
+flow-traced) signal at 5-minute resolution for five regions in 2025,
+retrieved via the historical API v3 endpoint
+\path{/carbon-intensity/past-range}; the exact retrieval parameters
+and the resulting series are archived in the repository. Average
+intensity measures the emissions per kWh of the electricity mix
+actually consumed, whereas marginal intensity measures the emissions
+of the generator that would supply an additional unit of demand.
+This distinction matters for load shifting: pausing computation avoids
+emissions from the marginal generator, while average intensity is used
+to attribute a run's footprint. Our savings are therefore attributional;
+marginal-based estimates, such as those by
+Dodge et al.~\cite{dodge_measuring_2022}, may yield different magnitudes
+and thresholds. Table~\ref{tab:grid} summarizes the mean,
+standard deviation, and coefficient of variation (CV): Germany and
+Sweden have the highest CV, but Germany and Italy offer the greatest
+usable arbitrage, while the low-variance United States and China
+offer few clean intervals. The series is strongly autocorrelated
+(lag-1 $= 0.999$, one-day lag $= 0.718$ for Germany), so
+chronological trace replay is essential. Runs that would pass
+31~December are replayed cyclically, repeating the same annual pattern.
+
+% ============================================================
+% 4. Optimization Method
+% ============================================================
+\section{Adaptive Grid-Search Optimization} \label{sec:opti-algo}
+
+Exhaustively enumerating the 3D policy space $(\theta_p, \theta_r,
+t_s)$ is computationally prohibitive: a naive grid at resolution $N$
+per axis costs $O(N^2 \cdot D)$ where $D$ is the number of start-date
+samples. With $N=100$ and $D=52$, brute-force requires approximately
+260,000 simulations. We instead use an adaptive grid-search algorithm
+inspired by trust-region optimization:
+\begin{enumerate}
+  \item {\bf Initialization.} A coarse grid over full bounds:
+    $\theta_p \in [10, \theta_p^{\max}]$, $\theta_r \in [0,
+    \theta_p^{\max}]$ with $\theta_r \leq \theta_p$, and
+    $t_s$ at $D$ uniform intervals. In our experiments the maximum
+    $\theta_p^{\max}$ is region-dependent: 100~gCO$_2$eq/kWh for Sweden
+    and 800 for all other regions.
+  \item {\bf Evaluation and selection.} Every grid point is
+    simulated. Points that exceed the overhead budget $B$ are discarded.
+  \item {\bf Zoom refinement.} Bounds contract around the best point
+    by shrinking factor $s = 0.45$ per axis, with the grid resolution
+    $N = 10$ points per axis per iteration held fixed.
+  \item {\bf Iteration.} Steps 2--3 repeat for a maximum of $K = 10$ iterations.
+\end{enumerate}
+
+The initial grid always contains the extreme policy ($\theta_p =
+\theta_p^{\max}, \theta_r = 0$), which does not pause under the
+observed intensities, so the search is anchored by a low-overhead
+candidate. The total complexity is $O(K \cdot N^2 \cdot D)$; with our
+settings ($K=10, N=10, D=7$ for start-date experiments, $D=1$ for
+fixed-date runs), a full optimization evaluates on the order of 3,500
+candidate policies (roughly 700 for fixed-start runs), completing in
+well under one minute on a single CPU core. The optimizer converges
+within 5--6 iterations in all regions; later iterations improve the
+score by $\leq2\times10^{-5}$.
+
+% ============================================================
+% 5. Results
+% ============================================================
+\section{Results}
+
+\subsection{Experimental Setup}
+
+DeepSeek~V3 has 671B total parameters (37B activated per token) and
+14.8T training tokens, and was trained on 2048\,H800 GPUs with 2.79M
+total GPU-hours~\cite{deepseek-ai_deepseek-v3_2024}. We assume a
+facility PUE of 1.27~\cite{jegham_hungry_2025}.
+
+The H800 has a TDP of 700\,W~\cite{h800_specs}. For the idle
+power we adopt the measured 60\,W idle draw of the power-comparable
+H100~\cite{massedcompute_h100_power,advantech_h100_h800}. We set the
+checkpoint save time to 148.8\,s
+(a 7B model under PyTorch distributed
+checkpointing~\cite{pytorch_checkpoint}) and the resume time to 0\,s
+(asynchronous checkpointing); Sect.~\ref{sec:ckpt-cost} sweeps this cost.
+
+\subsection{Pareto Frontier Analysis}
+
+Figure~\ref{fig:pareto} shows the combined Pareto frontiers and
+Table~\ref{tab:best} the best-score configurations; for DeepSeek~V3,
+single-year savings range from 43.4\% (Germany) to 6.2\% (China).
+Table~\ref{tab:budgets} lists the best savings along this frontier
+when the overhead budget is tightened to $B$. The budget matters in
+practice: the German optimum reaches 43.4\% only by running for
+2.74$\times$ the baseline duration, whereas capping overhead at 50\%
+still yields 25.4\% (the 10--50\% columns are the relevant ones for
+deadline-constrained jobs). In high-variability grids the frontier
+reflects carbon-intensive intervals worth avoiding; Sweden plateaus
+earlier because its low baseline intensity leaves fewer such windows;
+the United States and China vary so little that pausing rarely finds
+a cleaner interval than the one it left.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.64\textwidth]{savings_vs_overhead_all}
+  \caption{
+    Pareto frontiers for DeepSeek~V3 across five grid regions. Each
+    point is a feasible policy $(\theta_p, \theta_r, t_s)$ evaluated
+    on 2025 5-minute intensity data. Best-score points within 200\%
+    overhead are stars.
+  }
+  \label{fig:pareto}
+\end{figure}
+
+\begin{table}[htbp]
+  \centering
+  \begin{minipage}[t]{0.46\columnwidth}\centering
+    \caption{Best savings (\%) among the evaluated Pareto-optimal
+      DeepSeek~V3 policies per overhead budget $B$
+    (Fig.~\ref{fig:pareto}).}
+    \label{tab:budgets}
     \small
-    \begin{tabular}{lrrr}
+    \begin{tabular}{@{}l S[table-format=2.1] S[table-format=2.1]
+      S[table-format=2.1] S[table-format=2.1] S[table-format=2.1]@{}}
       \toprule
-      Region & Mean & Std.\ dev. & CV \\
-      & (gCO$_2$eq/kWh) & (gCO$_2$eq/kWh) & \\
+      & \multicolumn{5}{c}{Overhead budget $B$} \\
+      \cmidrule(l){2-6}
+      Region & {10\%} & {25\%} & {50\%} & {100\%} & {200\%} \\
       \midrule
-      DE (Germany) & 380 & 141.98 & 0.37 \\
-      SE (Sweden)  &  23 &   8.19 & 0.35 \\
-      IT (Italy)   & 309 &  87.02 & 0.28 \\
-      US (United States) & 412 & 44.68 & 0.11 \\
-      CN (China)   & 519 &  55.68 & 0.11 \\
+      DE & 6.2 & 16.5 & 25.4 & 37.5 & 43.4 \\
+      IT & 4.0 & 10.7 & 15.2 & 25.8 & 32.7 \\
+      SE & 8.0 & 14.1 & 19.1 & 22.9 & 23.2 \\
+      US & 1.4 & 4.8 & 7.0 & 9.4 & 9.5 \\
+      CN & 2.1 & 3.7 & 4.8 & 6.2 & 6.2 \\
       \bottomrule
     \end{tabular}
-  \end{table}
-
-  Carbon intensity data comes from the Electricity Maps API at
-  5-minute resolution for five regions in 2025. Table~\ref{tab:grid}
- summarizes the mean intensity, standard deviation, and
-  coefficient of variation (CV) of each region.
-  Grid variability determines savings potential: Germany
-  and Italy offer the greatest temporal arbitrage
-  opportunity, while the United States and China offer few
-  clean intervals. The time series exhibits strong temporal
-  autocorrelation (lag-1 $= 0.999$, one-day lag $= 0.694$ for
-  Germany), which makes a chronological trace replay essential.
-
-  % ============================================================
-  % 4. Optimization Method
-  % ============================================================
-  \section{Adaptive Grid-Search Optimization} \label{sec:opti-algo}
-
-  Exhaustively enumerating the 3D policy space $(\theta_p, \theta_r, t_s)$ is
-  computationally prohibitive: a naive grid at resolution $N$ per axis costs
-  $O(N^2 \cdot D)$ where $D$ is the number of start-date samples. With
-  $N=100$ and $D=52$, brute-force requires approximately 260,000 simulations.
-  We instead use an adaptive grid-search algorithm inspired by trust-region
-  optimization:
-  \begin{enumerate}
-    \item {\bf Initialization.} A coarse grid over full bounds:
-      % obacht, this is correct!
-      $\theta_p \in [0, \theta_p^{\max}]$, $\theta_r \in [0, \theta_p^{\max}]$ with $\theta_r \le \theta_p$, and
-      $t_s$ at $D$ uniform intervals. The maximum $\theta_p^{\max}$ is
-      region-dependent: 100~gCO$_2$eq/kWh for Sweden, 800 for all others.
-    \item {\bf Evaluation and selection.} Every grid point is simulated. Points
-    that exceed the overhead budget $B$ are discarded.
-    \item {\bf Zoom refinement.} Bounds contract around the best point by
-    shrinking factor $s = 0.45$ per axis. The grid resolution $N = 10$ points per
-      axis per iteration remains fixed. If the contracted interval on any axis
-      falls below $3$~gCO$_2$eq/kWh, the search on that axis terminates.
-    \item {\bf Iteration.} Steps 2--3 repeat for a maximum of $K = 10$
-      iterations.
-  \end{enumerate}
-
-  The algorithm guarantees a feasible point (the initial grid always contains
-    the no-pause policy $\theta_p = \theta_p^{\max}, \theta_r =
-  0$, yielding $0\%$ overhead). The total complexity is $O(K \cdot N^2 \cdot D)$;
-  with our settings ($K=10, N=10, D=7$ for start-date experiments, $D=1$ for
-  fixed-date runs), a full optimization evaluates approximately 3,500
-  candidate policies (550 for fixed-start runs), completing in under one
-  minute on a single CPU core. The optimizer converges within 5--6
-  iterations in all (model, region) combinations; subsequent
-  iterations yield no measurable improvement
-  ($\Delta\text{score}\leq2\times10^{-5}$).
-
-  % ============================================================
-  % 5. Experimental Setup
-  % ============================================================
-  \iffalse
-  \section{Experimental Setup}
-
-  \subsection{Models}
-
-  We evaluated DeepSeek~V3 (671B total parameters, 37B active with MoE,
-  trained on 14.8T tokens using 2048~H800~GPUs, 2.79M~GPU-hours) and
-  Kimi~K2 (1T parameters, 32B active with MoE, trained on 15.5T tokens,
-  minimum 256~GPU model-parallel group). The GPU-hours for Kimi were
-  estimated based on the GPU-hours per trillion tokens given by Deepseek.
-  These represent the current frontier of LLM pretraining at
-  substantially different scales.
-
-  \subsection{Hardware Constants}
-
-  GPU training power: 700~W (NVIDIA H800 TDP~\cite{h800_specs}). GPU idle
-  power: 60~W (estimated). PUE: 1.27 (DeepSeek DGX H800 infrastructure
-  data~\cite{jegham_hungry_2025}). Checkpoint pause: 148.8~s (PyTorch
-  Distributed synchronous checkpoint, 7B model~\cite{pytorch_checkpoint}).
-  Checkpoint resume: 0~s (asynchronous checkpoint I/O).
-
-  \subsection{Regions and Data}
-
-  Five regions shown in Table~\ref{tab:grid}. We use 2025 marginal carbon
-  intensity at 5-minute resolution from Electricity Maps. Our framework
-  generalizes to any year of available intensity data.
-
-  \subsection{Optimizer Settings}
-
-  Resolution $N=10$, iterations $K=10$, budget $B=200\%$, maximum
-  pause threshold $\theta_p^{\max}$, shrink factor
-  $s=0.45$, minimum step $3$~gCO$_2$eq/kWh, $\alpha=1.0$ (pure savings
-  objective within budget). Start-date resolution: 1 sample (Jan~1) for
-  fixed-date runs, 7 samples per year for start-date optimization.
-\fi
-
-  % ============================================================
-  % 6. Results
-  % ============================================================
-  \section{Results}
-
-  \subsection{Experimental Setup}
-
-\begin{table}[htbp]
-  \centering
-  \caption{Experimental Setup used in our simulation runs.}
-  \label{tab:exp_setup}
-  \small
-  \begin{tabularx}{\columnwidth}{|l|X|}
-    \toprule
-    \textbf{Parameter / Setting} & \textbf{Specification / Value} \\
-    \midrule
-    \multicolumn{2}{|l|}{\textbf{Models}} \\
-    DeepSeek V3 & 671B total parameters (37B active MoE), 14.8T tokens, 2048\,H800 GPUs, 2.79M GPU-hours \\
-    Kimi K2 & 1T total parameters (32B active MoE), 15.5T tokens, $\ge~256$ GPU model-parallel group\textsuperscript{*} \\
-    \midrule
-    \multicolumn{2}{|l|}{\textbf{Hardware Constants}} \\
-    GPU Power (Active / Idle)& 700\,W (H800 TDP)~\cite{h800_specs} \quad / 60\,W (est.) \\
-    PUE & 1.27 (DeepSeek DGX H800 infrastructure)~\cite{jegham_hungry_2025} \\
-    Checkpoint Overhead- & \\
-    Time (Pause / Resume) & 148.8\,s (PyTorch Dist. 7B)~\cite{pytorch_checkpoint} / 0\,s (async I/O)\\
-    \midrule
-    \multicolumn{2}{|l|}{\textbf{Additional Optimizer Settings (not described in section \ref{sec:opti-algo})}} \\
-    Budget \& Weight & Budget $B=200\%$, $\alpha=1.0$ (pure savings objective) \\
-    \bottomrule
-  \end{tabularx}
-  \vspace{1mm}
-  
-  \raggedright \scriptsize \textsuperscript{*}GPU-hours estimated based on DeepSeek GPU-h/trillion tokens.
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.52\columnwidth}\centering
+    \caption{Best policy per region with optimized start dates; margin
+      $\Delta_\theta = \theta_p - \theta_r \leq 20$~gCO$_2$eq/kWh
+    everywhere.}
+    \label{tab:best}
+    \small
+    \begin{tabular}{@{}l S[table-format=3.0] S[table-format=3.0]
+      S[table-format=2.1] S[table-format=3.1]@{}}
+      \toprule
+      Region & {$\theta_p$} & {$\theta_r$} & {Savings (\%)} & {Overhead (\%)} \\
+      \midrule
+      DE & 273 & 268 & 43.4 & 174.3 \\
+      IT & 247 & 230 & 32.7 & 194.7 \\
+      SE &  19 &  18 & 23.2 & 106.3 \\
+      US & 396 & 386 &  9.5 & 115.7 \\
+      CN & 528 & 511 &  6.2 &  72.5 \\
+      \bottomrule
+    \end{tabular}
+  \end{minipage}
 \end{table}
 
-  \subsection{Pareto Frontier Analysis}
+Savings broadly track grid variability, not monotonically: Italy
+beats the higher-CV Sweden, whose low absolute intensity caps the
+emissions available to avoid, and the United States beats the higher-CV China.
 
-  Figure~\ref{fig:pareto} presents the combined Pareto frontiers.
-  Table~\ref{tab:best} reports the best-score configurations. For
-  DeepSeek~V3, single-year savings range from 43.4\% (Germany, score 0.717)
-  to 6.2\% (China, score 0.531).
-  
-  In high-variability grids, the frontier reflects substantial carbon-intensive intervals 
-  worth avoiding. Sweden plateaus earlier: its consistently low baseline carbon intensity yields fewer high-emission windows to mitigate. The United States and China show limited 
-  temporal variation: pausing rarely finds a significantly cleaner interval 
-  than the one it left. 
+\subsection{Threshold Space and Hysteresis Margin}
 
-  \begin{figure}[h]
-    \centering
-    \includegraphics[width=0.7\textwidth]{savings_vs_overhead_all}
-    \caption{
-      Combined Pareto frontiers for DeepSeek~V3 and
-      Kimi~K2 across five grid regions.
-      Each point is a feasible policy $(\theta_p, \theta_r, t_s)$
-      evaluated on 2025 5-minute intensity data.
-      Best-score points within 200\% overhead are stars.
-    }
-    \label{fig:pareto}
-  \end{figure}
-
-
-\begin{table}[htbp]
+\begin{figure}
   \centering
-  \caption{Best policy configurations per (model, region) with optimized
-    start dates. The hysteresis margin $\Delta_\theta = \theta_p -
-    \theta_r$ is
-  $\leq 16$~gCO$_2$eq/kWh across all combinations.}
-  \label{tab:best}
-  \small
-  \begin{tabular}{l | rrrr | rrrr}
-    \toprule
-    & \multicolumn{4}{c|}{DeepSeek~V3} & \multicolumn{4}{c}{Kimi~K2} \\
-    \cmidrule(lr){2-5} \cmidrule(lr){6-9}
-    Region & $\theta_p$ & $\theta_r$ & Savings & Overhead & $\theta_p$ & $\theta_r$ & Savings & Overhead \\
-    \midrule
-    DE & 272 & 268 & 43.4\% & 174.3\% & 267 & 262 & 27.5\% & 199.4\% \\
-    IT & 246 & 231 & 32.7\% & 194.7\% & 283 & 271 & 16.6\% & 129.1\% \\
-    SE &  19 &  18 & 23.2\% & 106.3\% &  22 &  21 & 12.8\% & 115.4\% \\
-    US & 396 & 386 &  9.5\% & 115.7\% & 453 & 447 &  3.1\% &  22.2\% \\
-    CN & 528 & 512 &  6.2\% &  72.5\% & 537 & 522 &  2.4\% &  40.1\% \\
-    \bottomrule
-  \end{tabular}
-\end{table}
+  \includegraphics[width=0.52\textwidth]{threshold_space_DeepSeek_V3_DE_0101}
+  \caption{
+    Pause vs.\ resume threshold for DeepSeek~V3 in Germany (January 1
+    start). Color encodes composite score; the diagonal
+    $\theta_r=\theta_p$ marks zero-hysteresis policies.
+  }
+  \label{fig:threshold}
+\end{figure}
 
-  For Kimi~K2, the same regional ordering holds at lower absolute savings
-  (Germany 27.5\%, score 0.637; China 2.4\%, score 0.512). Larger GPU counts
-  amplify the benefit of avoiding carbon intensive intervals, but the scaling is
-  sub-linear: DeepSeek~V3's up to 8$\times$ GPU advantage yields only
-  1.5--2.0$\times$
-  the relative savings, because checkpoint overhead scales with GPU count.
+The threshold analysis (Fig.~\ref{fig:threshold}) reveals that
+optimal margins cluster near zero for this setup. We repeat the
+optimization under five overhead budgets (10, 25, 50, 100, and 200\%)
+over 19 scenarios (each region under fixed January and July starts,
+  an optimizer-chosen start on 2025, and one on the 2022--2025 average;
+the US July start is infeasible), yielding 84 feasible
+scenario--budget pairs and 110{,}616 feasible policy evaluations
+(Fig.~\ref{fig:margin}); a 2025-only subset (62 pairs) gives a median
+margin of 7.0~gCO$_2$eq/kWh and $\Delta_\theta \leq 20$ in 91.9\%.
 
-  The ranking of regions by savings potential (DE $>$ IT $>$ SE $>$ US $>$ CN) follows
-  the ranking by coefficient of variation; mean intensity plays a secondary
-  role. Sweden's high coefficient of variation is offset by its very low mean (23~gCO$_2$eq/kWh),
-  limiting the absolute emissions available to avoid.
+\begin{figure}[!ht]
+  \centering
+  \includegraphics[width=0.795\textwidth]{margin_analysis}
+  \caption{Margin analysis over 84 scenario--budget combinations.
+    (a)~Best savings attainable when the margin is restricted to a bin,
+    relative to the run optimum (bars: median, whiskers: interquartile
+    range). (b)~Cumulative share of runs whose optimal margin falls
+    below the abscissa; dashed and dotted lines mark $\Delta_\theta =
+  10$ and $20$~gCO$_2$eq/kWh.}
+  \label{fig:margin}
+\end{figure}
 
- 
+The distribution of the optimal margin is strongly skewed to small
+values (Fig.~\ref{fig:margin}b) with a median of 6.5~gCO$_2$eq/kWh
+($\Delta_\theta \leq 10$~gCO$_2$eq/kWh in 66.7\% and $\Delta_\theta
+\leq 20$~gCO$_2$eq/kWh in 94.0\% of the combinations).
 
-  \subsection{Threshold Space and Hysteresis Margin}
+Fig.~\ref{fig:margin}a prices a wide margin directly: for each bin it
+shows the best savings a feasible policy in the bin can still
+achieve, relative to the run optimum. Bins up to $\Delta_\theta =
+20$~gCO$_2$eq/kWh stay within 1\,pp at the median; beyond that the
+attainable savings fall steadily.
 
-  \begin{figure}
-    \centering
-    \includegraphics[width=0.55\textwidth]{threshold_space_DeepSeek_V3_DE_0101}
-    \caption{
-      Pause vs.\ resume threshold for DeepSeek~V3 training in Germany starting on July 1st.
-      Color encodes composite score. The diagonal $\theta_r = \theta_p$
-      marks zero-hysteresis policies.
-    }
-    \label{fig:threshold}
-  \end{figure}
+Capping $\Delta_\theta$ at 10~gCO$_2$eq/kWh costs a median of
+0.00\,pp and a mean of 0.03\,pp of savings: 83 of 84 combinations
+lose under 0.5\,pp, the worst case loses 1.05\,pp (Germany, $B =
+25\%$). Capping at 20~gCO$_2$eq/kWh is cheaper still, with all 84
+losing under 1\,pp. The benefit hysteresis should provide
+(suppressing rapid pause/resume cycling) survives the tighter cap:
+the pause count changes by a median of 0 and by $+6.7$\% on average,
+and no run doubles it.
 
-  The threshold space analysis (example in Fig.~\ref{fig:threshold})
-  reveals the central
-  finding: optimal hysteresis margins cluster near zero. Across all 10
-  (model, region) combinations, the best-score points satisfy $\Delta_\theta
-  \leq 16$~gCO$_2$eq/kWh, and in most cases $\Delta_\theta \leq
-  10$~gCO$_2$eq/kWh (Table~\ref{tab:best}). Zero-hysteresis policies
-  ($\theta_r = \theta_p$) achieve scores within 1--3\% of the optimum,
-  confirming that a non-zero margin provides marginal practical benefit.
+The margin is therefore an insensitive tuning parameter: once the
+signal falls below the resume threshold it stays low, so waiting
+longer before resuming buys little clean time while adding idle
+overhead. A margin of 10~gCO$_2$eq/kWh is a safe, nearly free
+default, and effort is better spent on $\theta_p$ and $t_s$.
 
+\subsection{Sensitivity to Checkpoint Cost} \label{sec:ckpt-cost}
 
-  \subsection{Start Date Sensitivity}
+All preceding margin results assume a 148.8~s checkpoint cost
+(measured for a 7B model). Larger checkpoints increase transition
+costs and wider margins suppress pause/resume frequency. We therefore
+re-run the optimization for DeepSeek~V3 in Germany (2025, optimized
+start date), sweeping a symmetric save/load cost $c$ over (0, 1, 10,
+30, 60, 148.8, 300, and 600~s) across the five overhead budgets. This
+yields 40 combinations with 122{,}934 feasible policy evaluations.
 
- Although the start date exerts only a secondary influence in some zones, its impact is substantial in others. Across all (model, region) combinations, winter months (November--February) are
-  disproportionately represented among optimal start dates, reflecting lower
-  grid carbon intensity during the heating season. The effect ranges from
-  approximately 20 percentage points of savings (Italy) to under 2 percentage
-  points (China), confirming that the hysteresis threshold choice mostly, but not always, dominates
-  start-date scheduling.
+\begin{figure}[!ht]
+  \centering
+  \includegraphics[width=0.83\textwidth]{checkpoint_margin}
+  \caption{DeepSeek~V3 in Germany (2025) under a checkpoint-cost
+    sweep: symmetric save/load cost $c$ swept over five overhead
+    budgets. %(40 combinations, 122{,}934 feasible policies).
+    (a)~Optimal hysteresis margin vs.\ $c$; dashed and dotted lines
+    mark $\Delta_\theta = 10$ and
+    20~gCO$_2$eq/kWh. (b)~Savings lost when the margin is capped at
+  10~gCO$_2$eq/kWh.}
+  \label{fig:ckpt-margin}
+\end{figure}
 
-  % ============================================================
-  % 7. Discussion
-  % ============================================================
-  \section{Discussion and Conclusion}
+As Figure~\ref{fig:ckpt-margin} shows, the optimal margin is small:
+median 4.8~gCO$_2$eq/kWh, with $\Delta_\theta \leq 10$ in 72.5\% and
+$\Delta_\theta \leq 20$ in 90.0\% of the 40 optima. Although higher
+transition costs increase the median optimum (2.4 at $c = 0$ to
+22.9~gCO$_2$eq/kWh at $c = 600$~s) and reduce pause counts (e.g., $61
+\rightarrow 45$ at $B = 50\%$), no optimum exceeds 18.7~gCO$_2$eq/kWh
+for $c \leq 300$~s. Capping $\Delta_\theta$ at 10~gCO$_2$eq/kWh costs
+at most 0.12\,pp of savings (median 0.00\,pp; zero loss in 30 of 40
+cases). Even forcing zero hysteresis costs at most 0.90\,pp.
 
+High checkpoint costs primarily reduce achievable savings (e.g.,
+losing 1.5\,pp at $B = 200\%$) rather than altering the margin.
+Checkpoint cost is thus a first-order parameter for savings, but a
+second-order one for hysteresis width, confirming 10~gCO$_2$eq/kWh as
+a safe default even for frontier-scale models.
 
+\subsection{Start Date Sensitivity}
 
-  \subsection{Limitations}
-  %\paragraph{Limitations}
+Start date is a secondary lever whose value grows with the run
+length. For the higher overhead budgets the optimizer consistently
+selects late-winter to early-spring starts, February for Germany and
+China and January for Italy and the United States, whereas at the
+tightest budgets, where the run is only slightly extended, the best
+start is scattered (often late summer) and contributes little.
+Because a single run spans several months, beginning near the end of
+the high-carbon winter aligns it with the low-carbon spring and
+summer and keeps it out of the following winter peak; Germany's
+cleanest months (May--June) are about half the winter level. The
+effect scales with the seasonal amplitude of the grid
+(Table~\ref{tab:grid}): at a 200\% budget, January versus July starts
+differ by roughly 9\,pp of savings in Germany and 20\,pp in
+Italy, but under 3\,pp in China. Threshold choice nonetheless dominates
+the start date in every region.
 
-  Our simulation assumes perfect foresight: policies are evaluated on
-  historical data rather than forecasted future intensity. A real deployment
-  would require forecasting, introducing prediction error. We use a fixed
-  checkpoint overhead, real overhead depends on model size and
-  storage bandwidth. The idle power of the GPU is an estimate; the actual values vary.
-  Finally, this work considers single-site training; geo-distributed training
-  could compound savings by adding spatial flexibility.
+% ============================================================
+% 6. Discussion
+% ============================================================
+\section{Discussion and Conclusion}
 
-  % ============================================================
-  % 8. Conclusion
-  % ============================================================
-  \subsection{Conclusion}
-  %\paragraph{Conclusion}
+\subsection{Limitations}
+%\paragraph{Limitations}
 
-  We have presented a simulation framework for carbon-aware
-  LLM training via hysteresis-based pausing. Across two models and five
-  grid regions, it establishes systematic Pareto
-  frontiers, to the best of our knowledge, for this problem.
+Our simulation assumes perfect foresight, evaluating policies on
+historical rather than forecasted intensity; a real deployment would
+incur prediction error. The checkpoint cost is swept from 0 to 600~s
+(Sect.~\ref{sec:ckpt-cost}) as a single symmetric save/load
+parameter; real overhead depends on model size, sharding, and storage
+bandwidth, and save/load times need not be equal. The idle power is
+adopted from the power-comparable H100; the H800's idle draw under a
+real training workload may differ.
+The optimizer is an adaptive grid search, so ``optimum'' denotes the
+best policy on a finite grid; a finer grid might shift the margins,
+which is why we report the cost of a capped margin rather than
+resolve the exact optimum. Finally, this work considers single-site
+training; geo-distributed training could compound savings by adding
+spatial flexibility.
 
-  The central finding is that hysteresis provides diminishing returns: the
-  optimal policy uses a narrow or zero margin ($\Delta_\theta \leq
-  16$~gCO$_2$eq/kWh). Wide hysteresis margins waste
-  time and checkpoint overhead without proportional savings. Carbon-aware
-  pausing can reduce operational emissions by up to 43\% in high-variability
-  grids at the cost of up to 200\% wall-clock overhead.
+% ============================================================
+% 7. Conclusion
+% ============================================================
+\subsection{Conclusion}
+%\paragraph{Conclusion}
 
-  In practice: in high-variability grids, set $\theta_p$ at the
-  20--40th percentile of regional intensity with near-zero hysteresis
-  for 30--43\% savings at up to 200\% overhead. Low-variance grids
-  yield under 10\% savings; geo-distributed training or embodied
-  carbon trade-offs are more promising there.
+We have presented a simulation framework for carbon-aware LLM
+training via hysteresis-based pausing, building on the established
+pause-and-resume
+literature~\cite{dodge_measuring_2022,lechowicz_pause_2023}; across
+five grid regions it maps the savings--overhead trade-off at frontier-LLM scale.
 
-  Three directions are particularly promising for future work: (1) extending
-  the framework to use forecasted rather than historical carbon intensity for
-  real-time deployment; (2) combining temporal shifting with geo-distributed
-  training; and (3) incorporating embodied carbon awareness to ensure
-  operational savings are not outweighed by manufacturing emissions.
-  Beyond individual emissions reduction, carbon-aware scheduling also
-  provides demand-side flexibility that supports grid integration of
-  renewable energy.
+The central finding is that hysteresis has diminishing returns:
+across 84 scenario--budget combinations the optimal margin is
+6.5~gCO$_2$eq/kWh at the median and at most 20~gCO$_2$eq/kWh in 94\%
+of the runs; enforcing 10~gCO$_2$eq/kWh costs a median of
+0.00\,pp; sweeping checkpoint cost from 0 to 600\,s does not
+change this. Wide margins waste time and checkpoint overhead
+without proportional savings, whereas carbon-aware pausing can reduce
+operational emissions by up to 43\% in high-variability grids at the
+cost of up to 200\% time overhead.
 
-  All simulation code and data are available on
-  Github\footnote{https://404simon.github.io/TheGreenEpoch},
-  where our interactive browser-based simulator and optimizer can be tried.
+As design guidance, high-variability grids should place $\theta_p$
+near the 30--40th percentile of regional intensity (higher for very
+low-intensity grids such as Sweden) and use a narrow margin of
+10~gCO$_2$eq/kWh for 30--43\% savings at up to 200\% overhead;
+low-variance grids yield under 10\%, where geo-distributed training
+or embodied carbon trade-offs are more promising.
 
-  % ============================================================
-  % References
-  % ============================================================
-  \bibliographystyle{splncs04}
-  \bibliography{references}
+Future work should (1) use forecasted rather than historical
+intensity for real-time deployment, (2) combine temporal shifting
+with geo-distributed training, and (3) incorporate embodied carbon
+to account for manufacturing emissions.
 
-  \end{document}
+All simulation code and data, including an interactive browser-based
+simulator, are available at \url{https://github.com/404Simon/TheGreenEpoch}.
+
+% ============================================================
+% References
+% ============================================================
+\bibliographystyle{splncs04}
+\bibliography{references}
+
+\end{document}

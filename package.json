@@ -16,7 +16,7 @@
   "devDependencies": {
     "@solidjs/testing-library": "^0.8.10",
     "@tailwindcss/vite": "^4.3.2",
-    "@testing-library/jest-dom": "^7.0.0",
+    "@testing-library/jest-dom": "^8.0.0",
     "@types/node": "^26.1.1",
     "@types/plotly.js": "^3.0.10",
     "jsdom": "^31.0.0",
@@ -28,14 +28,14 @@
     "vitest": "^5.0.0"
   },
   "dependencies": {
-    "@solidjs/router": "^1.0.0",
+    "@solidjs/router": "^2.0.0",
     "baseline-browser-mapping": "^2.10.42",
     "chart.js": "^4.5.1",
     "chartjs-plugin-annotation": "^3.1.0",
-    "chartjs-plugin-zoom": "^2.2.0",
+    "chartjs-plugin-zoom": "^3.0.0",
     "commander": "^15.0.0",
     "plotly.js-dist-min": "^4.0.0",
-    "solid-js": "^1.9.14",
+    "solid-js": "^2.0.0",
     "vega": "^6.2.0",
     "vega-embed": "^7.1.0",
     "vega-lite": "^6.4.3"
